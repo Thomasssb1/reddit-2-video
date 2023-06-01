@@ -1,32 +1,31 @@
-print("What is your name? \n")
+using HTTP
+using DotEnv
+import JSON
 
-name = readline()
+DotEnv.config(path="info.env")
+test = ENV["TEST_DATA"]
+println(test)
 
-add(x,y) = x + y
-sub(x,y) = x-y
-mul(x,y) = x*y
-div(x,y) = x/y
+#commentlink = "https://www.reddit.com/comments/$rarticleid.json"
 
-if name == "John"
-    print("You are BANNED!")
-    wait(3)
-    exit()
-else
-    print("Input two numbers, seperated by a space \n")
-    num1, num2 = split(readline(), " ")
-    num1 = parse(Int, num1)
-    num2 = parse(Int, num2)
-    print("What operation would you like? \n")
-    op = lowercase(readline())
-    if op == "add"
-        add(num1, num2)
-    elseif op == "sub"
-        sub(num1, num2)
-    elseif op == "multiply"
-        mul(num1, num2)
-    elseif op == "division"
-        div(num1, num2)
-    else
-        print("Try again...")
-    end
+function request(link::String)
+    r = HTTP.request("GET", link;)
+    println(r.status)
+    JSON.parse(String(r.body))
 end
+
+function getarticleinfo(rsort, rsubreddit)
+    data = request("https://www.reddit.com/r/$rsubreddit/$rsort.json?")
+    #print(data)
+    title = data["data"]["children"][1]["data"]["title"]
+    upvotes = data["data"]["children"][1]["data"]["ups"]
+    nsfw = data["data"]["children"][1]["data"]["over_18"]
+    author = data["data"]["children"][1]["data"]["author"]
+
+    subname = data["data"]["children"][1]["data"]["subreddit_name_prefixed"]
+
+    print(title)
+    sleep(5)
+end
+
+#request(articlelink)
