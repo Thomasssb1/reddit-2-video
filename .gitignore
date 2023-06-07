@@ -1,3 +1,2 @@
-*.env
+.dart_tool/
 *.mp4
-*.png
