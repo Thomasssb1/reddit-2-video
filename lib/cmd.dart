@@ -7,7 +7,7 @@ ArgResults? parse(args) {
   parser.addOption('subreddit');
   parser.addOption('sort',
       defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
-  parser.addFlag('nsfw', defaultsTo: false);
+  parser.addFlag('nsfw', defaultsTo: true);
   parser.addOption('c', defaultsTo: '8', help: 'Minimum number of comments');
   parser.addFlag('downvotes',
       defaultsTo: false, abbr: 'd', help: 'Display downvotes on overlay');
