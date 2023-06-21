@@ -7,6 +7,11 @@ ArgResults? parse(args) {
   parser.addOption('subreddit');
   parser.addOption('sort',
       defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
+  parser.addOption('comment-sort',
+      defaultsTo: 'top',
+      abbr: 'cs',
+      allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
+  parser.addFlag('post-confirmation', defaultsTo: false);
   parser.addFlag('nsfw', defaultsTo: true);
   parser.addOption('c', defaultsTo: '8', help: 'Minimum number of comments');
   parser.addFlag('downvotes',
