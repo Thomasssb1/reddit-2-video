@@ -9,7 +9,6 @@ ArgResults? parse(args) {
       defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
   parser.addOption('comment-sort',
       defaultsTo: 'top',
-      abbr: 'cs',
       allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
   parser.addFlag('post-confirmation', defaultsTo: false);
   parser.addFlag('nsfw', defaultsTo: true);
