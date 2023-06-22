@@ -1,2 +1,4 @@
 .dart_tool/
 *.mp4
+*.wav
+*.srt

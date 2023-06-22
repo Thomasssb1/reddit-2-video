@@ -161,3 +161,4 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
 }
 
 // ffmpeg -i defaults/video1.mp4 -vf "subtitles=comments.srt:fontsdir=defaults/font:force_style='Fontname=Verdana,Alignment=10',crop=585:1080" -ss 00:01:00 -to 00:01:10  output.mp401:10  output.mp4
+// var result = await Process.run( 'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]); print(result.stdout); print(result.stderr);
