@@ -94,6 +94,10 @@ List<String> splitComments(String comment) {
   // the max amount of characters on screen
   comment = comment
       .replaceAll(RegExp(r'''[^\w\d' "]+'''), ' ')
+      .replaceAll(
+          RegExp(
+              r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)'''),
+          ' ')
       .replaceAll(RegExp(' {2,}'), ' ')
       .trim();
   const int splitAmount = 18;
@@ -115,7 +119,7 @@ List<String> splitComments(String comment) {
 
 String lengthCalculation(String message, String startTime) {
   // start (hh:mm:ss,ms)--> end (hh:mm:ss,ms)
-  int timePerChar = 100;
+  int timePerChar = 50;
 
   int prevMinutes = int.parse(startTime[3] + startTime[4]);
   int prevSeconds = int.parse(startTime[6] + startTime[7]);
@@ -133,8 +137,13 @@ String lengthCalculation(String message, String startTime) {
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
-    String? musicPath, int framerate) {
-  var file = File("./comments.srt");
+    String? musicPath, int framerate) async {
+  var filetxt = File("./.temp/comments.txt");
+  var sinktxt = filetxt.openWrite();
+
+  sinktxt.write("${postData[0]['post']['title']}");
+
+  var file = File("./.temp/comments.srt");
   var sink = file.openWrite();
 
   final List<String> splitTitle = splitComments(postData[0]['post']['title']);
@@ -148,6 +157,7 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   int lineCount = splitTitle.length;
   for (final comment in postData[1]['comments']) {
     List<String> splitComment = splitComments(comment['body']);
+    sinktxt.write(comment['body']);
     for (int j = 0; j < splitComment.length; j++) {
       final newTime = lengthCalculation(splitComment[j], startTime);
       lineCount += 1;
@@ -157,8 +167,12 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
     }
   }
 
+  sinktxt.close();
   sink.close();
+  var result = await Process.run(
+      'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
+  print(result.stdout);
+  print(result.stderr);
 }
 
 // ffmpeg -i defaults/video1.mp4 -vf "subtitles=comments.srt:fontsdir=defaults/font:force_style='Fontname=Verdana,Alignment=10',crop=585:1080" -ss 00:01:00 -to 00:01:10  output.mp401:10  output.mp4
-// var result = await Process.run( 'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]); print(result.stdout); print(result.stderr);
