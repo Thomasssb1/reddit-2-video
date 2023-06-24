@@ -137,11 +137,14 @@ String lengthCalculation(String message, String startTime) {
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
-    String? musicPath, int framerate) async {
-  var filetxt = File("./.temp/comments.txt");
+    String? musicPath, int framerate, bool offlineTTS) async {
+  var filetxt = File("./.temp/comments.json");
   var sinktxt = filetxt.openWrite();
 
-  sinktxt.write("${postData[0]['post']['title']}");
+  Map tempJson = {};
+
+  tempJson["settings"] = {"offline": offlineTTS, "accent": "com.mx"};
+  tempJson["body"] = postData[0]['post']['title'];
 
   var file = File("./.temp/comments.srt");
   var sink = file.openWrite();
@@ -157,7 +160,7 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   int lineCount = splitTitle.length;
   for (final comment in postData[1]['comments']) {
     List<String> splitComment = splitComments(comment['body']);
-    sinktxt.write(comment['body']);
+    tempJson["body"] += comment['body'];
     for (int j = 0; j < splitComment.length; j++) {
       final newTime = lengthCalculation(splitComment[j], startTime);
       lineCount += 1;
@@ -167,12 +170,10 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
     }
   }
 
-  sinktxt.close();
+  sinktxt.write(json.encode(tempJson));
   sink.close();
   var result = await Process.run(
       'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
-  print(result.stdout);
-  print(result.stderr);
 }
 
 // ffmpeg -i defaults/video1.mp4 -vf "subtitles=comments.srt:fontsdir=defaults/font:force_style='Fontname=Verdana,Alignment=10',crop=585:1080" -ss 00:01:00 -to 00:01:10  output.mp401:10  output.mp4

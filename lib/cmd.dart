@@ -12,6 +12,10 @@ ArgResults? parse(args) {
       allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
   parser.addFlag('post-confirmation', defaultsTo: false);
   parser.addFlag('nsfw', defaultsTo: true);
+  parser.addFlag('offline',
+      defaultsTo: false,
+      help:
+          'Determines which TTS engine to use (Google requires internet, otherwise local generation will take place)');
   parser.addOption('c', defaultsTo: '8', help: 'Minimum number of comments');
   parser.addFlag('downvotes',
       defaultsTo: false, abbr: 'd', help: 'Display downvotes on overlay');

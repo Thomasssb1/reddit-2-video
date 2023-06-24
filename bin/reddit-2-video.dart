@@ -22,7 +22,8 @@ void main(List<String> arguments) async {
           results['output'],
           results['video-path'],
           results['music-path'],
-          int.parse(results['framerate']));
+          int.parse(results['framerate']),
+          results['offline']);
     } else {
       print("No posts found... Try again.");
     }
