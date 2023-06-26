@@ -73,7 +73,8 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
               'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
             };
           })
-          .where((element) => element['body'] != null)
+          .where((element) =>
+              element['body'] != null && (element['body'] ??= "").length <= 512)
           .toList();
       commentData = commentData.sublist(
           0,
@@ -141,10 +142,10 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   var filetxt = File("./.temp/comments.json");
   var sinktxt = filetxt.openWrite();
 
-  Map tempJson = {};
+  Map tempJson = {"text": []};
 
   tempJson["settings"] = {"offline": offlineTTS, "accent": "com.mx"};
-  tempJson["body"] = postData[0]['post']['title'];
+  tempJson["text"].add(postData[0]['post']['title']);
 
   var file = File("./.temp/comments.srt");
   var sink = file.openWrite();
@@ -160,7 +161,7 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   int lineCount = splitTitle.length;
   for (final comment in postData[1]['comments']) {
     List<String> splitComment = splitComments(comment['body']);
-    tempJson["body"] += comment['body'];
+    tempJson["text"].add(comment['body']);
     for (int j = 0; j < splitComment.length; j++) {
       final newTime = lengthCalculation(splitComment[j], startTime);
       lineCount += 1;
@@ -174,6 +175,47 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   sink.close();
   var result = await Process.run(
       'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
+
+  // still editing
+  List<FfmpegInput> inputs = [FfmpegInput.asset("./defaults/video1.mp4")];
+
+  await for (var file in Directory('./.temp/tts').list()) {
+    inputs.add(FfmpegInput.asset(file.path));
+  }
+  ;
+  List<FfmpegStream> tts = [
+    for (int i = 0; i < inputs.length - 1; i++)
+      FfmpegStream(audioId: "[${i + 1}:a]")
+  ];
+
+  const outputStream = FfmpegStream(videoId: null, audioId: "[final_a]");
+  final command = FfmpegCommand(
+      inputs: inputs,
+      args: [
+        CliArg(name: 'map', value: '0:v'),
+        CliArg(name: 'map', value: outputStream.audioId!),
+        CliArg(name: 'c:v', value: 'copy'),
+        CliArg(name: 'ss', value: '00:00:00'),
+        CliArg(name: 'to', value: '00:01:30')
+      ],
+      filterGraph: FilterGraph(chains: [
+        FilterChain(inputs: tts, filters: [
+          ConcatFilter(
+              segmentCount: tts.length,
+              outputAudioStreamCount: 1,
+              outputVideoStreamCount: 0),
+        ], outputs: [
+          outputStream
+        ])
+      ]),
+      outputFilepath: "./.temp/final.mp4");
+  //print(command.toCli().join(' '));
+  final process = await Ffmpeg().run(command);
+  process.stderr.transform(utf8.decoder).listen((data) {
+    print(data);
+  });
+  stdin.pipe(process.stdin);
+  await process.exitCode;
 }
 
-// ffmpeg -i defaults/video1.mp4 -vf "subtitles=comments.srt:fontsdir=defaults/font:force_style='Fontname=Verdana,Alignment=10',crop=585:1080" -ss 00:01:00 -to 00:01:10  output.mp401:10  output.mp4
+// ffmpeg -i defaults/video1.mp4 -i .temp/tts.wav -map 0:v -map 1:a -shortest -filter:v "subtitles=.temp/comments.srt:fontsdir=defaults/font:force_style='Fontname=Verdana,Alignment=10',crop=585:1080" -filter:a "atempo=1001/1000,asetrate=44100*1000/1001" -ss 00:00:00 -to 00:03:20  output.mp4

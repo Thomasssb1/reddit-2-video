@@ -1,4 +1,5 @@
 import 'package:reddit_2_video/reddit_2_video.dart' as reddit_2_video;
+import 'package:reddit_2_video/test.dart';
 import '../lib/cmd.dart';
 
 import 'dart:io';
@@ -16,6 +17,7 @@ void main(List<String> arguments) async {
         int.parse(results['c']),
         results['comment-sort'],
         results['post-confirmation']);
+    general();
     if (postData.isNotEmpty) {
       reddit_2_video.generateVideo(
           postData,
