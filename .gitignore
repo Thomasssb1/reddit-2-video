@@ -3,5 +3,4 @@
 *.wav
 *.srt
 *.mp3
-comments.txt
-test.dart
+.temp

@@ -81,14 +81,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  ffmpeg_cli:
-    dependency: "direct main"
-    description:
-      name: ffmpeg_cli
-      sha256: dac8b1e53ca6be70a0bb22d16f5d352145ec9b447a02b20ea7a39d6aec82f8e8
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
   file:
     dependency: transitive
     description:
@@ -153,14 +145,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.7"
-  json_annotation:
-    dependency: transitive
-    description:
-      name: json_annotation
-      sha256: b10a7b2ff83d83c777edba3c6a0f97045ddadd56c944e1a23a3fdf43a1bf4467
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.8.1"
   lints:
     dependency: "direct dev"
     description:
