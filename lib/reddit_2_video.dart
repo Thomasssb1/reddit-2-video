@@ -84,13 +84,13 @@ Future<List<dynamic>> getPostData(
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, String? musicPath, int framerate,
-    bool offlineTTS) async {
+    bool offlineTTS, String fileType) async {
   //var result = await Process.run(
   //'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
 
   int end_ms = await generateSubtitles(offlineTTS, postData);
 
-  List<String> command = await generateCommand(end_ms, framerate);
+  List<String> command = await generateCommand(end_ms, framerate, fileType);
   final process = await Process.start('ffmpeg', command);
   process.stderr.transform(utf8.decoder).listen((data) {
     print(data);

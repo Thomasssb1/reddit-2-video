@@ -50,7 +50,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   //return errors
 }
 
-Future<List<String>> generateCommand(int end, int fps) async {
+Future<List<String>> generateCommand(int end, int fps, String fileType) async {
   List<String> command = ["-i", "./defaults/video1.mp4"];
   List<String> inputStreams = [];
 
@@ -73,7 +73,7 @@ Future<List<String>> generateCommand(int end, int fps) async {
     '${end + 100}ms',
     '-filter_complex',
     '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
-    './.temp/final.mp4'
+    './.temp/final.$fileType'
   ]);
 
   return command;
