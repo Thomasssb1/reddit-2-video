@@ -2,10 +2,7 @@ List<String> splitComments(String comment) {
   // the max amount of characters on screen
   comment = comment
       .replaceAll(RegExp(r'''[^\w\d' "]+'''), ' ')
-      .replaceAll(
-          RegExp(
-              r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)'''),
-          ' ')
+      .replaceAll(RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)'''), ' ')
       .replaceAll(RegExp(' {2,}'), ' ')
       .trim();
   const int splitAmount = 18;
@@ -33,9 +30,7 @@ String lengthCalculation(String message, String startTime) {
   int prevSeconds = int.parse(startTime[5] + startTime[6]);
   int prevMilliseconds = int.parse(startTime.substring(8)) * 10;
   Duration calculatedTime = Duration(
-      milliseconds:
-          (prevMilliseconds + (prevSeconds * 1000) + (prevMinutes * 60000)) +
-              (message.length * timePerChar));
+      milliseconds: (prevMilliseconds + (prevSeconds * 1000) + (prevMinutes * 60000)) + (message.length * timePerChar));
   if (calculatedTime.inHours > 0) {
     return "Somehow the time has gone over an hour for the video.. Aborting.";
   }

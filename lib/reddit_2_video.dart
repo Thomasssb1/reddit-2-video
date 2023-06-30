@@ -6,22 +6,20 @@ import 'ffmpeg.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 
-Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
-    int commentCount, String commentSort, bool postConfirm) async {
+Future<List<dynamic>> getPostData(
+    String subreddit, String sort, bool nsfw, int commentCount, String commentSort, bool postConfirm) async {
   // make the network request
   var client = http.Client();
   List<dynamic> postData = [];
   try {
-    var response =
-        await client.get(Uri.https("reddit.com", "/r/$subreddit/$sort.json"));
+    var response = await client.get(Uri.https("reddit.com", "/r/$subreddit/$sort.json"));
     var json = jsonDecode(utf8.decode(response.bodyBytes));
 
     List<dynamic> data = pick(json, 'data', 'children')
         .asListOrEmpty((p0) {
           if ((!p0('data', 'stickied').asBoolOrFalse())) {
             // ignore any comments pinned to the subreddit (normally mod posts)
-            if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >=
-                commentCount) {
+            if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >= commentCount) {
               // check if the post has enough comments specified with -c
               if (nsfw) {
                 // if the user has nsfw tag set to true (default)
@@ -29,9 +27,8 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
                   'title': p0('data', 'title').required().asString(),
                   'id': p0('data', 'id').asStringOrNull(),
                   'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                  'created': p0('data', 'created_utc').letOrNull((pick) =>
-                      DateTime.fromMicrosecondsSinceEpoch(
-                          (pick.asDoubleOrNull() ?? 0.0).round())),
+                  'created': p0('data', 'created_utc')
+                      .letOrNull((pick) => DateTime.fromMicrosecondsSinceEpoch((pick.asDoubleOrNull() ?? 0.0).round())),
                   'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                   'media': p0('data', 'media').asBoolOrFalse()
                 };
@@ -43,9 +40,8 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
                     'title': p0('data', 'title').required().asString(),
                     'id': p0('data', 'id').asStringOrNull(),
                     'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                    'created': p0('data', 'created_utc').letOrNull((pick) =>
-                        DateTime.fromMicrosecondsSinceEpoch(
-                            (pick.asDoubleOrNull() ?? 0.0).round())),
+                    'created': p0('data', 'created_utc').letOrNull(
+                        (pick) => DateTime.fromMicrosecondsSinceEpoch((pick.asDoubleOrNull() ?? 0.0).round())),
                     'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                     'media': p0('data', 'media').asBoolOrFalse()
                   };
@@ -62,8 +58,8 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
     } else {
       final id = data[0]['id'];
       postData.add({"post": data[0]});
-      var commentResponse = await client.get(Uri.https("reddit.com",
-          "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
+      var commentResponse =
+          await client.get(Uri.https("reddit.com", "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
       print(commentResponse.statusCode);
       var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
       List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
@@ -73,14 +69,10 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
               'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
             };
           })
-          .where((element) =>
-              element['body'] != null && (element['body'] ??= "").length <= 512)
+          .where((element) => element['body'] != null && (element['body'] ??= "").length <= 512)
           .toList();
-      commentData = commentData.sublist(
-          0,
-          commentData.length < 3 * commentCount
-              ? commentData.length
-              : 3 * commentCount);
+      commentData =
+          commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
       postData.add({"comments": commentData});
     }
   } catch (e) {
@@ -91,14 +83,14 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw,
   return postData;
 }
 
-generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
-    String? musicPath, int framerate, bool offlineTTS) async {
+generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, String? musicPath, int framerate,
+    bool offlineTTS) async {
   //var result = await Process.run(
   //'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
 
   int end_ms = await generateSubtitles(offlineTTS, postData);
 
-  List<String> command = await generateCommand(end_ms);
+  List<String> command = await generateCommand(end_ms, framerate);
   final process = await Process.start('ffmpeg', command);
   process.stderr.transform(utf8.decoder).listen((data) {
     print(data);

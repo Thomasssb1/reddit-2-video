@@ -25,8 +25,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   String startTime = "0:00:00.00";
   for (final text in splitTitle) {
     final newTime = lengthCalculation(text, startTime);
-    final newDialog = sink_comments.write(
-        "Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,$animation$text\n");
+    final newDialog = sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,$animation$text\n");
 
     startTime = newTime;
   }
@@ -35,8 +34,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
     tempJson["text"].add(comment['body']);
     for (final comment in splitComment) {
       final newTime = lengthCalculation(comment, startTime);
-      final newDialog = sink_comments.write(
-          "Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,$animation$comment\n");
+      final newDialog = sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,$animation$comment\n");
       startTime = newTime;
     }
   }
@@ -52,7 +50,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   //return errors
 }
 
-Future<List<String>> generateCommand(int end) async {
+Future<List<String>> generateCommand(int end, int fps) async {
   List<String> command = ["-i", "./defaults/video1.mp4"];
   List<String> inputStreams = [];
 
@@ -74,7 +72,7 @@ Future<List<String>> generateCommand(int end) async {
     '-to',
     '${end + 100}ms',
     '-filter_complex',
-    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[final_a], crop=585:1080, subtitles=.temp/comments.ass',
+    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
     './.temp/final.mp4'
   ]);
 
