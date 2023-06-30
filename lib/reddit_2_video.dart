@@ -90,7 +90,7 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
 
   int end_ms = await generateSubtitles(offlineTTS, postData);
 
-  List<String> command = await generateCommand(end_ms, framerate, fileType);
+  List<String> command = await generateCommand(output, end_ms, framerate, fileType);
   final process = await Process.start('ffmpeg', command);
   process.stderr.transform(utf8.decoder).listen((data) {
     print(data);

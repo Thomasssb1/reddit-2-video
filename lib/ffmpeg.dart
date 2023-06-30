@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'utils.dart';
+import 'package:path/path.dart' as p;
 
 Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   String animation =
@@ -50,7 +51,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   //return errors
 }
 
-Future<List<String>> generateCommand(int end, int fps, String fileType) async {
+Future<List<String>> generateCommand(String output, int end, int fps, String fileType) async {
   List<String> command = ["-i", "./defaults/video1.mp4"];
   List<String> inputStreams = [];
 
@@ -60,6 +61,24 @@ Future<List<String>> generateCommand(int end, int fps, String fileType) async {
     command.addAll(["-i", value.path]);
     inputStreams.add("[${i}:a]");
     i++;
+  }
+
+  // problem:
+  // if the user specifies a file, use that file
+  // if the user does not specify a file then generate one
+
+  if (output.endsWith('/')) {
+    print("No filename provided - using a default filename.");
+    output += "final";
+  } else {
+    String fileName = p.basename(output);
+    String fileExtension = fileName.split(RegExp(r'^.*(?=(\.[0-9a-z]+$))')).last.replaceFirst('.', '');
+    output = output.replaceAll(".$fileExtension", '');
+    if (fileExtension != fileType) {
+      print(
+          "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the -file-type flag ($fileType).\n If you do not want this to happen, then change the value of the -file-type flag to match the desired output type.\n");
+      fileType = fileExtension;
+    }
   }
 
   command.addAll([
@@ -73,7 +92,7 @@ Future<List<String>> generateCommand(int end, int fps, String fileType) async {
     '${end + 100}ms',
     '-filter_complex',
     '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
-    './.temp/final.$fileType'
+    '$output.$fileType'
   ]);
 
   return command;

@@ -27,7 +27,7 @@ ArgResults? parse(args) {
       hide: true,
       help: 'Timezone to use when adding date to the post overlay',
       allowed: ['GMT', 'ECT', 'EET', 'PST', 'CST', 'EST']);
-  parser.addOption('output', abbr: 'o', defaultsTo: '', help: 'Location where the generated file will be stored.');
+  parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');
   parser.addOption('file-type', defaultsTo: 'mp4', allowed: ['mp4', 'avi', 'mov', 'flv']);
   parser.addOption('framerate',
       defaultsTo: '45',
