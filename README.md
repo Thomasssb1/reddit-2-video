@@ -2,6 +2,18 @@
 A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
 At the moment, it is in development and currently has no easy way to setup CLI command usage without cloning the repository yourself.
 
+## Dependencies
+Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
+Run this single command if using a linux platform that supports apt-get.
+```
+$ apt-get install ffmpeg dart python3
+```
+For other platforms, check the individual installing guides. If your platform is not Windows or MacOS, then check the other option which contains a guide to every supported platform.<br>
+<b>ffmpeg: [Windows](https://www.gyan.dev/ffmpeg/builds/), [MacOS](https://evermeet.cx/ffmpeg/), [Other](https://ffmpeg.org/download.html)<br>
+dart: [Installation guide](https://dart.dev/get-dart#install) for Windows, Linux and MacOS.<br>
+python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://www.python.org/downloads/macos/), [Other](https://www.python.org/download/other/)
+</b>
+
 ## Setup
 This setup may be a bit tedious for now as it is still currently under development. However, you can still use this project for your own use whilst it is in development. <br>
 Clone the repository
