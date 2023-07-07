@@ -1,6 +1,35 @@
 # reddit2video
 A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
-At the moment, it is in development and currently has no easy way to setup CLI command usage without cloning the repository yourself. Once the app is ready, I will include a set of steps for easy setup.
+At the moment, it is in development and currently has no easy way to setup CLI command usage without cloning the repository yourself.
+
+## Dependencies
+Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
+Run this single command if using a linux platform that supports apt-get.
+```
+$ apt-get install ffmpeg dart python3
+```
+For other platforms, check the individual installing guides. If your platform is not Windows or MacOS, then check the other option which contains a guide to every supported platform.<br>
+<b>ffmpeg: [Windows](https://www.gyan.dev/ffmpeg/builds/), [MacOS](https://evermeet.cx/ffmpeg/), [Other](https://ffmpeg.org/download.html)<br>
+dart: [Installation guide](https://dart.dev/get-dart#install) for Windows, Linux and MacOS.<br>
+python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://www.python.org/downloads/macos/), [Other](https://www.python.org/download/other/)
+</b>
+
+## Setup
+This setup may be a bit tedious for now as it is still currently under development. However, you can still use this project for your own use whilst it is in development. <br>
+Clone the repository
+``` 
+$ git clone https://github.com/Thomasssb1/reddit2video.git
+```
+Activate the repo so it can be used throughout your system
+```
+$ cd reddit2video
+$ dart pub global activate --source path .
+```
+Call the method in the command line like so
+```
+$ reddit-2-video --subreddit AskReddit
+```
+You can add more args as talked about below.
 
 ## Commands
 To use this, you need to use the command reddit-2-video along with arguments to generate a video. <br>
@@ -35,5 +64,7 @@ The only **required** argument is `subreddit`.
   Timezone to use when adding date to the post overlay 
     Options are: 'GMT', 'ECT', 'EET', 'PST', 'CST', 'EST'
 ```
+At the moment, the only supported args are:
+subreddit, sort, nsfw, c, o, file-type, framerate and comment-sort (undocumented).
 ### Help
 Use the flag `--help` or `-h` for more help and information.
