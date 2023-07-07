@@ -23,7 +23,7 @@ $ git clone https://github.com/Thomasssb1/reddit2video.git
 Activate the repo so it can be used throughout your system
 ```
 $ cd reddit2video
-$ pub global activate --source path .
+$ dart pub global activate --source path .
 ```
 Call the method in the command line like so
 ```
