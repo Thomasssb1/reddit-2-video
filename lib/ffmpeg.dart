@@ -4,8 +4,8 @@ import 'utils.dart';
 import 'package:path/path.dart' as p;
 
 Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
-  String animation =
-      r"{\an5\1c&H000000&\t(0, 150, \1c&HFFFFFF& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100)}{\fad(150,150)}";
+  /// [Remember] ffmpeg uses `HGGBBRR`
+  String animation(colour) => return r"{\an5\1c&H000000&\t(0, 150, \1c&"+colour+r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
   final file_for_tts = File("./.temp/comments.json");
   final sink_tts = file_for_tts.openWrite();
@@ -26,7 +26,8 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   String startTime = "0:00:00.00";
   for (final text in splitTitle) {
     final newTime = lengthCalculation(text, startTime);
-    final newDialog = sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,$animation$text\n");
+    final newDialog =
+        sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
 
     startTime = newTime;
   }
@@ -35,7 +36,8 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
     tempJson["text"].add(comment['body']);
     for (final comment in splitComment) {
       final newTime = lengthCalculation(comment, startTime);
-      final newDialog = sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,$animation$comment\n");
+      final newDialog =
+          sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$comment\n");
       startTime = newTime;
     }
   }
@@ -63,10 +65,6 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     i++;
   }
 
-  // problem:
-  // if the user specifies a file, use that file
-  // if the user does not specify a file then generate one
-
   if (output.endsWith('/')) {
     print("No filename provided - using a default filename.");
     output += "final";
@@ -77,7 +75,6 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     if (fileExtension != fileType) {
       print(
           "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the -file-type flag ($fileType).\n If you do not want this to happen, then change the value of the -file-type flag to match the desired output type.\n");
-      fileType = fileExtension;
     }
   }
 
