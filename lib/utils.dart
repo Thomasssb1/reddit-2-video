@@ -1,7 +1,7 @@
 List<String> splitComments(String comment) {
   // the max amount of characters on screen
   comment = comment
-      .replaceAll(RegExp(r'''[^\w\d' "]+'''), ' ')
+      //.replaceAll(RegExp(r'''[^\w\d' "]+'''), ' ')
       .replaceAll(RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)'''), ' ')
       .replaceAll(RegExp(' {2,}'), ' ')
       .trim();
@@ -24,7 +24,7 @@ List<String> splitComments(String comment) {
 
 String lengthCalculation(String message, String startTime) {
   // start (hh:mm:ss,ms)--> end (hh:mm:ss,ms)
-  int timePerChar = 50;
+  int timePerChar = 75;
 
   int prevMinutes = int.parse(startTime[2] + startTime[3]);
   int prevSeconds = int.parse(startTime[5] + startTime[6]);

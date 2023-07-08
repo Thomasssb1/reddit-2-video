@@ -5,7 +5,10 @@ import 'package:path/path.dart' as p;
 
 Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   /// [Remember] ffmpeg uses `HGGBBRR`
-  String animation(colour) => return r"{\an5\1c&H000000&\t(0, 150, \1c&"+colour+r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
+  String animation(colour) =>
+      r"{\an5\1c&H000000&\t(0, 150, \1c&" +
+      colour +
+      r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
   final file_for_tts = File("./.temp/comments.json");
   final sink_tts = file_for_tts.openWrite();
