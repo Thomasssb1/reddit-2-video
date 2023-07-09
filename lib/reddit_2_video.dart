@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+
+import 'package:reddit_2_video/utils.dart';
 
 import 'ffmpeg.dart';
 
@@ -12,23 +15,27 @@ Future<List<dynamic>> getPostData(
   var client = http.Client();
   List<dynamic> postData = [];
   try {
-    var response = await client.get(Uri.https("reddit.com", "/r/$subreddit/$sort.json"));
+    bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(subreddit);
+    Uri linkUri = Uri.https("reddit.com", "/r/$subreddit/$sort.json");
+    if (isLink) {
+      linkUri = Uri.parse("$subreddit.json");
+    }
+    var response = await client.get(Uri.https(linkUri.authority, linkUri.path));
     var json = jsonDecode(utf8.decode(response.bodyBytes));
-
-    List<dynamic> data = pick(json, 'data', 'children')
+    List<dynamic> data = pick(isLink ? json[0] : json, 'data', 'children')
         .asListOrEmpty((p0) {
           if ((!p0('data', 'stickied').asBoolOrFalse())) {
             // ignore any comments pinned to the subreddit (normally mod posts)
             if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >= commentCount) {
               // check if the post has enough comments specified with -c
-              if (nsfw) {
+              if (isLink ? true : nsfw) {
                 // if the user has nsfw tag set to true (default)
                 return {
                   'title': p0('data', 'title').required().asString(),
                   'id': p0('data', 'id').asStringOrNull(),
                   'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                  'created': p0('data', 'created_utc')
-                      .letOrNull((pick) => DateTime.fromMicrosecondsSinceEpoch((pick.asDoubleOrNull() ?? 0.0).round())),
+                  'created': p0('data', 'created_utc').letOrNull(
+                      (pick) => DateTime.fromMillisecondsSinceEpoch(((pick.asDoubleOrNull() ?? 0.0) * 1000).round())),
                   'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                   'media': p0('data', 'media').asBoolOrFalse()
                 };
@@ -53,13 +60,13 @@ Future<List<dynamic>> getPostData(
         })
         .where((element) => element != null && element['id'] != null)
         .toList();
-    if (postConfirm) {
+    if (postConfirm && !isLink) {
       // for loop
     } else {
       final id = data[0]['id'];
       postData.add({"post": data[0]});
-      var commentResponse =
-          await client.get(Uri.https("reddit.com", "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
+      var commentResponse = await client.get(
+          Uri.https("reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
       print(commentResponse.statusCode);
       var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
       List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
@@ -69,13 +76,15 @@ Future<List<dynamic>> getPostData(
               'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
             };
           })
-          .where((element) => element['body'] != null && (element['body'] ??= "").length <= 512)
+          .where((element) =>
+              element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
           .toList();
       commentData =
           commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
       postData.add({"comments": commentData});
     }
   } catch (e) {
+    print(e);
     //error handling
   } finally {
     client.close();
