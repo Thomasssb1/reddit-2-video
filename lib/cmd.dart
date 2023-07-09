@@ -7,20 +7,25 @@ ArgResults? parse(args) {
   parser.addOption('subreddit');
   parser.addOption('sort', defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
   parser.addOption('comment-sort', defaultsTo: 'top', allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
+  parser.addOption('c', defaultsTo: '8', help: 'Minimum number of comments');
+  // Look into getting info such as female/male when assigning voices in future
+  parser.addMultiOption('alternate',
+      valueHelp: "alternate-tts(true/false),alternate-colour(true/false),title-colour(hex)");
   parser.addFlag('post-confirmation', defaultsTo: false);
-  parser.addFlag('nsfw', defaultsTo: true);
-  parser.addFlag('offline',
+  parser
+    ..addFlag('nsfw', defaultsTo: true)
+    ..addFlag('spoiler',
+        defaultsTo: false, help: 'Add a spoiler to the video which hides the image/text before showing for 3s');
+  parser.addFlag('ntts',
       defaultsTo: false,
       help:
-          'Determines which TTS engine to use (Google requires internet, otherwise local generation will take place)');
-  parser.addOption('c', defaultsTo: '8', help: 'Minimum number of comments');
-  parser.addFlag('upvotes', defaultsTo: false, abbr: 'u', help: 'Display upvotes on overlay');
-  parser.addFlag('downvotes', defaultsTo: false, abbr: 'd', help: 'Display downvotes on overlay');
-  parser.addFlag('awards', defaultsTo: false, abbr: 'a', help: 'Display awards on overlay');
+          'Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.');
+  parser
+    ..addFlag('upvotes', defaultsTo: false, abbr: 'u', help: 'Display upvotes on overlay')
+    ..addFlag('downvotes', defaultsTo: false, abbr: 'd', help: 'Display downvotes on overlay')
+    ..addFlag('awards', defaultsTo: false, abbr: 'a', help: 'Display awards on overlay');
   parser.addOption('video-path', defaultsTo: '../defaults/video1.mp4', abbr: 'v', valueHelp: "path");
-  parser.addMultiOption('music', defaultsTo: null, valueHelp: "path,volume");
-  parser.addFlag('spoiler',
-      defaultsTo: false, help: 'Add a spoiler to the video which hides the image/text before showing for 3s');
+  parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addFlag('date', defaultsTo: false, help: 'Add date of when the post was uploaded to the overlay.');
   parser.addOption('timezone',
       abbr: 't',

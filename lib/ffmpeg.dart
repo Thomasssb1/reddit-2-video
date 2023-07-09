@@ -10,27 +10,26 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
       colour +
       r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
-  final file_for_tts = File("./.temp/comments.json");
-  final sink_tts = file_for_tts.openWrite();
+  final fileForTTS = File("./.temp/comments.json");
+  final sinkTTS = fileForTTS.openWrite();
 
   Map tempJson = {"text": []};
 
   tempJson["settings"] = {"offline": offlineTTS, "accent": "com.mx"};
   tempJson["text"].add(postData[0]['post']['title']);
 
-  final default_ass = File("./defaults/default.ass");
-  final contents = await default_ass.readAsString();
+  final defaultASS = File("./defaults/default.ass");
+  final contents = await defaultASS.readAsString();
 
-  final file_for_comments = File("./.temp/comments.ass");
-  final sink_comments = file_for_comments.openWrite();
-  sink_comments.write("$contents\n");
+  final fileForComments = File("./.temp/comments.ass");
+  final sinkComments = fileForComments.openWrite();
+  sinkComments.write("$contents\n");
 
   final List<String> splitTitle = splitComments(postData[0]['post']['title']);
   String startTime = "0:00:00.00";
   for (final text in splitTitle) {
     final newTime = lengthCalculation(text, startTime);
-    final newDialog =
-        sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
+    sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
 
     startTime = newTime;
   }
@@ -39,14 +38,13 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
     tempJson["text"].add(comment['body']);
     for (final comment in splitComment) {
       final newTime = lengthCalculation(comment, startTime);
-      final newDialog =
-          sink_comments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$comment\n");
+      sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$comment\n");
       startTime = newTime;
     }
   }
 
-  sink_tts.write(json.encode(tempJson));
-  sink_comments.close();
+  sinkTTS.write(json.encode(tempJson));
+  sinkComments.close();
 
   int prevMinutes = int.parse(startTime[2] + startTime[3]);
   int prevSeconds = int.parse(startTime[5] + startTime[6]);
@@ -64,7 +62,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
   int i = 1;
   await for (final value in tts) {
     command.addAll(["-i", value.path]);
-    inputStreams.add("[${i}:a]");
+    inputStreams.add("[$i:a]");
     i++;
   }
 
@@ -98,5 +96,3 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
 
   return command;
 }
-
-// ffmpeg -i .temp/tts/tts-0.wav -i .temp/tts/tts-1.wav -i .temp/tts/tts-2.wav -i defaults/music_test.mp3 -map [final_a] -filter_complex "[0:a][1:a][2:a] concat=n=3:v=0:a=1[a0];[a0][3:a]amerge[final_a]" output.wav
