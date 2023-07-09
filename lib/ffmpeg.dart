@@ -82,6 +82,8 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
   }
 
   command.addAll([
+    '-i',
+    'defaults/music_test.mp3',
     '-map',
     '0:v',
     '-map',
@@ -91,9 +93,11 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     '-to',
     '${end + 100}ms',
     '-filter_complex',
-    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
+    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[0a];[0a][${inputStreams.length + 1}:a]amerge[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
     '$output.$fileType'
   ]);
 
   return command;
 }
+
+// ffmpeg -i .temp/tts/tts-0.wav -i .temp/tts/tts-1.wav -i .temp/tts/tts-2.wav -i defaults/music_test.mp3 -map [final_a] -filter_complex "[0:a][1:a][2:a] concat=n=3:v=0:a=1[a0];[a0][3:a]amerge[final_a]" output.wav
