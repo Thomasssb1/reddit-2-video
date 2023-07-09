@@ -18,7 +18,7 @@ ArgResults? parse(args) {
   parser.addFlag('downvotes', defaultsTo: false, abbr: 'd', help: 'Display downvotes on overlay');
   parser.addFlag('awards', defaultsTo: false, abbr: 'a', help: 'Display awards on overlay');
   parser.addOption('video-path', defaultsTo: '../defaults/video1.mp4', abbr: 'v', valueHelp: "path");
-  parser.addMultiOption('music', defaultsTo: null, abbr: 'm', valueHelp: "path, volume");
+  parser.addMultiOption('music', defaultsTo: null, abbr: 'm', valueHelp: "path,volume");
   parser.addFlag('spoiler',
       defaultsTo: false, help: 'Add a spoiler to the video which hides the image/text before showing for 3s');
   parser.addFlag('date', defaultsTo: false, help: 'Add date of when the post was uploaded to the overlay.');

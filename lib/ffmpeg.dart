@@ -56,7 +56,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   //return errors
 }
 
-Future<List<String>> generateCommand(String output, int end, int fps, String fileType) async {
+Future<List<String>> generateCommand(String output, int end, int fps, String fileType, List<String> music) async {
   List<String> command = ["-i", "./defaults/video1.mp4"];
   List<String> inputStreams = [];
 
@@ -82,8 +82,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
   }
 
   command.addAll([
-    '-i',
-    'defaults/music_test.mp3',
+    if (music.isNotEmpty) ...['-i', music[0]],
     '-map',
     '0:v',
     '-map',
@@ -93,7 +92,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     '-to',
     '${end + 100}ms',
     '-filter_complex',
-    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1[0a];[0a][${inputStreams.length + 1}:a]amerge[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
+    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1${(music.isNotEmpty) ? "[0a];[0a][${inputStreams.length + 1}:a]amerge" : ""}[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
     '$output.$fileType'
   ]);
 
