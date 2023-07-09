@@ -3,5 +3,5 @@
 *.wav
 *.srt
 *.mp3
-.temp
-.vscode
+.temp/
+.vscode/
