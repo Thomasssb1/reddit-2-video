@@ -92,7 +92,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     '-to',
     '${end + 100}ms',
     '-filter_complex',
-    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1${(music.isNotEmpty) ? "[0a];[0a][${inputStreams.length + 1}:a]amerge" : ""}[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
+    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1${(music.isNotEmpty) ? "[0a];[${inputStreams.length + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge" : ""}[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
     '$output.$fileType'
   ]);
 
