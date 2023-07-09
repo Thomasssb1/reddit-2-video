@@ -5,4 +5,4 @@
 *.mp3
 .temp
 .vscode
-comments.json
+.temp/comments.json
