@@ -35,6 +35,7 @@ ArgResults? parse(args) {
       allowed: ['15', '30', '45', '60', '75', '120', '144'],
       help:
           'The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.');
+  parser.addFlag('verbose', defaultsTo: false);
   parser.addOption('help', abbr: 'h', help: 'Provide information on how to use reddit-2-video');
 
   var results = parser.parse(args);

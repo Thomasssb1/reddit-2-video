@@ -84,7 +84,7 @@ Future<List<dynamic>> getPostData(
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, List<String> music, int framerate,
-    bool offlineTTS, String fileType) async {
+    bool offlineTTS, String fileType, bool verbose) async {
   //var result = await Process.run(
   //'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
 
@@ -93,10 +93,14 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   List<String> command = await generateCommand(output, end_ms, framerate, fileType, music);
   final process = await Process.start('ffmpeg', command);
   process.stderr.transform(utf8.decoder).listen((data) {
-    print(data);
+    if (verbose || data.contains('Overwrite? [y/N]')) {
+      print(data);
+    }
   });
   stdin.pipe(process.stdin);
   await process.exitCode;
+  print(
+      "Video generation completed, check the directory you provided for the final video otherwise it is in the directory that you called the command from.");
 }
 
 // ffmpeg -i defaults/video1.mp4 -i .temp/tts.wav -map 0:v -map 1:a -shortest -filter:v "subtitles=.temp/comments.srt:fontsdir=defaults/font:force_style='Fontname=Verdana,Alignment=10',crop=585:1080" -filter:a "atempo=1001/1000,asetrate=44100*1000/1001" -ss 00:00:00 -to 00:03:20  output.mp4
