@@ -1,3 +1,5 @@
+import 'dart:io';
+
 List<String> splitComments(String comment) {
   // the max amount of characters on screen
   comment = comment
@@ -32,9 +34,60 @@ String lengthCalculation(String message, String startTime) {
   Duration calculatedTime = Duration(
       milliseconds: (prevMilliseconds + (prevSeconds * 1000) + (prevMinutes * 60000)) + (message.length * timePerChar));
   if (calculatedTime.inHours > 0) {
-    return "Somehow the time has gone over an hour for the video.. Aborting.";
+    printError("Somehow the time has gone over an hour for the video.. Aborting.");
+    exit(124);
   }
   String newTime =
       "0:${calculatedTime.inMinutes.remainder(60).toString().padLeft(2, '0')}:${calculatedTime.inSeconds.remainder(60).toString().padLeft(2, '0')}.${calculatedTime.inMilliseconds.remainder(1000).toString().padRight(2, '0').substring(0, 2)}";
   return newTime;
+}
+
+void printError(String message) {
+  print("\x1b[31m$message\x1b[0m");
+}
+
+void printWarning(String message) {
+  print("\x1b[33m$message\x1b[0m");
+}
+
+void printSuccess(String message) {
+  print("\x1b[32m$message\x1b[0m");
+}
+
+void printUnderline(String message) {
+  print("\x1b[4m$message\x1b[0m");
+}
+
+void printHelp(String usage) {
+  List<String> newMessage = [];
+  bool options = false;
+  bool defaults = false;
+  for (final char in usage.split(" ")) {
+    if (char.trimLeft().startsWith('--')) {
+      newMessage.add("\x1b[32m$char\x1b[0m");
+    } else if (char.trimLeft().startsWith('(defaults')) {
+      defaults = true;
+      newMessage.add("\x1b[33m$char\x1b[0m");
+    } else if (defaults) {
+      if (char.trimRight().endsWith(')')) {
+        newMessage.add("\x1b[33m$char\x1b[0m");
+        defaults = false;
+      } else {
+        newMessage.add("\x1b[33m$char\x1b[0m");
+      }
+    } else if (char.trimLeft().startsWith('[')) {
+      options = true;
+      newMessage.add("\x1b[35m$char\x1b[0m");
+    } else if (options) {
+      if (char.trimRight().endsWith(']')) {
+        newMessage.add("\x1b[35m$char\x1b[0m");
+        options = false;
+      } else {
+        newMessage.add("\x1b[35m$char\x1b[0m");
+      }
+    } else {
+      newMessage.add(char);
+    }
+  }
+  print(newMessage.join(' '));
 }
