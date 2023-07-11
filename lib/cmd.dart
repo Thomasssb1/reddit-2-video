@@ -1,13 +1,15 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:reddit_2_video/utils.dart';
 
 ArgResults? parse(args) {
   var parser = ArgParser();
   parser.addOption('subreddit');
   parser.addOption('sort', defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
   parser.addOption('comment-sort', defaultsTo: 'top', allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
-  parser.addOption('c', defaultsTo: '8', help: 'Minimum number of comments');
+  parser.addOption('count', defaultsTo: '8', help: 'Minimum number of comments');
+  parser.addOption('type', defaultsTo: 'comments', allowed: ['comments', 'post', 'multi']);
   // Look into getting info such as female/male when assigning voices in future
   parser.addMultiOption('alternate',
       valueHelp: "alternate-tts(true/false),alternate-colour(true/false),title-colour(hex)");
@@ -46,7 +48,8 @@ ArgResults? parse(args) {
   var results = parser.parse(args);
 
   if (results.wasParsed('help')) {
-    print(parser.usage);
+    printHelp(parser.usage);
+    //printSuccess(parser.usage);
     return null;
   } else if (!results.wasParsed('subreddit')) {
     stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
