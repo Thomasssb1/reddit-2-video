@@ -74,7 +74,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     String fileExtension = fileName.split(RegExp(r'^.*(?=(\.[0-9a-z]+$))')).last.replaceFirst('.', '');
     output = output.replaceAll(".$fileExtension", '');
     if (fileExtension != fileType) {
-      print(
+      printWarning(
           "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the -file-type flag ($fileType).\n If you do not want this to happen, then change the value of the -file-type flag to match the desired output type.\n");
     }
   }
