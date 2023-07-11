@@ -60,29 +60,50 @@ Future<List<dynamic>> getPostData(
         })
         .where((element) => element != null && element['id'] != null)
         .toList();
+    late final id;
     if (postConfirm && !isLink) {
-      // for loop
+      for (final post in data) {
+        printUnderline("${post['title']}\n");
+        print("\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mDownvotes: NULL \x1b[0m\n");
+        print("Created: ${post['created']}, ${post['spoiler'] ? 'Is marked as a spoiler' : ''}\n");
+        if (post['media']) {
+          print("Media: ${post['media']}\n");
+        }
+        printUnderline("Post ${data.indexOf(post) + 1}/${data.length}.");
+        print("Do you want to generate a video for this post? [y/N] ");
+        String continueGeneration = stdin.readLineSync() ?? 'n';
+        if (continueGeneration.toLowerCase() == 'y') {
+          id = post['id'];
+          postData.add({"post": post});
+          break;
+        } else {
+          print("Continuing to find a new post...\n");
+          if (post == data.last) {
+            printError("All posts have been searched for the subreddit $subreddit, try again later..");
+            exit(1);
+          }
+          continue;
+        }
+      }
     } else {
-      final id = data[0]['id'];
+      id = data[0]['id'];
       postData.add({"post": data[0]});
-      var commentResponse = await client.get(
-          Uri.https("reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
-      print(commentResponse.statusCode);
-      var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
-      List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
-          .asListOrEmpty((p0) {
-            return {
-              'body': p0('data', 'body').asStringOrNull(),
-              'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
-            };
-          })
-          .where((element) =>
-              element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
-          .toList();
-      commentData =
-          commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
-      postData.add({"comments": commentData});
     }
+    var commentResponse = await client
+        .get(Uri.https("reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
+    var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
+    List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
+        .asListOrEmpty((p0) {
+          return {
+            'body': p0('data', 'body').asStringOrNull(),
+            'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
+          };
+        })
+        .where((element) =>
+            element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
+        .toList();
+    commentData = commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
+    postData.add({"comments": commentData});
   } catch (e) {
     print(e);
     //error handling
@@ -104,17 +125,17 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   late String errorMessage;
   var messages = process.stderr.transform(utf8.decoder).listen((data) {
     if (verbose || data.contains('Overwrite? [y/N]')) {
-      print(data);
+      stdout.write(data);
       errorMessage = data;
     }
   });
   stdin.pipe(process.stdin);
   int code = await process.exitCode;
   if (code == 0) {
-    print(
+    printSuccess(
         "Video generation completed, check the directory you provided for the final video otherwise it is in the directory that you called the command from.");
   } else {
-    print(
+    printError(
         "Video generation unable to be completed. The most common errors include using incorrect path to files, make sure to check before trying again.\nError code: $code\n$errorMessage");
   }
 }

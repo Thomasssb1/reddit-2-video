@@ -13,7 +13,7 @@ void main(List<String> arguments) async {
         results['nsfw'], int.parse(results['count']), results['comment-sort'], results['post-confirmation']);
     if (postData.isNotEmpty) {
       reddit_2_video.generateVideo(postData, results['output'], results['video-path'], results['music'],
-          int.parse(results['framerate']), results['offline'], results['file-type'], results['verbose']);
+          int.parse(results['framerate']), results['ntts'], results['file-type'], results['verbose']);
     } else {
       printWarning("No post(s) found... Try again.");
     }
