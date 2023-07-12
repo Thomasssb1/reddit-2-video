@@ -9,11 +9,26 @@ import 'dart:io';
 void main(List<String> arguments) async {
   var results = parse(arguments);
   if (results != null) {
-    final List<dynamic> postData = await reddit_2_video.getPostData(results['subreddit'], results['sort'],
-        results['nsfw'], int.parse(results['count']), results['comment-sort'], results['post-confirmation']);
+    final List<dynamic> postData = await reddit_2_video.getPostData(
+      results['subreddit'],
+      results['sort'],
+      results['nsfw'],
+      int.parse(results['count']),
+      results['comment-sort'],
+      results['post-confirmation'],
+      results['type'],
+    );
     if (postData.isNotEmpty) {
-      reddit_2_video.generateVideo(postData, results['output'], results['video-path'], results['music'],
-          int.parse(results['framerate']), results['ntts'], results['file-type'], results['verbose']);
+      reddit_2_video.generateVideo(
+        postData,
+        results['output'],
+        results['video-path'],
+        results['music'],
+        int.parse(results['framerate']),
+        results['ntts'],
+        results['file-type'],
+        results['verbose'],
+      );
     } else {
       printWarning("No post(s) found... Try again.");
     }
