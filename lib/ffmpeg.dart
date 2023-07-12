@@ -16,7 +16,6 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   Map tempJson = {"text": []};
 
   tempJson["settings"] = {"offline": offlineTTS, "accent": "com.mx"};
-  tempJson["text"].add(postData[0]['post']['title']);
 
   final defaultASS = File("./defaults/default.ass");
   final contents = await defaultASS.readAsString();
@@ -25,21 +24,23 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
   final sinkComments = fileForComments.openWrite();
   sinkComments.write("$contents\n");
 
-  final List<String> splitTitle = splitComments(postData[0]['post']['title']);
   String startTime = "0:00:00.00";
-  for (final text in splitTitle) {
-    final newTime = lengthCalculation(text, startTime);
-    sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
-
-    startTime = newTime;
-  }
-  for (final comment in postData[1]['comments']) {
-    List<String> splitComment = splitComments(comment['body']);
-    tempJson["text"].add(comment['body']);
-    for (final comment in splitComment) {
-      final newTime = lengthCalculation(comment, startTime);
-      sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$comment\n");
-      startTime = newTime;
+  for (final post in postData) {
+    for (int i = 0; i < post.length; i++) {
+      //final info in post) {
+      if (post[i].isNotEmpty) {
+        tempJson["text"].add(post[i]);
+        final List<String> splitInfo = splitComments(post[i]);
+        for (final text in splitInfo) {
+          final newTime = lengthCalculation(text, startTime);
+          if (i == 0) {
+            sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
+          } else {
+            sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$text\n");
+          }
+          startTime = newTime;
+        }
+      }
     }
   }
 
@@ -75,7 +76,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
     output = output.replaceAll(".$fileExtension", '');
     if (fileExtension != fileType) {
       printWarning(
-          "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the -file-type flag ($fileType).\n If you do not want this to happen, then change the value of the -file-type flag to match the desired output type.\n");
+          "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the --file-type option ($fileType).\n If you do not want this to happen, then change the value of the --file-type flag to match the desired output type.\n");
     }
   }
 

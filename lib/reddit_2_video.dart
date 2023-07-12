@@ -9,8 +9,8 @@ import 'ffmpeg.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 
-Future<List<dynamic>> getPostData(
-    String subreddit, String sort, bool nsfw, int commentCount, String commentSort, bool postConfirm) async {
+Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int commentCount, String commentSort,
+    bool postConfirm, String type) async {
   // make the network request
   var client = http.Client();
   List<dynamic> postData = [];
@@ -19,6 +19,10 @@ Future<List<dynamic>> getPostData(
     Uri linkUri = Uri.https("reddit.com", "/r/$subreddit/$sort.json");
     if (isLink) {
       linkUri = Uri.parse("$subreddit.json");
+      if (type == 'multi') {
+        printError("Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
+        exit(1);
+      }
     }
     var response = await client.get(Uri.https(linkUri.authority, linkUri.path));
     var json = jsonDecode(utf8.decode(response.bodyBytes));
@@ -33,11 +37,14 @@ Future<List<dynamic>> getPostData(
                 return {
                   'title': p0('data', 'title').required().asString(),
                   'id': p0('data', 'id').asStringOrNull(),
+                  'body': p0('data', 'selftext').asStringOrNull() ?? '',
                   'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                  'created': p0('data', 'created_utc').letOrNull(
+                  'created': p0('data', 'created').letOrNull(
                       (pick) => DateTime.fromMillisecondsSinceEpoch(((pick.asDoubleOrNull() ?? 0.0) * 1000).round())),
                   'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
-                  'media': p0('data', 'media').asBoolOrFalse()
+                  'media': p0('data', 'media').asBoolOrFalse(),
+                  'nsfw': p0('data', 'over_18').asBoolOrNull() ?? false,
+                  'comments': p0('data', 'num_comments').asIntOrNull() ?? 0
                 };
               } else {
                 // if the user has nsfw tag set to false
@@ -46,11 +53,14 @@ Future<List<dynamic>> getPostData(
                   return {
                     'title': p0('data', 'title').required().asString(),
                     'id': p0('data', 'id').asStringOrNull(),
+                    'body': p0('data', 'selftext').asStringOrNull() ?? '',
                     'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                    'created': p0('data', 'created_utc').letOrNull(
+                    'created': p0('data', 'created').letOrNull(
                         (pick) => DateTime.fromMicrosecondsSinceEpoch((pick.asDoubleOrNull() ?? 0.0).round())),
                     'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
-                    'media': p0('data', 'media').asBoolOrFalse()
+                    'media': p0('data', 'media').asBoolOrFalse(),
+                    'nsfw': false,
+                    'comments': p0('data', 'num_comments').asIntOrNull() ?? 0
                   };
                 }
               }
@@ -60,50 +70,91 @@ Future<List<dynamic>> getPostData(
         })
         .where((element) => element != null && element['id'] != null)
         .toList();
-    late final id;
+    if (type != 'multi' && !postConfirm) {
+      postData = [data[0]];
+    }
     if (postConfirm && !isLink) {
       for (final post in data) {
         printUnderline("${post['title']}\n");
-        print("\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mDownvotes: NULL \x1b[0m\n");
-        print("Created: ${post['created']}, ${post['spoiler'] ? 'Is marked as a spoiler' : ''}\n");
+        print("\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mComments: ${post['comments']} \x1b[0m\n");
+        print(
+            "Created: ${post['created']}, ${post['spoiler'] ? 'This post \x1b[31mis\x1b[0m marked as a spoiler' : ''}\n");
         if (post['media']) {
           print("Media: ${post['media']}\n");
         }
+        if (nsfw) {
+          print("This post is${post['nsfw'] ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
+        }
         printUnderline("Post ${data.indexOf(post) + 1}/${data.length}.");
-        print("Do you want to generate a video for this post? [y/N] ");
+        print("Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+        if (type == 'multi') {
+          print("You can also enter 'skip' to skip all remaining posts. ");
+        }
         String continueGeneration = stdin.readLineSync() ?? 'n';
         if (continueGeneration.toLowerCase() == 'y') {
-          id = post['id'];
-          postData.add({"post": post});
+          postData.add(post);
+          if (type != 'multi') {
+            break;
+          }
+        } else if (continueGeneration.toLowerCase() == 'skip' && type == 'multi') {
           break;
         } else {
           print("Continuing to find a new post...\n");
-          if (post == data.last) {
-            printError("All posts have been searched for the subreddit $subreddit, try again later..");
+          if (post == data.last && type != 'multi') {
+            printError(
+                "All posts have been searched for the subreddit $subreddit, try again later or use a different sort term..");
             exit(1);
           }
-          continue;
         }
       }
-    } else {
-      id = data[0]['id'];
-      postData.add({"post": data[0]});
     }
-    var commentResponse = await client
-        .get(Uri.https("reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/$id.json", {"sort": commentSort}));
-    var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
-    List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
-        .asListOrEmpty((p0) {
-          return {
-            'body': p0('data', 'body').asStringOrNull(),
-            'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
-          };
-        })
-        .where((element) =>
-            element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
-        .toList();
-    commentData = commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
-    postData.add({"comments": commentData});
+    if (type == 'comments') {
+      postData = postData.map((e) => [e['title'], e['body']]).toList();
+      var commentResponse = await client.get(Uri.https(
+          "reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/${data[0]['id']}.json", {"sort": commentSort}));
+      var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
+      List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
+          .asListOrEmpty((p0) {
+            return {
+              'body': p0('data', 'body').asStringOrNull(),
+              'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
+            };
+          })
+          .where((element) =>
+              element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
+          .toList();
+      commentData =
+          commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
+      postData[0].addAll(commentData.map((e) => e['body']).toList());
+    } else if (type == 'post') {
+      postData = postData.map((e) => [e['title'], e['body']]).toList();
+    } else if (type == 'multi') {
+      if (!postConfirm) {
+        if (data.length < commentCount) {
+          printWarning(
+              "Currently unable to retrieve the specified number of posts ($commentCount). Generating video anyways with ${data.length} posts instead.");
+        } else {
+          postData = data.sublist(0, commentCount);
+        }
+      } else {
+        if (postData.isEmpty) {
+          printError("You haven't selected any posts. Retry but ensure that atleast one post is selected.");
+          exit(1);
+        }
+        if (postData.length < commentCount) {
+          printWarning(
+              "You haven't selected enough posts as specified by the count option ($commentCount). Generating video with only the posts that you have selected.");
+        } else {
+          if (postData.length > commentCount) {
+            printWarning(
+                "You have selected too many posts as specified by the count option ($commentCount). Generating video with only $commentCount posts instead. You can change this by editing the -count option.");
+          }
+          postData = postData.sublist(0, commentCount);
+        }
+      }
+      postData = postData.map((e) => [e['title'], e['body']]).toList();
+      // need to check if works
+    }
   } catch (e) {
     print(e);
     //error handling
