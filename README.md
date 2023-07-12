@@ -74,4 +74,4 @@ Options are: 15, 30, 45 (default), 60, 75, 120, 144
 At the moment, the only supported args are:
 subreddit, sort, nsfw, c, o, file-type, framerate and comment-sort (undocumented).
 ### Help
-Use the flag `--help` or `-h` for more help and information.
+Use the flag `-help` for more help and information.
