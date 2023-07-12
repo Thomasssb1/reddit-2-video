@@ -76,7 +76,9 @@ void printHelp(String usage) {
         newMessage.add("\x1b[33m$char\x1b[0m");
       }
     } else if (char.trimLeft().startsWith('[')) {
-      options = true;
+      if (!(char.trimRight().endsWith(']'))) {
+        options = true;
+      }
       newMessage.add("\x1b[35m$char\x1b[0m");
     } else if (options) {
       if (char.trimRight().endsWith(']')) {
