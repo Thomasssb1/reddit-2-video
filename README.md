@@ -31,6 +31,9 @@ $ reddit-2-video --subreddit AskReddit
 ```
 You can add more args as talked about below.
 
+### Warning
+The TTS is not currently perfectly lined up with the subtitles. I will be implementing a better solution to match these up **soon**.<br> Any other issues you might face is likely due to the fact I am still developing this, updates will be releasing daily.
+
 ## Commands
 To use this, you need to use the command reddit-2-video along with arguments to generate a video. <br>
 The only **required** argument is `subreddit`.
