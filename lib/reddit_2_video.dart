@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:reddit_2_video/utils.dart';
+import 'package:reddit_2_video/log.dart';
 
 import 'ffmpeg.dart';
 
@@ -68,7 +69,7 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
           }
           // filter out any null values from the values returned
         })
-        .where((element) => element != null && element['id'] != null)
+        .where((element) => element != null && element['id'] != null && checkLog(element['id']) == false)
         .toList();
     if (type != 'multi' && !postConfirm) {
       postData = [data[0]];
@@ -125,8 +126,10 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
           .toList();
       commentData =
           commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
+      writeToLog(postData[0]);
       postData[0].addAll(commentData.map((e) => e['body']).toList());
     } else if (type == 'post') {
+      writeToLog(postData[0]);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
     } else if (type == 'multi') {
       if (!postConfirm) {
@@ -152,8 +155,8 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
           postData = postData.sublist(0, commentCount);
         }
       }
+      postData.forEach(writeToLog);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
-      // need to check if works
     }
   } catch (e) {
     print(e);
