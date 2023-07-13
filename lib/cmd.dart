@@ -1,9 +1,10 @@
 import 'dart:io';
+import 'dart:js_interop';
 
 import 'package:args/args.dart';
 import 'package:reddit_2_video/utils.dart';
 
-ArgResults? parse(args) {
+dynamic parse(args) {
   var parser = ArgParser();
   parser.addOption('subreddit');
   parser.addOption('sort', defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
@@ -42,14 +43,20 @@ ArgResults? parse(args) {
   parser.addFlag('verbose', defaultsTo: false);
   parser.addFlag('help');
 
+  var command = parser.addCommand('flush');
+
   var results = parser.parse(args);
 
-  if (results.wasParsed('help')) {
-    printHelp(parser.usage);
-    return null;
-  } else if (!results.wasParsed('subreddit')) {
-    stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
-    return null;
+  if (results.command == null) {
+    if (results.wasParsed('help')) {
+      printHelp(parser.usage);
+      return null;
+    } else if (!results.wasParsed('subreddit')) {
+      stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
+      return null;
+    }
+  } else {
+    return results.command!.name;
   }
 
   return parser.parse(args);

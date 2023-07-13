@@ -42,20 +42,6 @@ String lengthCalculation(String message, String startTime) {
   return newTime;
 }
 
-checkLog(String id) async {
-  final File logFile = File("./.temp/visited_log.txt");
-  final String content = await logFile.readAsString();
-  final List<String> logs = content.split('\n');
-  if (logs.contains(id)) {
-    return true;
-  } else {
-    final sink = logFile.openWrite(mode: FileMode.append);
-    sink.writeln(id);
-    sink.close();
-    return false;
-  }
-}
-
 void printError(String message) {
   print("\x1b[31m$message\x1b[0m");
 }
