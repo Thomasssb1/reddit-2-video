@@ -30,7 +30,7 @@ void main(List<String> arguments) async {
         results['verbose'],
       );
     } else {
-      printWarning("No post(s) found... Try again.");
+      printError("No post(s) found... Try again.");
     }
   }
 }

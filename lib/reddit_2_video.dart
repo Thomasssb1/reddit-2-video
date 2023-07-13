@@ -166,8 +166,13 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, List<String> music, int framerate,
     bool offlineTTS, String fileType, bool verbose) async {
-  //var result = await Process.run(
-  //'python', [r"D:\Executables\reddit-2-video\lib\tts.py"]);
+  print("Starting TTS generation...");
+  var result = await Process.run('python', [r"lib/tts.py"]);
+  if (result.exitCode != 0) {
+    printError("TTS failed.\nExit code: ${result.exitCode}\nError: ${result.stderr}");
+  } else {
+    printSuccess("TTS successfully generated.");
+  }
 
   int end_ms = await generateSubtitles(offlineTTS, postData);
 
