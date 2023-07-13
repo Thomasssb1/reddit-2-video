@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:reddit_2_video/utils.dart';
 import 'package:reddit_2_video/log.dart';
@@ -15,17 +14,18 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
   // make the network request
   var client = http.Client();
   List<dynamic> postData = [];
-  try {
-    bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(subreddit);
-    Uri linkUri = Uri.https("reddit.com", "/r/$subreddit/$sort.json");
-    if (isLink) {
-      linkUri = Uri.parse("$subreddit.json");
-      if (type == 'multi') {
-        printError("Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
-        exit(1);
-      }
+  bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(subreddit);
+  Uri linkUri = Uri.https("reddit.com", "gd/r/$subreddit/$sort.json");
+  if (isLink) {
+    linkUri = Uri.parse("$subreddit.json");
+    if (type == 'multi') {
+      printError("Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
+      exit(1);
     }
-    var response = await client.get(Uri.https(linkUri.authority, linkUri.path));
+  }
+  var response = await client.get(Uri.https(linkUri.authority, linkUri.path));
+  bool valid = checkStatusCode(response, "Post");
+  if (valid) {
     var json = jsonDecode(utf8.decode(response.bodyBytes));
     List<dynamic> data = pick(isLink ? json[0] : json, 'data', 'children')
         .asListOrEmpty((p0) {
@@ -113,21 +113,26 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
       postData = postData.map((e) => [e['title'], e['body']]).toList();
       var commentResponse = await client.get(Uri.https(
           "reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/${data[0]['id']}.json", {"sort": commentSort}));
-      var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
-      List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
-          .asListOrEmpty((p0) {
-            return {
-              'body': p0('data', 'body').asStringOrNull(),
-              'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
-            };
-          })
-          .where((element) =>
-              element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
-          .toList();
-      commentData =
-          commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
-      writeToLog(postData[0]);
-      postData[0].addAll(commentData.map((e) => e['body']).toList());
+      bool valid = checkStatusCode(response, "Comment");
+      if (valid) {
+        var commentJson = jsonDecode(utf8.decode(commentResponse.bodyBytes));
+        List<dynamic> commentData = pick(commentJson, 1, 'data', 'children')
+            .asListOrEmpty((p0) {
+              return {
+                'body': p0('data', 'body').asStringOrNull(),
+                'author': p0('data', 'author').asStringOrNull() ?? "Anonymous"
+              };
+            })
+            .where((element) =>
+                element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
+            .toList();
+        commentData =
+            commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
+        writeToLog(postData[0]);
+        postData[0].addAll(commentData.map((e) => e['body']).toList());
+      } else {
+        exit(1);
+      }
     } else if (type == 'post') {
       writeToLog(postData[0]);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
@@ -158,13 +163,11 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
       postData.forEach(writeToLog);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
     }
-  } catch (e) {
-    print(e);
-    //error handling
-  } finally {
     client.close();
+    return postData;
+  } else {
+    exit(1);
   }
-  return postData;
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, List<String> music, int framerate,
@@ -182,7 +185,7 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   List<String> command = await generateCommand(output, end_ms, framerate, fileType, music, video, override);
   final process = await Process.start('ffmpeg', command);
   late String errorMessage;
-  var messages = process.stderr.transform(utf8.decoder).listen((data) {
+  process.stderr.transform(utf8.decoder).listen((data) {
     if (verbose || data.contains('Overwrite? [y/N]')) {
       stdout.write(data);
       errorMessage = data;

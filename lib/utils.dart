@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:http/http.dart';
 
 List<String> splitComments(String comment) {
   // the max amount of characters on screen
@@ -92,4 +93,23 @@ void printHelp(String usage) {
     }
   }
   print(newMessage.join(' '));
+}
+
+bool checkStatusCode(Response response, String type) {
+  if (response.statusCode == 200) {
+    return true;
+  } else if (response.statusCode == 404) {
+    printError(
+        "Endpoint could not be found. Perhaps the reddit endpoint being accessed is down or unavailable. Please try again later. If the problem persists, post this as an issue on github https://github.com/Thomasssb1/reddit-2-video/issues\nError: ${response.statusCode}\nReason: ${response.reasonPhrase}");
+  } else if (response.statusCode == 400) {
+    printError(
+        "Incorrect data was sent to the server. If the problem persists, post this as an issue on github https://github.com/Thomasssb1/reddit-2-video/issues along with the data below.\nError:${response.statusCode}\nIncorrect data being sent: $type\n${response.body}\nReason: ${response.reasonPhrase}");
+  } else if (response.statusCode == 303) {
+    printError(
+        "Error occurred whilst attempting to get post data. It is likely that the endpoint used is inactive and needs to be changed. Post this as an issue on github https://github.com/Thomasssb1/reddit-2-video/issues if the problem persists.\nError: ${response.statusCode}\nReason: ${response.reasonPhrase}");
+  } else {
+    printError(
+        "An unknown error occured when attempting to access the link.\nError: ${response.statusCode}\nReason: ${response.reasonPhrase}\n${response.body}");
+  }
+  return false;
 }
