@@ -27,7 +27,7 @@ ArgResults? parse(args) {
     ..addFlag('spoiler',
         defaultsTo: false, help: 'Add a spoiler to the video which hides the image/text before showing for 3s');
   parser.addFlag('ntts',
-      defaultsTo: false,
+      defaultsTo: true,
       help:
           'Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.');
   parser.addOption('video-path', defaultsTo: '../defaults/video1.mp4', abbr: 'v', valueHelp: "path");

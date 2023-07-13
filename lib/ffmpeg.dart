@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'utils.dart';
 import 'package:path/path.dart' as p;
 
-Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
+Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
   /// [Remember] ffmpeg uses `HGGBBRR`
   String animation(colour) =>
       r"{\an5\1c&H000000&\t(0, 150, \1c&" +
@@ -15,7 +15,7 @@ Future<int> generateSubtitles(bool offlineTTS, List<dynamic> postData) async {
 
   Map tempJson = {"text": []};
 
-  tempJson["settings"] = {"offline": offlineTTS, "accent": "com.mx"};
+  tempJson["settings"] = {"ntts": nttsActive, "accent": "com.mx"};
 
   final defaultASS = File("./defaults/default.ass");
   final contents = await defaultASS.readAsString();
