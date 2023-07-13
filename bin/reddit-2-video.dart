@@ -7,7 +7,6 @@ import 'dart:io';
 
 // enable preview ffplay
 // add styling to title and fade in etc using .ass
-// fix escaped double quotes problem in json
 void main(List<String> arguments) async {
   var results = parse(arguments);
   if (results == 'flush') {

@@ -29,7 +29,7 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
     for (int i = 0; i < post.length; i++) {
       //final info in post) {
       if (post[i].isNotEmpty) {
-        tempJson["text"].add(post[i]);
+        tempJson["text"].add(post[i].replaceAll('"', r'\"'));
         final List<String> splitInfo = splitComments(post[i]);
         for (final text in splitInfo) {
           final newTime = lengthCalculation(text, startTime);
