@@ -41,6 +41,7 @@ dynamic parse(args) {
       help:
           'The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.');
   parser.addFlag('verbose', defaultsTo: false);
+  parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help');
 
   var command = parser.addCommand('flush');

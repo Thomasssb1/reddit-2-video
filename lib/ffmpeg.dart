@@ -55,7 +55,8 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
   //return errors
 }
 
-Future<List<String>> generateCommand(String output, int end, int fps, String fileType, List<String> music) async {
+Future<List<String>> generateCommand(
+    String output, int end, int fps, String fileType, List<String> music, bool override) async {
   List<String> command = ["-i", "./defaults/video1.mp4"];
   List<String> inputStreams = [];
 
@@ -82,6 +83,7 @@ Future<List<String>> generateCommand(String output, int end, int fps, String fil
 
   command.addAll([
     if (music.isNotEmpty) ...['-i', music[0]],
+    if (override) '-y',
     '-map',
     '0:v',
     '-map',
