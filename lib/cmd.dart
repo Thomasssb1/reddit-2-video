@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:js_interop';
 
 import 'package:args/args.dart';
 import 'package:reddit_2_video/utils.dart';
@@ -44,7 +43,7 @@ dynamic parse(args) {
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help');
 
-  var command = parser.addCommand('flush');
+  parser.addCommand('flush');
 
   var results = parser.parse(args);
 
