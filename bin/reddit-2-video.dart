@@ -32,6 +32,7 @@ void main(List<String> arguments) async {
         results['file-type'],
         results['verbose'],
         results['override'],
+        results['video-path'],
       );
     } else {
       printError("No post(s) found... Try again.");

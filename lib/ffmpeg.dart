@@ -56,8 +56,8 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
 }
 
 Future<List<String>> generateCommand(
-    String output, int end, int fps, String fileType, List<String> music, bool override) async {
-  List<String> command = ["-i", "./defaults/video1.mp4"];
+    String output, int end, int fps, String fileType, List<String> music, String video, bool override) async {
+  List<String> command = ["-i", video];
   List<String> inputStreams = [];
 
   final tts = Directory('./.temp/tts').list();
