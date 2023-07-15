@@ -199,4 +199,5 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
     printError(
         "Video generation unable to be completed. The most common errors include using incorrect path to files, make sure to check before trying again.\nError code: $code\n$errorMessage");
   }
+  clearTemp();
 }

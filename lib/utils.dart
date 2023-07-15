@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart';
 
@@ -114,7 +115,20 @@ bool checkStatusCode(Response response, String type) {
   return false;
 }
 
-void clearTemp() {
-  final File tempFile = File("./.temp");
-  tempFile.
+void clearTemp() async {
+  final Directory tempTTSFolder = Directory("./.temp/tts");
+  await tempTTSFolder.delete(recursive: true).then((_) => null).catchError((error) {
+    printError(
+        "Unable to clear the temporary data. This will not affect future video generation but will cause ~a few MB stored in the temporary folder. Error: $error");
+    return;
+  });
+  await (Directory('./.temp/tts').create().then((_) => null).catchError((error) {
+    printError(
+        "Unable to create TTS folder. If this continues, then post this as an issue on github error https://github.com/Thomasssb1/reddit-2-video/issues along with steps to reproduce this issue. Error: $error");
+    return;
+  }));
+  final File assFile = File("./.temp/comments.ass");
+  final File jsonFile = File("./.temp/comments.json");
+  assFile.writeAsStringSync('');
+  jsonFile.writeAsStringSync('');
 }
