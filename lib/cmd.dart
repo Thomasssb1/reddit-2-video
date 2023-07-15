@@ -32,7 +32,7 @@ dynamic parse(args) {
       defaultsTo: true,
       help:
           'Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.');
-  parser.addOption('video-path', defaultsTo: '../defaults/video1.mp4', abbr: 'v', valueHelp: "path");
+  parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'v', valueHelp: "path");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');
   parser.addOption('file-type', defaultsTo: 'mp4', allowed: ['mp4', 'avi', 'mov', 'flv']);
