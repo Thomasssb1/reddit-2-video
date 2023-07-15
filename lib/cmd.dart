@@ -20,7 +20,9 @@ dynamic parse(args) {
   });
   // Look into getting info such as female/male when assigning voices in future
   parser.addMultiOption('alternate',
-      valueHelp: "alternate-tts(true/false),alternate-colour(true/false),title-colour(hex)");
+      valueHelp: "alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)",
+      help:
+          "tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000)");
   parser.addFlag('post-confirmation', defaultsTo: false);
   parser
     ..addFlag('nsfw', defaultsTo: true)
