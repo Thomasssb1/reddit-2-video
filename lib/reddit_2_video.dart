@@ -15,7 +15,7 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
   var client = http.Client();
   List<dynamic> postData = [];
   bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(subreddit);
-  Uri linkUri = Uri.https("reddit.com", "gd/r/$subreddit/$sort.json");
+  Uri linkUri = Uri.https("reddit.com", "/r/$subreddit/$sort.json");
   if (isLink) {
     linkUri = Uri.parse("$subreddit.json");
     if (type == 'multi') {
@@ -110,7 +110,6 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
       }
     }
     if (type == 'comments') {
-      postData = postData.map((e) => [e['title'], e['body']]).toList();
       var commentResponse = await client.get(Uri.https(
           "reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/${data[0]['id']}.json", {"sort": commentSort}));
       bool valid = checkStatusCode(response, "Comment");
@@ -128,7 +127,7 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
             .toList();
         commentData =
             commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
-        writeToLog(postData[0]);
+        postData = postData.map((e) => [e['title'], e['body']]).toList();
         postData[0].addAll(commentData.map((e) => e['body']).toList());
       } else {
         exit(1);
