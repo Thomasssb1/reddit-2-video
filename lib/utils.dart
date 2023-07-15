@@ -113,3 +113,8 @@ bool checkStatusCode(Response response, String type) {
   }
   return false;
 }
+
+void clearTemp() {
+  final File tempFile = File("./.temp");
+  tempFile.
+}
