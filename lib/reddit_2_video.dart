@@ -187,8 +187,8 @@ generateVideo(List<dynamic> postData, String output, String backgroundVideoPath,
   process.stderr.transform(utf8.decoder).listen((data) {
     if (verbose || data.contains('Overwrite? [y/N]')) {
       stdout.write(data);
-      errorMessage = data;
     }
+    errorMessage = data;
   });
   stdin.pipe(process.stdin);
   int code = await process.exitCode;
