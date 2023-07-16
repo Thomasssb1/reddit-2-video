@@ -40,39 +40,33 @@ The only **required** argument is `subreddit`.
 <br>
 ```
 --subreddit
--s --sort
-Options are: hot (default), new, top, rising
---comment-sort                                                                            
-Options are: top (default), best, new, controversial, old, q&a
---c
-Minimum number of comments (defaults to 8)
---alternate=<alternate-tts(true/false),alternate-colour(true/false),title-colour(hex)>    
---[no-]post-confirmation
---[no-]nsfw
-(defaults to on)
---[no-]spoiler
-Add a spoiler to the video which hides the image/text before showing for 3s
---[no-]ntts
-Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.
--u --[no-]upvotes
-Display upvotes on overlay
--d --[no-]downvotes
-Display downvotes on overlay
--a --[no-]awards
-Display awards on overlay
--v --video-path=<path>
-(defaults to "../defaults/video1.mp4")
---music=<path,volume>
---[no-]date
-Add date of when the post was uploaded to the overlay.
--o --output
-Location where the generated file will be stored.
---file-type
-Options are: mp4 (default), avi, mov, flv
---framerate
-The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.
-Options are: 15, 30, 45 (default), 60, 75, 120, 144
---[no-]verbose
+    --subreddit
+-s, --sort                                                                            [hot (default), new, top, rising]
+    --comment-sort                                                                    [top (default), best, new, controversial, old, q&a]
+    --count                                                                           Minimum number of comments
+                                                                                      (defaults to "8")
+    --type
+          [comments] (default)                                                        Creates a video that contains a post title, body and a set number of comments for that post.
+          [multi]                                                                     Creates a video that contains multiple posts from a single subreddit, not including comments.
+          [post]                                                                      Creates a video that only contains a single post with the title and body.
+
+    --alternate=<alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)>    tts - alternate TTS voice for each comment/post (defaults to off)
+                                                                                      colour - alternate text colour for each comment/post (defaults to off)
+                                                                                      title-colour - determine title colour for post (defaults to #FF0000)
+    --[no-]post-confirmation
+    --[no-]nsfw                                                                       (defaults to on)
+    --[no-]spoiler                                                                    Add a spoiler to the video which hides the image/text before showing for 3s
+    --[no-]ntts                                                                       Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.
+                                                                                      (defaults to on)
+-v, --video-path=<path>                                                               (defaults to "defaults/video1.mp4")
+    --music=<path,volume>
+-o, --output                                                                          Location where the generated file will be stored.
+                                                                                      (defaults to "final")
+    --file-type                                                                       [mp4 (default), avi, mov, flv]
+    --framerate                                                                       The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.
+                                                                                      [15, 30, 45 (default), 60, 75, 120, 144]
+    --[no-]verbose
+    --[no-]override
 ```
 At the moment, the only supported args are:
 subreddit, sort, nsfw, c, o, file-type, framerate and comment-sort (undocumented).
