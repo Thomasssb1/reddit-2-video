@@ -45,7 +45,10 @@ dynamic parse(args) {
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help');
 
-  parser.addCommand('flush');
+  var flush = parser.addCommand(
+    'flush',
+  );
+  flush.addOption('post', abbr: 'p', help: 'Remove a specific reddit post from the visited log.');
 
   var results = parser.parse(args);
 
