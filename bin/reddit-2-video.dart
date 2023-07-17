@@ -8,7 +8,11 @@ import 'dart:io';
 // add styling to title and fade in etc using .ass
 void main(List<String> arguments) async {
   if (await File('./.temp/tts/.gitkeep').exists()) {
-    await File('./.temp/tts/.gitkeep').delete();
+    await File('./.temp/tts/.gitkeep').delete().catchError((error) {
+      printError(
+          "Something went wrong when trying to delete a temporary file. To fix this you can go to the ./reddit-2-video/.temp/tts folder and delete the .gitkeep file. Error: $error");
+      exit(1);
+    });
   }
   var results = parse(arguments);
   if (results == 'flush') {
