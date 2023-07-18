@@ -3,6 +3,7 @@ import 'package:reddit_2_video/reddit_2_video.dart' as reddit_2_video;
 import 'package:reddit_2_video/utils.dart';
 import '../lib/cmd.dart';
 import 'dart:io';
+import 'package:args/args.dart';
 
 // enable preview ffplay
 // add styling to title and fade in etc using .ass
@@ -15,33 +16,33 @@ void main(List<String> arguments) async {
     });
   }
   var results = parse(arguments);
-  if (results == 'flush') {
-    flushLog();
-  } else if (results != null) {
+  if (results['command'] == null) {
     final List<dynamic> postData = await reddit_2_video.getPostData(
-      results['subreddit'],
-      results['sort'],
-      results['nsfw'],
-      int.parse(results['count']),
-      results['comment-sort'],
-      results['post-confirmation'],
-      results['type'],
+      results['args']['subreddit'],
+      results['args']['sort'],
+      results['args']['nsfw'],
+      int.parse(results['args']['count']),
+      results['args']['comment-sort'],
+      results['args']['post-confirmation'],
+      results['args']['type'],
     );
     if (postData.isNotEmpty) {
       reddit_2_video.generateVideo(
         postData,
-        results['output'],
-        results['video-path'],
-        results['music'],
-        int.parse(results['framerate']),
-        results['ntts'],
-        results['file-type'],
-        results['verbose'],
-        results['override'],
-        results['video-path'],
+        results['args']['output'],
+        results['args']['video-path'],
+        results['args']['music'],
+        int.parse(results['args']['framerate']),
+        results['args']['ntts'],
+        results['args']['file-type'],
+        results['args']['verbose'],
+        results['args']['override'],
+        results['args']['video-path'],
       );
     } else {
       printError("No post(s) found... Try again.");
     }
+  } else if (results['command'] == 'flush') {
+    flushLog(results['args']['post']);
   }
 }

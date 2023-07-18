@@ -29,7 +29,8 @@ void writeToLog(dynamic post) {
   // error handling
 }
 
-flushLog() async {
+flushLog(String link) async {
+  print(link);
   final File logFile = File("./.temp/visited_log.txt");
   logFile.writeAsStringSync('');
 }

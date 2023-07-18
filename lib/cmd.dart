@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:args/command_runner.dart';
+import 'package:reddit_2_video/log.dart';
 import 'package:reddit_2_video/utils.dart';
 
 dynamic parse(args) {
@@ -45,9 +47,7 @@ dynamic parse(args) {
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help');
 
-  var flush = parser.addCommand(
-    'flush',
-  );
+  var flush = parser.addCommand('flush');
   flush.addOption('post', abbr: 'p', help: 'Remove a specific reddit post from the visited log.');
 
   var results = parser.parse(args);
@@ -55,14 +55,14 @@ dynamic parse(args) {
   if (results.command == null) {
     if (results.wasParsed('help')) {
       printHelp(parser.usage);
-      return null;
+      exit(1);
     } else if (!results.wasParsed('subreddit')) {
       stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
-      return null;
+      exit(1);
     }
   } else {
-    return results.command!.name;
+    return {'command': 'flush', 'args': flush.parse(args)};
   }
 
-  return parser.parse(args);
+  return {'command': null, 'args': results};
 }
