@@ -1,9 +1,8 @@
 import 'package:reddit_2_video/log.dart';
 import 'package:reddit_2_video/reddit_2_video.dart' as reddit_2_video;
 import 'package:reddit_2_video/utils.dart';
-import '../lib/cmd.dart';
+import 'package:reddit_2_video/cmd.dart';
 import 'dart:io';
-import 'package:args/args.dart';
 
 // enable preview ffplay
 // add styling to title and fade in etc using .ass
