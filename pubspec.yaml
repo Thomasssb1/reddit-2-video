@@ -17,3 +17,4 @@ dependencies:
   deep_pick: ^1.0.0
   http: ^0.13.6
   path: ^1.8.0
+  wav: ^1.2.0

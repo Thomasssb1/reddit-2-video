@@ -361,6 +361,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  wav:
+    dependency: "direct main"
+    description:
+      name: wav
+      sha256: fabef6796a4a1ace300c5b3a1d327aaeb6291197eeecb8b64dd4f18509d6e7cb
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   web_socket_channel:
     dependency: transitive
     description:
