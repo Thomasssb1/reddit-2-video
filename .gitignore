@@ -3,6 +3,6 @@
 *.wav
 *.srt
 *.mp3
-.temp/
 .vscode/
-.gitkeep
+.temp/tts/*
+!.temp/tts/.gitkeep
