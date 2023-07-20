@@ -50,3 +50,11 @@ for count, comment in enumerate(data["text"]):
         generateNTTS(comment, count)
     else:
         generateGTTS(comment, count)
+
+# if __name__ == "__main__":
+# text = sys.argv[1]
+# count = sys.argv[2]
+# if sys.argv[3] == "1":
+# generateNTTS(text, count)
+# else:
+# generateGTTS(text, count)
