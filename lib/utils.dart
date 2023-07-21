@@ -27,7 +27,7 @@ List<String> splitComments(String comment) {
 
 String lengthCalculation(String message, String startTime) {
   // start (hh:mm:ss,ms)--> end (hh:mm:ss,ms)
-  int timePerChar = 75;
+  int timePerChar = 93;
 
   int prevMinutes = int.parse(startTime[2] + startTime[3]);
   int prevSeconds = int.parse(startTime[5] + startTime[6]);
@@ -126,8 +126,8 @@ void clearTemp() async {
         "Unable to create TTS folder. If this continues, then post this as an issue on github error https://github.com/Thomasssb1/reddit-2-video/issues along with steps to reproduce this issue. Error: $error");
     return;
   }));
-  final File assFile = File("./.temp/comments.ass");
+  //final File assFile = File("./.temp/comments.ass");
   final File jsonFile = File("./.temp/comments.json");
-  assFile.writeAsStringSync('');
-  jsonFile.writeAsStringSync('');
+  //assFile.writeAsStringSync('');
+  //jsonFile.writeAsStringSync('');
 }
