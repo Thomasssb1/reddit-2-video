@@ -127,9 +127,7 @@ void clearTemp() async {
     return;
   }));
   final File assFile = File("./.temp/comments.ass");
-  final File jsonFile = File("./.temp/comments.json");
   assFile.writeAsStringSync('');
-  jsonFile.writeAsStringSync('');
 }
 
 Future<double> generateTTS(String text, int counter, bool ntts, startTime) async {
