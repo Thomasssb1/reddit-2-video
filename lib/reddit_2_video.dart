@@ -129,6 +129,7 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
             commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
         postData = postData.map((e) => [e['title'], e['body']]).toList();
         postData[0].addAll(commentData.map((e) => e['body']).toList());
+        writeToLog(postData[0]);
       } else {
         exit(1);
       }
