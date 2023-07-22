@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:http/http.dart';
+import 'package:wav/wav.dart';
 
 List<String> splitComments(String comment) {
   // the max amount of characters on screen
@@ -8,7 +9,7 @@ List<String> splitComments(String comment) {
       .replaceAll(RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)'''), ' ')
       .replaceAll(RegExp(' {2,}'), ' ')
       .trim();
-  const int splitAmount = 18;
+  const int splitAmount = 50;
   String commentPiece = "";
   List<String> newComment = [];
   for (final word in comment.split(
@@ -25,15 +26,14 @@ List<String> splitComments(String comment) {
   return newComment;
 }
 
-String lengthCalculation(String message, String startTime) {
+String lengthCalculation(double duration, String startTime) {
   // start (hh:mm:ss,ms)--> end (hh:mm:ss,ms)
-  int timePerChar = 93;
 
   int prevMinutes = int.parse(startTime[2] + startTime[3]);
   int prevSeconds = int.parse(startTime[5] + startTime[6]);
   int prevMilliseconds = int.parse(startTime.substring(8)) * 10;
   Duration calculatedTime = Duration(
-      milliseconds: (prevMilliseconds + (prevSeconds * 1000) + (prevMinutes * 60000)) + (message.length * timePerChar));
+      milliseconds: (prevMilliseconds + (prevSeconds * 1000) + (prevMinutes * 60000)) + (duration * 1000).round());
   if (calculatedTime.inHours > 0) {
     printError("Somehow the time has gone over an hour for the video.. Aborting.");
     exit(124);
@@ -126,8 +126,20 @@ void clearTemp() async {
         "Unable to create TTS folder. If this continues, then post this as an issue on github error https://github.com/Thomasssb1/reddit-2-video/issues along with steps to reproduce this issue. Error: $error");
     return;
   }));
-  //final File assFile = File("./.temp/comments.ass");
+  final File assFile = File("./.temp/comments.ass");
   final File jsonFile = File("./.temp/comments.json");
-  //assFile.writeAsStringSync('');
-  //jsonFile.writeAsStringSync('');
+  assFile.writeAsStringSync('');
+  jsonFile.writeAsStringSync('');
+}
+
+Future<double> generateTTS(String text, int counter, bool ntts, startTime) async {
+  var ttsResult = await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0"]);
+  if (ttsResult.exitCode != 0) {
+    printError("TTS failed.\nExit code: ${ttsResult.exitCode}\nError: ${ttsResult.stderr}");
+    exit(0);
+  } else {
+    stdout.write("\r\x1b[32mTTS successfully generated. $counter ...\x1b[0m ");
+  }
+  final wav = await Wav.readFile("./.temp/tts/tts-${counter - 1}.wav");
+  return wav.duration;
 }

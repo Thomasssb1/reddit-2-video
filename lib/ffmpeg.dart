@@ -10,9 +10,6 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
       colour +
       r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
-  final fileForTTS = File("./.temp/comments.json");
-  final sinkTTS = fileForTTS.openWrite();
-
   Map tempJson = {"text": []};
 
   tempJson["settings"] = {"ntts": nttsActive, "accent": "com.mx"};
@@ -25,26 +22,28 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
   sinkComments.write("$contents\n");
 
   String startTime = "0:00:00.00";
+  int counter = 1;
   for (final post in postData) {
     for (int i = 0; i < post.length; i++) {
-      //final info in post) {
       if (post[i].isNotEmpty) {
         tempJson["text"].add(post[i].replaceAll('"', r'\"'));
-        final List<String> splitInfo = splitComments(post[i]);
+        final List<String> splitInfo = splitComments(post[i].replaceAll("\n", " "));
         for (final text in splitInfo) {
-          final newTime = lengthCalculation(text, startTime);
+          final duration = await generateTTS(text, counter, nttsActive, startTime);
+          final newTime = lengthCalculation(duration, startTime);
+
           if (i == 0) {
             sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
           } else {
             sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$text\n");
           }
           startTime = newTime;
+          counter++;
         }
       }
     }
   }
 
-  sinkTTS.write(json.encode(tempJson));
   sinkComments.close();
 
   int prevMinutes = int.parse(startTime[2] + startTime[3]);
@@ -55,18 +54,15 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
   //return errors
 }
 
-Future<List<String>> generateCommand(
-    String output, int end, int fps, String fileType, List<String> music, String video, bool override) async {
+Future<List<String>> generateCommand(String output, int end, int fps, String fileType, List<String> music, String video,
+    bool override, int ttsCount) async {
   List<String> command = ["-i", video];
-  List<String> inputStreams = [];
 
-  final tts = Directory('./.temp/tts').list();
-  int i = 1;
-  await for (final value in tts) {
-    command.addAll(["-i", value.path]);
-    inputStreams.add("[$i:a]");
-    i++;
-  }
+  command.addAll(List.generate(ttsCount, (index) => ["-i", "./.temp/tts/tts-$index.wav"], growable: false)
+      .expand((e) => e)
+      .toList());
+
+  List<String> inputStreams = List.generate(ttsCount, (index) => "[${index + 1}:a]");
 
   if (output.endsWith('/')) {
     print("No filename provided - using a default filename.");
@@ -93,7 +89,7 @@ Future<List<String>> generateCommand(
     '-to',
     '${end + 100}ms',
     '-filter_complex',
-    '${inputStreams.join(' ')} concat=n=${inputStreams.length}:v=0:a=1${(music.isNotEmpty) ? "[0a];[${inputStreams.length + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge" : ""}[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
+    '${inputStreams.join(' ')} concat=n=$ttsCount:v=0:a=1${(music.isNotEmpty) ? "[0a];[${ttsCount + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge" : ""}[final_a], crop=585:1080, subtitles=.temp/comments.ass, fps=$fps',
     '$output.$fileType'
   ]);
 

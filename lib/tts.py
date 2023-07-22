@@ -25,9 +25,6 @@ speakers = {
     "slt": 6799,  # US female
 }
 
-f = open("./.temp/comments.json", "r", encoding="utf8")
-data = json.load(f)
-
 
 def generateNTTS(text, count, speaker=6799):
     inputs = processor(text=text, return_tensors="pt").to(device)
@@ -40,21 +37,15 @@ def generateNTTS(text, count, speaker=6799):
 
 
 def generateGTTS(text, count):
-    speech = gTTS(text=text, lang="en", slow=False, tld=data["settings"]["accent"])
+    # speech = gTTS(text=text, lang="en", slow=False, tld=data["settings"]["accent"])
     output_filename = f"tts-{count}.wav"
-    speech.save(f"./.temp/tts/{output_filename}")
+    # speech.save(f"./.temp/tts/{output_filename}")
 
 
-for count, comment in enumerate(data["text"]):
-    if data["settings"]["ntts"]:
-        generateNTTS(comment, count)
+if __name__ == "__main__":
+    text = sys.argv[1]
+    count = sys.argv[2]
+    if sys.argv[3] == "1":
+        generateNTTS(text, count)
     else:
-        generateGTTS(comment, count)
-
-# if __name__ == "__main__":
-# text = sys.argv[1]
-# count = sys.argv[2]
-# if sys.argv[3] == "1":
-# generateNTTS(text, count)
-# else:
-# generateGTTS(text, count)
+        generateGTTS(text, count)

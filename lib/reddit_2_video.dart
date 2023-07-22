@@ -170,18 +170,21 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, List<String> music, int framerate,
-    bool offlineTTS, String fileType, bool verbose, bool override, String video) async {
-  int end_ms = await generateSubtitles(offlineTTS, postData);
+    bool ntts, String fileType, bool verbose, bool override, String video) async {
+  int end_ms = await generateSubtitles(ntts, postData);
 
-  print("Starting TTS generation...");
-  var result = await Process.run('python', [r"lib/tts.py"]);
-  if (result.exitCode != 0) {
-    printError("TTS failed.\nExit code: ${result.exitCode}\nError: ${result.stderr}");
-  } else {
-    printSuccess("TTS successfully generated.");
-  }
+  int ttsCount = await Directory('./.temp/tts').list().length;
 
-  List<String> command = await generateCommand(output, end_ms, framerate, fileType, music, video, override);
+  List<String> command = await generateCommand(
+    output,
+    end_ms,
+    framerate,
+    fileType,
+    music,
+    video,
+    override,
+    ttsCount,
+  );
   final process = await Process.start('ffmpeg', command);
   late String errorMessage;
   process.stderr.transform(utf8.decoder).listen((data) {
