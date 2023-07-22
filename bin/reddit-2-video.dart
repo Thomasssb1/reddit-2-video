@@ -14,6 +14,7 @@ void main(List<String> arguments) async {
       exit(1);
     });
   }
+
   var results = parse(arguments);
   if (results['command'] == null) {
     final List<dynamic> postData = await reddit_2_video.getPostData(
