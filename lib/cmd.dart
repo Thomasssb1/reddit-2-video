@@ -1,10 +1,12 @@
 import 'dart:io';
-
 import 'package:args/args.dart';
 import 'package:reddit_2_video/utils.dart';
 
+/// parse the command line arguments entered.
 dynamic parse(args) {
+  // init parser
   var parser = ArgParser();
+  // add parser options
   parser.addOption('subreddit');
   parser.addOption('sort', defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
   parser.addOption('comment-sort', defaultsTo: 'top', allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
@@ -49,23 +51,33 @@ dynamic parse(args) {
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help');
 
+  // create a new command
   var flush = parser.addCommand('flush');
+  // add a command specific option
   flush.addOption('post', abbr: 'p', help: 'Remove a specific reddit post from the visited log.');
 
+  // parse the cli for arguments
   var results = parser.parse(args);
 
+  // if the command was the default generation command
   if (results.command == null) {
+    // if the cli contained help argument
     if (results.wasParsed('help')) {
+      // output the help message
       printHelp(parser.usage);
       exit(1);
+      // if the cli did not contain a subreddit/link
     } else if (!results.wasParsed('subreddit')) {
       stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
       exit(1);
+      // if the user entered an accent while ntts is active (does not affect)
     } else if (results['ntts'] && results.wasParsed('accent')) {
       printWarning(
           'The option --accent will not be used as ntts is active. For accent to be used, ntts needs to be set to false.');
     }
+    // return map of command and args
     return {'command': null, 'args': results};
+    // if the command is flush
   } else {
     return {'command': 'flush', 'args': flush.parse(args)};
   }

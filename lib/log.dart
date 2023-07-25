@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:js_interop';
 import 'package:reddit_2_video/utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
@@ -44,18 +43,26 @@ void writeToLog(dynamic post) {
 
 /// remove all ids from the file or a specific id if specified
 void flushLog(String? link) async {
+  // open log file
   final File logFile = File("./.temp/visited_log.txt");
+  // if the user wants to remove every entry
   if (link == null) {
+    // write nothing to file to overwrite data
     logFile.writeAsStringSync('');
-  } else {
+  } // if the user wants to remove a specific post
+  else {
+    // send response and check if valid
     var response = await http.get(Uri.parse("$link.json"));
     bool valid = checkStatusCode(response, "Post");
     if (valid) {
       var json = jsonDecode(utf8.decode(response.bodyBytes));
+      // try/catch used if an incorrect link is given which doesn't contain an id in the json data
       try {
         String id = pick(json[0], 'data', 'children', 0, 'data', 'id').asStringOrThrow();
+        // read lines as a list and remove any entries that match the id
         final lines = await logFile.readAsLines();
         lines.removeWhere((element) => element == id);
+        // turn the list into a \n split file
         await logFile.writeAsString(lines.join('\n'));
       } catch (e) {
         printError("Incorrect link, the following link is not a valid link.\nLink: $link, \nError: $e");
