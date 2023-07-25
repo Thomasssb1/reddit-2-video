@@ -130,8 +130,8 @@ void clearTemp() async {
   assFile.writeAsStringSync('');
 }
 
-Future<double> generateTTS(String text, int counter, bool ntts, startTime) async {
-  var ttsResult = await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0"]);
+Future<double> generateTTS(String text, int counter, bool ntts, String accent, startTime) async {
+  var ttsResult = await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0", accent]);
   if (ttsResult.exitCode != 0) {
     printError("TTS failed.\nExit code: ${ttsResult.exitCode}\nError: ${ttsResult.stderr}");
     exit(0);

@@ -10,10 +10,6 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
       colour +
       r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
-  Map tempJson = {"text": []};
-
-  tempJson["settings"] = {"ntts": nttsActive, "accent": "com.mx"};
-
   final defaultASS = File("./defaults/default.ass");
   final contents = await defaultASS.readAsString();
 
@@ -26,10 +22,9 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
   for (final post in postData) {
     for (int i = 0; i < post.length; i++) {
       if (post[i].isNotEmpty) {
-        tempJson["text"].add(post[i].replaceAll('"', r'\"'));
         final List<String> splitInfo = splitComments(post[i].replaceAll("\n", " "));
         for (final text in splitInfo) {
-          final duration = await generateTTS(text, counter, nttsActive, startTime);
+          final duration = await generateTTS(text, counter, nttsActive, "com.mx", startTime);
           final newTime = lengthCalculation(duration, startTime);
 
           if (i == 0) {

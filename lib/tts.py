@@ -37,9 +37,9 @@ def generateNTTS(text, count, speaker=6799):
 
 
 def generateGTTS(text, count):
-    # speech = gTTS(text=text, lang="en", slow=False, tld=data["settings"]["accent"])
+    speech = gTTS(text=text, lang="en", slow=False, tld=sys.argv[4])
     output_filename = f"tts-{count}.wav"
-    # speech.save(f"./.temp/tts/{output_filename}")
+    speech.save(f"./.temp/tts/{output_filename}")
 
 
 if __name__ == "__main__":
