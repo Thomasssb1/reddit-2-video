@@ -171,8 +171,8 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
 }
 
 generateVideo(List<dynamic> postData, String output, String backgroundVideoPath, List<String> music, int framerate,
-    bool ntts, String fileType, bool verbose, bool override, String video) async {
-  int end_ms = await generateSubtitles(ntts, postData);
+    bool ntts, String fileType, bool verbose, bool override, String video, String accent) async {
+  int end_ms = await generateSubtitles(ntts, postData, accent);
 
   int ttsCount = await Directory('./.temp/tts').list().length;
 

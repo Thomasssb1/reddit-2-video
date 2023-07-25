@@ -8,7 +8,7 @@ dynamic parse(args) {
   parser.addOption('subreddit');
   parser.addOption('sort', defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
   parser.addOption('comment-sort', defaultsTo: 'top', allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
-  parser.addOption('count', defaultsTo: '8', help: 'Minimum number of comments');
+  parser.addOption('count', defaultsTo: '8', help: 'Minimum number of comments.');
   parser.addOption('type', defaultsTo: 'comments', allowed: [
     'comments',
     'post',
@@ -22,16 +22,20 @@ dynamic parse(args) {
   parser.addMultiOption('alternate',
       valueHelp: "alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)",
       help:
-          "tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000)");
+          "tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).");
   parser.addFlag('post-confirmation', defaultsTo: false);
   parser
     ..addFlag('nsfw', defaultsTo: true)
     ..addFlag('spoiler',
-        defaultsTo: false, help: 'Add a spoiler to the video which hides the image/text before showing for 3s');
+        defaultsTo: false, help: 'Add a spoiler to the video which hides the image/text before showing for 3s.');
   parser.addFlag('ntts',
       defaultsTo: true,
       help:
           'Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.');
+  parser.addOption('accent',
+      defaultsTo: 'com.mx',
+      help: 'The accent to be used when not using ntts.',
+      valueHelp: 'Use a top-level-domain from google such as com.mx or co.uk');
   parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'v', valueHelp: "path");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');
@@ -57,10 +61,12 @@ dynamic parse(args) {
     } else if (!results.wasParsed('subreddit')) {
       stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
       exit(1);
+    } else if (results['ntts'] && results.wasParsed('accent')) {
+      printWarning(
+          'The option --accent will not be used as ntts is active. For accent to be used, ntts needs to be set to false.');
     }
+    return {'command': null, 'args': results};
   } else {
     return {'command': 'flush', 'args': flush.parse(args)};
   }
-
-  return {'command': null, 'args': results};
 }

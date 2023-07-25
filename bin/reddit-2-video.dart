@@ -38,6 +38,7 @@ void main(List<String> arguments) async {
         results['args']['verbose'],
         results['args']['override'],
         results['args']['video-path'],
+        results['args']['accent'],
       );
     } else {
       printError("No post(s) found... Try again.");

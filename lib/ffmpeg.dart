@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'utils.dart';
 import 'package:path/path.dart' as p;
 
-Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
+Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String accent) async {
   /// [Remember] ffmpeg uses `HGGBBRR`
   String animation(colour) =>
       r"{\an5\1c&H000000&\t(0, 150, \1c&" +
@@ -24,7 +24,7 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData) async {
       if (post[i].isNotEmpty) {
         final List<String> splitInfo = splitComments(post[i].replaceAll("\n", " "));
         for (final text in splitInfo) {
-          final duration = await generateTTS(text, counter, nttsActive, "com.mx", startTime);
+          final duration = await generateTTS(text, counter, nttsActive, accent, startTime);
           final newTime = lengthCalculation(duration, startTime);
 
           if (i == 0) {
