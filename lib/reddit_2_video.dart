@@ -157,9 +157,9 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
         commentData =
             commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
         // combine postData about comments with post and reduce the data
+        writeToLog(postData[0]);
         postData = postData.map((e) => [e['title'], e['body']]).toList();
         postData[0].addAll(commentData.map((e) => e['body']).toList());
-        writeToLog(postData[0]);
       } // if not valid
       else {
         exit(1);
