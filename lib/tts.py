@@ -16,17 +16,17 @@ embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validat
 
 # create a dictionary for each possible speaker (hard to remember otherwise)
 speakers = {
-    "awb": 0,  # Scottish male
-    "bdl": 1138,  # US male
-    "clb": 2271,  # US female
-    "jmk": 3403,  # Canadian male
-    "ksp": 4535,  # Indian male
-    "rms": 5667,  # US male
-    "slt": 6799,  # US female
+    "ScottishMale": 0,
+    "USMale1": 1138,
+    "USFemale1": 2271,
+    "CanadianMale": 3403,
+    "IndianMale": 4535,
+    "USMale2": 5667,
+    "USFemale2": 6799,
 }
 
 
-def generateNTTS(text, count, speaker=6799):
+def generateNTTS(text, count, speaker):
     """
     Generate .wav tts files using neural tts models (speecht5)
     """
@@ -61,6 +61,6 @@ if __name__ == "__main__":
     count = sys.argv[2]
     # if the user has ntts arg set to true
     if sys.argv[3] == "1":
-        generateNTTS(text, count)
+        generateNTTS(text, count, speakers[sys.argv[5]])
     else:
         generateGTTS(text, count)

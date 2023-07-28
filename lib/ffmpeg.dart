@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 /// Write subtitles to .ass file with [custom animation] and [colours]
 ///
 /// Create new tts along with each comment
-Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String accent) async {
+Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String accent, String voice) async {
   /// [Remember] ffmpeg uses `HGGBBRR`
   String animation(colour) =>
       r"{\an5\1c&H000000&\t(0, 150, \1c&" +
@@ -39,7 +39,7 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String ac
         // iterate through the split text
         for (final text in splitInfo) {
           // generate the tts and get the duration of the file
-          final duration = await generateTTS(text, counter, nttsActive, accent, startTime);
+          final duration = await generateTTS(text, counter, nttsActive, accent, voice, startTime);
           // calculate the new time based off the previous time and the duration
           final newTime = lengthCalculation(duration, startTime);
 

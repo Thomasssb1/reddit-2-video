@@ -40,6 +40,9 @@ dynamic parse(args) {
     allowed: ['com.mx', 'co.uk', 'com.au', 'us', 'ca', 'co.in', 'ie', 'co.za'],
     help: 'The accent to be used when not using ntts.\nUse a top-level-domain from google such as com.mx or co.uk',
   );
+  parser.addOption('voice',
+      defaultsTo: 'USFemale2',
+      allowed: ['ScottishMale', 'USMale1', 'USFemale1', 'CanadianMale', 'IndianMale', 'USMale2', 'USFemale2']);
   parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'v', valueHelp: "path");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');

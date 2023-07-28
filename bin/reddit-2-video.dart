@@ -38,7 +38,7 @@ void main(List<String> arguments) async {
     // if the data collected returned nothing (e.g. subreddit has no posts)
     if (postData.isNotEmpty) {
       // generate subtitles as well as tts
-      int end_ms = await generateSubtitles(args['ntts'], postData, args['accent']);
+      int end_ms = await generateSubtitles(args['ntts'], postData, args['accent'], args['voice']);
       int ttsCount = await Directory('./.temp/tts').list().length;
 
       // create a ffmpeg command that can be run
