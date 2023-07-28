@@ -34,10 +34,12 @@ dynamic parse(args) {
       defaultsTo: true,
       help:
           'Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.');
-  parser.addOption('accent',
-      defaultsTo: 'com.mx',
-      help: 'The accent to be used when not using ntts.',
-      valueHelp: 'Use a top-level-domain from google such as com.mx or co.uk');
+  parser.addOption(
+    'accent',
+    defaultsTo: 'com.mx',
+    allowed: ['com.mx', 'co.uk', 'com.au', 'us', 'ca', 'co.in', 'ie', 'co.za'],
+    help: 'The accent to be used when not using ntts.\nUse a top-level-domain from google such as com.mx or co.uk',
+  );
   parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'v', valueHelp: "path");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');
@@ -49,7 +51,7 @@ dynamic parse(args) {
           'The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.');
   parser.addFlag('verbose', defaultsTo: false);
   parser.addFlag('override', defaultsTo: false);
-  parser.addFlag('help');
+  parser.addFlag('help', hide: true);
 
   // create a new command
   var flush = parser.addCommand('flush');
