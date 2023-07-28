@@ -42,7 +42,8 @@ dynamic parse(args) {
   );
   parser.addOption('voice',
       defaultsTo: 'USFemale2',
-      allowed: ['ScottishMale', 'USMale1', 'USFemale1', 'CanadianMale', 'IndianMale', 'USMale2', 'USFemale2']);
+      allowed: ['ScottishMale', 'USMale1', 'USFemale1', 'CanadianMale', 'IndianMale', 'USMale2', 'USFemale2'],
+      help: 'The voice to be used when using ntts.');
   parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'v', valueHelp: "path");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');
@@ -78,7 +79,10 @@ dynamic parse(args) {
       // if the user entered an accent while ntts is active (does not affect)
     } else if (results['ntts'] && results.wasParsed('accent')) {
       printWarning(
-          'The option --accent will not be used as ntts is active. For accent to be used, ntts needs to be set to false.');
+          'The option --accent will not be used as ntts is active. For accent to be used, ntts needs to be set to false; otherwise use the --voice argument.');
+    } else if (!results['ntts'] && results.wasParsed('voice')) {
+      printWarning(
+          'The option --voice will not be used as ntts is not active. For voice to be used, ntts needs to be set to true; otherwise use the --accent argument.');
     }
     // return map of command and args
     return {'command': null, 'args': results};
