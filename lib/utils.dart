@@ -76,39 +76,22 @@ void printUnderline(String message) {
 
 /// print the usage formatted with colours for particular uses
 void printHelp(String usage) {
-  List<String> newMessage = [];
-  bool options = false;
-  bool defaults = false;
-  for (final char in usage.split(" ")) {
-    if (char.trimLeft().startsWith('--')) {
-      newMessage.add("\x1b[32m$char\x1b[0m");
-    } else if (char.trimLeft().startsWith('(defaults')) {
-      defaults = true;
-      newMessage.add("\x1b[33m$char\x1b[0m");
-    } else if (defaults) {
-      if (char.trimRight().endsWith(')')) {
-        newMessage.add("\x1b[33m$char\x1b[0m");
-        defaults = false;
-      } else {
-        newMessage.add("\x1b[33m$char\x1b[0m");
-      }
-    } else if (char.trimLeft().startsWith('[')) {
-      if (!(char.trimRight().endsWith(']'))) {
-        options = true;
-      }
-      newMessage.add("\x1b[35m$char\x1b[0m");
-    } else if (options) {
-      if (char.trimRight().endsWith(']')) {
-        newMessage.add("\x1b[35m$char\x1b[0m");
-        options = false;
-      } else {
-        newMessage.add("\x1b[35m$char\x1b[0m");
-      }
-    } else {
-      newMessage.add(char);
+  var bracketsRegex = RegExp(r'\((defaults.+)\)');
+  var sqBracketsRegex = RegExp(r'\[(.*?)\]');
+  var dashRegex = RegExp(r'(?!-level|-colour|-domain)(\-\S+)');
+
+  for (final match in bracketsRegex.allMatches(usage)) {
+    usage = usage.replaceAll(match[0]!, '\x1b[33m${match[0]}\x1b[0m');
+  }
+  for (final match in sqBracketsRegex.allMatches(usage)) {
+    if (match[0] != '[no-]') {
+      usage = usage.replaceAll(match[0]!, '\x1b[35m${match[0]}\x1b[0m');
     }
   }
-  print(newMessage.join(' '));
+  for (final match in dashRegex.allMatches(usage)) {
+    usage = usage.replaceAll(match[0]!, '\x1b[32m${match[0]}\x1b[0m');
+  }
+  print(usage);
 }
 
 /// check if the http request contained an error
