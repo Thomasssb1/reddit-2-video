@@ -24,7 +24,8 @@ dynamic parse(args) {
   parser.addMultiOption('alternate',
       valueHelp: "alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)",
       help:
-          "tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).");
+          "tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).",
+      defaultsTo: ["off", "off", "H0000FF"]);
   parser.addFlag('post-confirmation', defaultsTo: false);
   parser
     ..addFlag('nsfw', defaultsTo: true)
@@ -77,10 +78,14 @@ dynamic parse(args) {
       stderr.writeln('Argument <subreddit> is required. \nUse -help to get more information about usage.');
       exit(1);
       // if the user entered an accent while ntts is active (does not affect)
+    } else if (results['alternate'].length < 3) {
+      printError('The option --alternate needs 3 options each split by a comma. Check --help to see the syntax.');
+      exit(0);
     } else if (results['ntts'] && results.wasParsed('accent')) {
       printWarning(
           'The option --accent will not be used as ntts is active. For accent to be used, ntts needs to be set to false; otherwise use the --voice argument.');
-    } else if (!results['ntts'] && results.wasParsed('voice')) {
+    } // if the user entered a voice while gtts is active (does not affect)
+    else if (!results['ntts'] && results.wasParsed('voice')) {
       printWarning(
           'The option --voice will not be used as ntts is not active. For voice to be used, ntts needs to be set to true; otherwise use the --accent argument.');
     }
