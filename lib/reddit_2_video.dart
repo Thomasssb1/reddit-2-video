@@ -212,18 +212,14 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
 }
 
 /// runs the ffmpeg command on cli and listens for any updates
-generateVideo(List<String> command, bool verbose) async {
+generateVideo(List<String> command) async {
   // starts the process
   final process = await Process.start('ffmpeg', command);
 
   late String errorMessage;
   // listen for anything that is written to the cli
   process.stderr.transform(utf8.decoder).listen((data) {
-    // if the user has verbose enabled or the message being written is a prompt to overwrite
-    if (verbose || data.contains('Overwrite? [y/N]')) {
-      // use stdout so that it overwrites previous line
-      stdout.write(data);
-    }
+    stdout.write(data);
     errorMessage = data;
   });
   // listen for any inputs from the user

@@ -59,12 +59,12 @@ void main(List<String> arguments) async {
         args['video-path'],
         args['override'],
         ttsCount,
+        args['verbose'],
       );
 
       // run the ffmpeg command
       await generateVideo(
         command,
-        args['verbose'],
       );
     } else {
       // output error

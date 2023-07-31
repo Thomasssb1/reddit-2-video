@@ -80,7 +80,7 @@ Future<int> generateSubtitles(
 
 /// Create a command that can be run in the cli using [ffmpeg]
 Future<List<String>> generateCommand(String output, int end, String fps, String fileType, List<String> music,
-    String video, bool override, int ttsCount) async {
+    String video, bool override, int ttsCount, bool verbose) async {
   // add the video as the first input
   List<String> command = ["-i", video];
 
@@ -115,9 +115,17 @@ Future<List<String>> generateCommand(String output, int end, String fps, String 
   // create a list of each argument required for ffmpeg
   command.addAll([
     // if the music argument is added then add that as an input stream
-    if (music.isNotEmpty) ...['-i', music[0]],
+    if (music.isNotEmpty) ...[
+      '-i',
+      music[0],
+    ],
     // if the override flag is passed
     if (override) '-y',
+    if (!verbose) ...[
+      '-loglevel',
+      'quiet',
+    ],
+
     // map the singular video stream
     '-map',
     '0:v',
