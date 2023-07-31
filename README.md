@@ -5,7 +5,7 @@ At the moment, it is in development and currently has no easy way to setup CLI c
 ## Dependencies
 Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
 Run this single command if using a linux platform that supports apt-get.
-```
+```sh
 $ apt-get install ffmpeg dart python3
 ```
 For other platforms, check the individual installing guides. If your platform is not Windows or MacOS, then check the other option which contains a guide to every supported platform.<br>
@@ -15,24 +15,32 @@ python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://ww
 </b>
 
 ## Setup
-This setup may be a bit tedious for now as it is still currently under development. However, you can still use this project for your own use whilst it is in development. <br>
 Clone the repository
-``` 
+```sh 
 $ git clone https://github.com/Thomasssb1/reddit2video.git
 ```
 Activate the repo so it can be used throughout your system
-```
-$ cd reddit2video
+Get the path where the reddit-2-video folder is stored, either run the command below and copy the output or do this manually. <br>
+This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder reddit2video that you cloned.
+
+<details>
+    <summary>For developer builds</summary><br>
+    > Run the following commands in your terminal in order to rebuild the executable each time something is changed whilst developing an update.
+    
+```sh
+$ cd reddit-2-video
 $ dart pub global activate --source path .
 ```
+</details>
+
 Call the method in the command line like so
-```
+```sh
 $ reddit-2-video --subreddit AskReddit
 ```
 You can add more args as talked about below.
 
 ### Warning
-The TTS sometimes skips words due to the regex filter used.<br> Any other issues you might face is likely due to the fact I am still developing this, updates will be releasing daily.
+The TTS sometimes skips words due to the regex filter used. Any other issues you might face is likely due to the fact I am still developing this, updates will be releasing daily.<br> Another thing to mention is that I do plan on getting this added to several package managers if possible to streamline the setup process.
 
 ## Commands
 To use this, you need to use the command reddit-2-video along with arguments to generate a video. <br>
