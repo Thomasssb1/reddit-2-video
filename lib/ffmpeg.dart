@@ -5,8 +5,16 @@ import 'package:path/path.dart' as p;
 /// Write subtitles to .ass file with [custom animation] and [colours]
 ///
 /// Create new tts along with each comment
-Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String accent, String voice) async {
-  /// [Remember] ffmpeg uses `HGGBBRR`
+Future<int> generateSubtitles(
+  bool nttsActive,
+  List<dynamic> postData,
+  String accent,
+  String voice,
+  bool alternateTTS,
+  bool alternateColour,
+  String titleColour,
+) async {
+  /// [Remember] ffmpeg uses `HBBGGRR`
   String animation(colour) =>
       r"{\an5\1c&H000000&\t(0, 150, \1c&" +
       colour +
@@ -46,7 +54,7 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String ac
           // if the text is the title
           if (i == 0) {
             // use red colour for title
-            sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('H0000FF')}$text\n");
+            sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation(titleColour)}$text\n");
           } else {
             sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$text\n");
           }
@@ -71,8 +79,8 @@ Future<int> generateSubtitles(bool nttsActive, List<dynamic> postData, String ac
 }
 
 /// Create a command that can be run in the cli using [ffmpeg]
-Future<List<String>> generateCommand(String output, int end, int fps, String fileType, List<String> music, String video,
-    bool override, int ttsCount) async {
+Future<List<String>> generateCommand(String output, int end, String fps, String fileType, List<String> music,
+    String video, bool override, int ttsCount) async {
   // add the video as the first input
   List<String> command = ["-i", video];
 
