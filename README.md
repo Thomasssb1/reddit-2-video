@@ -1,4 +1,4 @@
-# reddit2video
+# reddit-2-video
 A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
 At the moment, it is in development and currently has no easy way to setup CLI command usage without cloning the repository yourself.
 
@@ -17,7 +17,7 @@ python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://ww
 ## Setup
 Clone the repository
 ```sh 
-$ git clone https://github.com/Thomasssb1/reddit2video.git
+$ git clone https://github.com/Thomasssb1/reddit-2-video.git
 ```
 Activate the repo so it can be used throughout your system
 Get the path where the reddit-2-video folder is stored, either run the command below and copy the output or do this manually. <br>
