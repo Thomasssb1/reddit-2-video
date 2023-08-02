@@ -2,6 +2,27 @@ import 'dart:io';
 import 'utils.dart';
 import 'package:path/path.dart' as p;
 
+final List<String> nttsVoices = [
+  "ScottishMale",
+  "USMale1",
+  "USFemale1",
+  "CanadianMale",
+  "IndianMale",
+  "USMale2",
+  "USFemale2",
+];
+
+final List<String> ttsVoices = [
+  "com.mx",
+  "co.uk",
+  "com.au",
+  "us",
+  "ca",
+  "co.in",
+  "ie",
+  "co.za",
+];
+
 /// Write subtitles to .ass file with [custom animation] and [colours]
 ///
 /// Create new tts along with each comment
@@ -33,6 +54,7 @@ Future<int> generateSubtitles(
   // initialise start time and tts counter
   String startTime = "0:00:00.00";
   int counter = 1;
+  int currentTTS = nttsActive ? nttsVoices.indexOf(voice) : ttsVoices.indexOf(accent);
   // iterate through each post (2d)
   // [
   //  [title, body text, comments]
@@ -45,12 +67,13 @@ Future<int> generateSubtitles(
         // split the comments so that it can be displayed on screen properly
         final List<String> splitInfo = splitComments(post[i].replaceAll("\n", " "));
         // iterate through the split text
+
         for (final text in splitInfo) {
           // generate the tts and get the duration of the file
-          final duration = await generateTTS(text, counter, nttsActive, accent, voice, startTime);
+          final duration = await generateTTS(
+              text, counter, nttsActive, nttsActive ? nttsVoices[currentTTS] : ttsVoices[currentTTS], startTime);
           // calculate the new time based off the previous time and the duration
           final newTime = lengthCalculation(duration, startTime);
-
           // if the text is the title
           if (i == 0) {
             // use red colour for title
@@ -62,6 +85,7 @@ Future<int> generateSubtitles(
           startTime = newTime;
           counter++;
         }
+        currentTTS = nttsActive ? ++currentTTS % nttsVoices.length : ++currentTTS % ttsVoices.length;
       }
     }
   }
