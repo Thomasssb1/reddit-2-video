@@ -3,7 +3,9 @@ import 'package:http/http.dart';
 import 'package:wav/wav.dart';
 
 /// returns a single string as a list which contains max 50 characters each string in the list
-List<String> splitComments(String comment) {
+List<String> splitComments(
+  String comment,
+) {
   // remove any links from the comment
   comment = comment
       //.replaceAll(RegExp(r'''[^\w\d' "]+'''), ' ')
@@ -34,7 +36,10 @@ List<String> splitComments(String comment) {
 }
 
 /// calculate the end time of the new message from the previous time and duration
-String lengthCalculation(double duration, String startTime) {
+String lengthCalculation(
+  double duration,
+  String startTime,
+) {
   // 0:00:00.00 -> h:mm:ss.ms
   // infer the data from the string used in .ass file
   int prevMinutes = int.parse(startTime[2] + startTime[3]);
@@ -55,27 +60,37 @@ String lengthCalculation(double duration, String startTime) {
 }
 
 /// print with red text
-void printError(String message) {
+void printError(
+  String message,
+) {
   print("\x1b[31m$message\x1b[0m");
 }
 
 /// print with orange text
-void printWarning(String message) {
+void printWarning(
+  String message,
+) {
   print("\x1b[33m$message\x1b[0m");
 }
 
 /// print with green text
-void printSuccess(String message) {
+void printSuccess(
+  String message,
+) {
   print("\x1b[32m$message\x1b[0m");
 }
 
 /// print with underlined text
-void printUnderline(String message) {
+void printUnderline(
+  String message,
+) {
   print("\x1b[4m$message\x1b[0m");
 }
 
 /// print the usage formatted with colours for particular uses
-void printHelp(String usage) {
+void printHelp(
+  String usage,
+) {
   var bracketsRegex = RegExp(r'\((defaults.+)\)');
   var sqBracketsRegex = RegExp(r'\[(.*?)\]');
   var dashRegex = RegExp(r'(?!-level|-colour|-domain)(\-\S+)');
@@ -97,7 +112,10 @@ void printHelp(String usage) {
 /// check if the http request contained an error
 ///
 /// returns [true] if not and [false] if so
-bool checkStatusCode(Response response, String type) {
+bool checkStatusCode(
+  Response response,
+  String type,
+) {
   if (response.statusCode == 200) {
     return true;
   } else if (response.statusCode == 404) {
@@ -137,7 +155,14 @@ void clearTemp() async {
 }
 
 /// calls the pythhon tts.py file whilst passing arguments
-Future<double> generateTTS(String text, int counter, bool ntts, String accent, String voice, startTime) async {
+Future<double> generateTTS(
+  String text,
+  int counter,
+  bool ntts,
+  String accent,
+  String voice,
+  startTime,
+) async {
   // $ python lib/tts.py text, int, 1/0, accent, voice
   var ttsResult =
       await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0", accent, voice]);

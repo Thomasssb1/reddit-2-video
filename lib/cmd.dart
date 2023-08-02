@@ -3,7 +3,9 @@ import 'package:args/args.dart';
 import 'package:reddit_2_video/utils.dart';
 
 /// parse the command line arguments entered.
-dynamic parse(args) {
+dynamic parse(
+  args,
+) {
   // init parser
   var parser = ArgParser();
   // add parser options

@@ -7,8 +7,15 @@ import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 
 /// get the data from the post such as title and body text
-Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int commentCount, String commentSort,
-    bool postConfirm, String type) async {
+Future<List<dynamic>> getPostData(
+  String subreddit,
+  String sort,
+  bool nsfw,
+  int commentCount,
+  String commentSort,
+  bool postConfirm,
+  String type,
+) async {
   // make client so that multiple https requests can be made easily
   var client = http.Client();
   List<dynamic> postData = [];
@@ -212,7 +219,9 @@ Future<List<dynamic>> getPostData(String subreddit, String sort, bool nsfw, int 
 }
 
 /// runs the ffmpeg command on cli and listens for any updates
-generateVideo(List<String> command) async {
+generateVideo(
+  List<String> command,
+) async {
   // starts the process
   final process = await Process.start('ffmpeg', command);
 

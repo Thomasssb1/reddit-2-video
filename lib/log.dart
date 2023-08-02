@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 
 /// check if the visited_log.txt file contains the post that is currently being fetched
-bool checkLog(Object? id) {
+bool checkLog(
+  Object? id,
+) {
   // if an id does not exist for the post assume that it has already been generated
   if (id == null) {
     return true;
@@ -32,7 +34,9 @@ bool checkLog(Object? id) {
 }
 
 /// write the id of the post being generated to the log
-void writeToLog(dynamic post) {
+void writeToLog(
+  dynamic post,
+) {
   // open log file for writing
   final File logFile = File("./.temp/visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
@@ -42,7 +46,9 @@ void writeToLog(dynamic post) {
 }
 
 /// remove all ids from the file or a specific id if specified
-void flushLog(String? link) async {
+void flushLog(
+  String? link,
+) async {
   // open log file
   final File logFile = File("./.temp/visited_log.txt");
   // if the user wants to remove every entry
