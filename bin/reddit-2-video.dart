@@ -8,7 +8,9 @@ import 'package:reddit_2_video/ffmpeg.dart';
 /// [enable preview ffplay]
 /// [add styling to title and fade in etc using .ass]
 //
-void main(List<String> arguments) async {
+void main(
+  List<String> arguments,
+) async {
   // delete .gitkeep so that it isn't counted when getting all tts files
   if (await File('./.temp/tts/.gitkeep').exists()) {
     await File('./.temp/tts/.gitkeep').delete().catchError((error) {
@@ -43,8 +45,8 @@ void main(List<String> arguments) async {
         postData,
         args['accent'],
         args['voice'],
-        (args['alternate'][0] == 'on') ? true : false,
-        (args['alternate'][1] == 'on') ? true : false,
+        (args['alternate'][0].toLowerCase() == 'on') ? true : false,
+        (args['alternate'][1].toLowerCase() == 'on') ? true : false,
         args['alternate'][2],
       );
       int ttsCount = await Directory('./.temp/tts').list().length;
