@@ -42,6 +42,8 @@ You can add more args as talked about below.
 ### Warning
 The TTS sometimes skips words due to the regex filter used. Any other issues you might face is likely due to the fact I am still developing this, updates will be releasing daily.<br> Another thing to mention is that I do plan on getting this added to several package managers if possible to streamline the setup process.
 
+Right now you need to add a video file named `video1.mp4` inside of the `reddit-2-video/defaults/` folder. This will be the video that  runs in the background.<br> I am planning on adding video integration where you can download videos from a drive within the tool so that you do not need to do this step yourself.
+
 ## Commands
 To use this, you need to use the command reddit-2-video along with arguments to generate a video. <br>
 The only **required** argument is `subreddit`.
