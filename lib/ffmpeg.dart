@@ -43,10 +43,22 @@ Future<int> generateSubtitles(
   int counter = 1;
   int currentTTS = voices_accents.indexOf(nttsActive ? voice : accent);
   int currentColour = 0;
+  String ttsMessage = 'Generating TTS ...';
   // iterate through each post (2d)
   // [
   //  [title, body text, comments]
   // ]
+  print(
+      "Starting the process of generating TTS. This generally takes longer as it is also generating the subtitles to go along with it. ~4m");
+  final stream = Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
+    return "${secondCount + 1}s";
+  });
+  var msg = stream.listen((text) {
+    stdout.write("\r$ttsMessage $text");
+  });
+  //stream.forEach((text) {
+  //stdout.write("\r$ttsMessage $text");
+  //});
   for (final post in postData) {
     for (int i = 0; i < post.length; i++) {
       // if an aspect of the post doesn't contain any text
@@ -59,6 +71,7 @@ Future<int> generateSubtitles(
         for (final text in splitInfo) {
           // generate the tts and get the duration of the file
           final duration = await generateTTS(text, counter, nttsActive, voices_accents[currentTTS], startTime);
+          ttsMessage = "\x1b[32mTTS successfully generated. $counter ...\x1b[0m";
           // calculate the new time based off the previous time and the duration
           final newTime = lengthCalculation(duration, startTime);
           // if the text is the title
@@ -86,7 +99,7 @@ Future<int> generateSubtitles(
       }
     }
   }
-
+  msg.cancel();
   // close and save the file
   sinkComments.close();
 

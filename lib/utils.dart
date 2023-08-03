@@ -169,9 +169,6 @@ Future<double> generateTTS(
   if (ttsResult.exitCode != 0) {
     printError("TTS failed.\nExit code: ${ttsResult.exitCode}\nError: ${ttsResult.stderr}");
     exit(0);
-  } else {
-    // use stdout to overwrite the previous line along with \r
-    stdout.write("\r\x1b[32mTTS successfully generated. $counter ...\x1b[0m ");
   }
   // get the length of the new wav file containing the tts
   final wav = await Wav.readFile("./.temp/tts/tts-${counter - 1}.wav");
