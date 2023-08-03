@@ -1,27 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'utils.dart';
 import 'package:path/path.dart' as p;
-
-final List<String> nttsVoices = [
-  "ScottishMale",
-  "USMale1",
-  "USFemale1",
-  "CanadianMale",
-  "IndianMale",
-  "USMale2",
-  "USFemale2",
-];
-
-final List<String> ttsVoices = [
-  "com.mx",
-  "co.uk",
-  "com.au",
-  "us",
-  "ca",
-  "co.in",
-  "ie",
-  "co.za",
-];
 
 /// Write subtitles to .ass file with [custom animation] and [colours]
 ///
@@ -41,6 +21,13 @@ Future<int> generateSubtitles(
       colour +
       r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
+  // read the config file
+  // for list of voices/accents and colours
+  final config = File("./defaults/config.json");
+  final json = jsonDecode(config.readAsStringSync());
+  final List<dynamic> voices_accents = nttsActive ? json['voices'] : json['accents'];
+  final List<dynamic> colours = json['colours'];
+
   // read the default subtitles file
   final defaultASS = File("./defaults/default.ass");
   final contents = await defaultASS.readAsString();
@@ -54,7 +41,8 @@ Future<int> generateSubtitles(
   // initialise start time and tts counter
   String startTime = "0:00:00.00";
   int counter = 1;
-  int currentTTS = nttsActive ? nttsVoices.indexOf(voice) : ttsVoices.indexOf(accent);
+  int currentTTS = voices_accents.indexOf(nttsActive ? voice : accent);
+  int currentColour = 0;
   // iterate through each post (2d)
   // [
   //  [title, body text, comments]
@@ -70,8 +58,7 @@ Future<int> generateSubtitles(
 
         for (final text in splitInfo) {
           // generate the tts and get the duration of the file
-          final duration = await generateTTS(
-              text, counter, nttsActive, nttsActive ? nttsVoices[currentTTS] : ttsVoices[currentTTS], startTime);
+          final duration = await generateTTS(text, counter, nttsActive, voices_accents[currentTTS], startTime);
           // calculate the new time based off the previous time and the duration
           final newTime = lengthCalculation(duration, startTime);
           // if the text is the title
@@ -79,13 +66,23 @@ Future<int> generateSubtitles(
             // use red colour for title
             sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation(titleColour)}$text\n");
           } else {
-            sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$text\n");
+            if (alternateColour) {
+              sinkComments
+                  .write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation(colours[currentColour])}$text\n");
+            } else {
+              sinkComments.write("Dialogue: 0,$startTime,$newTime,Default,,0,0,0,,${animation('HFFFFFF')}$text\n");
+            }
           }
           // update variables
           startTime = newTime;
           counter++;
         }
-        currentTTS = nttsActive ? ++currentTTS % nttsVoices.length : ++currentTTS % ttsVoices.length;
+        if (alternateTTS) {
+          currentTTS = ++currentTTS % voices_accents.length;
+        }
+        if (alternateColour) {
+          currentColour = ++currentColour % colours.length;
+        }
       }
     }
   }
