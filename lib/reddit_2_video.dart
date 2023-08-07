@@ -87,6 +87,14 @@ Future<List<dynamic>> getPostData(
         })
         .where((element) => element != null && element['id'] != null && checkLog(element['id']) == false)
         .toList();
+    if (data.isEmpty){
+      if (isLink){
+        printError("The link provided in --subreddit has already had a video been generated previously. You can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
+      }else{
+        printError("No posts could be found for the subreddit. Try again with another subreddit.");
+      }
+      exit(0);
+    }
     // if the type is not multi and the user does not need to select a post
     if (type != 'multi' && !postConfirm) {
       // get the first post
