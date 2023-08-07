@@ -25,7 +25,7 @@ Future<int> generateSubtitles(
   // for list of voices/accents and colours
   final config = File("./defaults/config.json");
   final json = jsonDecode(config.readAsStringSync());
-  final List<dynamic> voices_accents = nttsActive ? json['voices'] : json['accents'];
+  final List<dynamic> voicesAccents = nttsActive ? json['voices'] : json['accents'];
   final List<dynamic> colours = json['colours'];
 
   // read the default subtitles file
@@ -41,7 +41,7 @@ Future<int> generateSubtitles(
   // initialise start time and tts counter
   String startTime = "0:00:00.00";
   int counter = 1;
-  int currentTTS = voices_accents.indexOf(nttsActive ? voice : accent);
+  int currentTTS = voicesAccents.indexOf(nttsActive ? voice : accent);
   int currentColour = 0;
   String ttsMessage = 'Generating TTS ...';
   // iterate through each post (2d)
@@ -70,7 +70,7 @@ Future<int> generateSubtitles(
 
         for (final text in splitInfo) {
           // generate the tts and get the duration of the file
-          final duration = await generateTTS(text, counter, nttsActive, voices_accents[currentTTS], startTime);
+          final duration = await generateTTS(text, counter, nttsActive, voicesAccents[currentTTS], startTime);
           ttsMessage = "\x1b[32mTTS successfully generated. $counter ...\x1b[0m";
           // calculate the new time based off the previous time and the duration
           final newTime = lengthCalculation(duration, startTime);
@@ -91,7 +91,7 @@ Future<int> generateSubtitles(
           counter++;
         }
         if (alternateTTS) {
-          currentTTS = ++currentTTS % voices_accents.length;
+          currentTTS = ++currentTTS % voicesAccents.length;
         }
         if (alternateColour) {
           currentColour = ++currentColour % colours.length;
