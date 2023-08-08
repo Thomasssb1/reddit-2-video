@@ -6,7 +6,7 @@ At the moment, it is in development and currently has no easy way to setup CLI c
 Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
 Run this single command if using a linux platform that supports apt-get.
 ```sh
-$ apt-get install ffmpeg dart python3
+$ apt-get install ffmpeg dart python
 ```
 For other platforms, check the individual installing guides. If your platform is not Windows or MacOS, then check the other option which contains a guide to every supported platform.<br>
 <b>ffmpeg: [Windows](https://www.gyan.dev/ffmpeg/builds/), [MacOS](https://evermeet.cx/ffmpeg/), [Other](https://ffmpeg.org/download.html)<br>
