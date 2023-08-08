@@ -1,3 +1,4 @@
+import 'package:args/args.dart';
 import 'package:reddit_2_video/log.dart';
 import 'package:reddit_2_video/reddit_2_video.dart';
 import 'package:reddit_2_video/utils.dart';
@@ -22,7 +23,7 @@ void main(
 
   // get the arguments passed on command line
   var results = parse(arguments);
-  var args = results['args'];
+  ArgResults args = results['args'];
 
   // if the command was the default generation command
   if (results['command'] == null) {
@@ -76,5 +77,7 @@ void main(
   } else if (results['command'] == 'flush') {
     // remove data from visited_log.txt
     flushLog(results['args']['post']);
+  } else{
+    printError('There is no such command. Try again but instead use a pre-existing command, for more information run reddit-2-video --help');
   }
 }
