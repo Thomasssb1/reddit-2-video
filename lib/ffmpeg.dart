@@ -15,6 +15,8 @@ Future<int> generateSubtitles(
   bool alternateColour,
   String titleColour,
 ) async {
+  checkInstall('python');
+
   /// [Remember] ffmpeg uses `HBBGGRR`
   String animation(colour) =>
       r"{\an5\1c&H000000&\t(0, 150, \1c&" +

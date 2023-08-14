@@ -174,3 +174,23 @@ Future<double> generateTTS(
   final wav = await Wav.readFile("./.temp/tts/tts-${counter - 1}.wav");
   return wav.duration;
 }
+
+checkInstall(String process) async {
+  try {
+    await Process.start(process, []);
+  } on ProcessException catch (e) {
+    if (e.errorCode == 2) {
+      print(
+          "The command $process could not be found. Do you want to install $process in order to continue? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+      String download = stdin.readLineSync() ?? 'n';
+      if (download.toLowerCase() == 'y') {
+      } else {
+        printError(
+            "Aborted. You need to install $process in order to use reddit-2-video. Learn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
+        exit(0);
+      }
+    } else {
+      printError("Something went wrong. Try again later. Error code: ${e.errorCode}\nError: ${e.message}");
+    }
+  }
+}
