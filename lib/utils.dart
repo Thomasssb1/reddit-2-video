@@ -241,7 +241,7 @@ Future<bool> installFFmpeg() async {
           "You do not have either choco, winget or scoop installed. You need to install one of these in order to use this process to install ffmpeg. Otherwise you need to install ffmpeg yourself.\nLearn more about ways to install ffmpeg here: https://www.gyan.dev/ffmpeg/builds/");
 
       exit(0);
-    } else if (Platform.isLinux) {
+    } else if (Platform.isLinux || Platform.isMacOS) {
       final process = await Process.start('git', ['clone', 'https://git.ffmpeg.org/ffmpeg.git', 'ffmpeg']);
       process.stdout.transform(utf8.decoder).listen((data) {
         stdout.write(data);
@@ -262,13 +262,9 @@ Future<bool> installFFmpeg() async {
         }
       } else {
         printError(
-            "Something went wrong trying to install ffmpeg from source. You will have to install manually. Learn more here: https://ffmpeg.org/download.html#build-linux");
+            "Something went wrong trying to install ffmpeg from source. You will have to install manually. Learn more here: ${Platform.isLinux ? 'https://ffmpeg.org/download.html#build-linux' : 'https://ffmpeg.org/download.html#build-mac'}");
         exit(0);
       }
-    } else if (Platform.isMacOS) {
-      printError(
-          "Currently MacOS needs you to install ffmpeg manually.\nLearn more here: \x1b[0mhttps://evermeet.cx/ffmpeg/");
-      exit(0);
     } else {
       printError(
           "Whilst trying to install ffmpeg using something went wrong. You will have to install manually.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
