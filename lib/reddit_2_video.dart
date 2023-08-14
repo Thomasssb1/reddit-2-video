@@ -233,7 +233,10 @@ generateVideo(
 ) async {
   // starts the process
 
-  checkInstall('ffmpeg');
+  bool installed = await checkInstall('ffmpeg');
+  if (!installed) {
+    await installFFmpeg();
+  }
   final process = await Process.start('ffmpeg', command);
 
   late String errorMessage;
