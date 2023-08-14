@@ -240,16 +240,40 @@ Future<bool> installFFmpeg() async {
       print(
           "You do not have either choco, winget or scoop installed. You need to install one of these in order to use this process to install ffmpeg. Otherwise you need to install ffmpeg yourself.\nLearn more about ways to install ffmpeg here: https://www.gyan.dev/ffmpeg/builds/");
 
-      return false;
+      exit(0);
     } else if (Platform.isLinux) {
+      final process = await Process.start('git', ['clone', 'https://git.ffmpeg.org/ffmpeg.git', 'ffmpeg']);
+      process.stdout.transform(utf8.decoder).listen((data) {
+        stdout.write(data);
+      });
+      stdin.pipe(process.stdin);
+      int code = await process.exitCode;
+      if (code == 0) {
+        try {
+          await Process.run('cd', ['ffmpeg']);
+          await Process.run('./configure', []);
+          await Process.run('make', []);
+          await Process.run('make', ['install']);
+          printSuccess("Successfully installed ffmpeg. Continuing reddit-2-video generation.");
+          return true;
+        } catch (e) {
+          printError("Something went wrong when trying configure or make ffmpeg from source. Error: $e");
+          exit(0);
+        }
+      } else {
+        printError(
+            "Something went wrong trying to install ffmpeg from source. You will have to install manually. Learn more here: https://ffmpeg.org/download.html#build-linux");
+        exit(0);
+      }
     } else if (Platform.isMacOS) {
       printError(
           "Currently MacOS needs you to install ffmpeg manually.\nLearn more here: \x1b[0mhttps://evermeet.cx/ffmpeg/");
+      exit(0);
     } else {
       printError(
-          "Could not determine your platform. You will need to install this yourself.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
+          "Whilst trying to install ffmpeg using something went wrong. You will have to install manually.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
+      exit(0);
     }
-    return false;
   } else {
     printError(
         "Aborted. You need to install ffmpeg in order to use reddit-2-video.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
