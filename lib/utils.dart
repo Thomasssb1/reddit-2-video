@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:http/http.dart';
 import 'package:wav/wav.dart';
+import 'dart:convert';
 
 /// returns a single string as a list which contains max 50 characters each string in the list
 List<String> splitComments(
@@ -175,22 +176,97 @@ Future<double> generateTTS(
   return wav.duration;
 }
 
-checkInstall(String process) async {
+Future<bool> installFFmpeg() async {
+  print(
+      "The command ffmpeg could not be found. Do you want to install ffmpeg in order to continue? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+  String download = stdin.readLineSync() ?? 'n';
+  if (download.toLowerCase() == 'y') {
+    if (Platform.isWindows) {
+      bool chocoInstalled = await checkInstall('choco');
+      bool wingetInstalled = await checkInstall('winget');
+      bool scoopInstalled = await checkInstall('scoop');
+
+      int code = 2;
+
+      if (chocoInstalled) {
+        printSuccess("Attempting to use choco to install ffmpeg.");
+        final process = await Process.start('choco', ['install', 'ffmpeg']);
+        process.stdout.transform(utf8.decoder).listen((data) {
+          stdout.write(data);
+        });
+        stdin.pipe(process.stdin);
+        code = await process.exitCode;
+        if (code == 0) {
+          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          return true;
+        } else {
+          printWarning(
+              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
+        }
+      }
+      if (wingetInstalled && code != 0) {
+        printSuccess("Attempting to use winget to install ffmpeg");
+        final process = await Process.start('winget', ['install', 'ffmpeg']);
+        process.stdout.transform(utf8.decoder).listen((data) {
+          stdout.write(data);
+        });
+        stdin.pipe(process.stdin);
+        code = await process.exitCode;
+        if (code == 0) {
+          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          return true;
+        } else {
+          printWarning(
+              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
+        }
+      }
+      if (scoopInstalled && code != 0) {
+        printSuccess("Attempting to use scoop to install ffmpeg");
+        final process = await Process.start('scoop', ['install', 'ffmpeg']);
+        process.stdout.transform(utf8.decoder).listen((data) {
+          stdout.write(data);
+        });
+        stdin.pipe(process.stdin);
+        code = await process.exitCode;
+        if (code == 0) {
+          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          return true;
+        } else {
+          printWarning(
+              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
+        }
+      }
+
+      print(
+          "You do not have either choco, winget or scoop installed. You need to install one of these in order to use this process to install ffmpeg. Otherwise you need to install ffmpeg yourself.\nLearn more about ways to install ffmpeg here: https://www.gyan.dev/ffmpeg/builds/");
+
+      return false;
+    } else if (Platform.isLinux) {
+    } else if (Platform.isMacOS) {
+      printError(
+          "Currently MacOS needs you to install ffmpeg manually.\nLearn more here: \x1b[0mhttps://evermeet.cx/ffmpeg/");
+    } else {
+      printError(
+          "Could not determine your platform. You will need to install this yourself.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
+    }
+    return false;
+  } else {
+    printError(
+        "Aborted. You need to install ffmpeg in order to use reddit-2-video.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
+    exit(0);
+  }
+}
+
+Future<bool> checkInstall(String process) async {
   try {
     await Process.start(process, []);
+    return true;
   } on ProcessException catch (e) {
     if (e.errorCode == 2) {
-      print(
-          "The command $process could not be found. Do you want to install $process in order to continue? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
-      String download = stdin.readLineSync() ?? 'n';
-      if (download.toLowerCase() == 'y') {
-      } else {
-        printError(
-            "Aborted. You need to install $process in order to use reddit-2-video. Learn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
-        exit(0);
-      }
+      return false;
     } else {
       printError("Something went wrong. Try again later. Error code: ${e.errorCode}\nError: ${e.message}");
+      exit(0);
     }
   }
 }
