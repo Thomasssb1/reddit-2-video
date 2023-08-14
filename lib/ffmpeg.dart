@@ -15,7 +15,12 @@ Future<int> generateSubtitles(
   bool alternateColour,
   String titleColour,
 ) async {
-  checkInstall('python');
+  bool installed = await checkInstall('python');
+  if (!installed) {
+    printError(
+        "Python is not installed. You need python in order to continue.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
+    exit(0);
+  }
 
   /// [Remember] ffmpeg uses `HBBGGRR`
   String animation(colour) =>
