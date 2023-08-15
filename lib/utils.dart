@@ -296,8 +296,15 @@ bool validateLink(String link) {
   if (isLink) {
     Uri uriLink = Uri.parse(link);
     List<String> paths = uriLink.pathSegments;
-    if (uriLink.host == 'www.reddit.com' && paths[0] == 'r' && paths[2] == 'comments') {
-      return true;
+    if (paths.isNotEmpty) {
+      if (paths.last == '') {
+        paths = paths.sublist(0, paths.length - 1);
+      }
+      if (paths.length == 5) {
+        if (uriLink.host == 'www.reddit.com' && paths[0] == 'r' && paths[2] == 'comments') {
+          return true;
+        }
+      }
     }
   }
   return false;
