@@ -290,3 +290,15 @@ Future<bool> checkInstall(String process) async {
     }
   }
 }
+
+bool validateLink(String link) {
+  bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(link);
+  if (isLink) {
+    Uri uriLink = Uri.parse(link);
+    List<String> paths = uriLink.pathSegments;
+    if (uriLink.host == 'www.reddit.com' && paths[0] == 'r' && paths[2] == 'comments') {
+      return true;
+    }
+  }
+  return false;
+}
