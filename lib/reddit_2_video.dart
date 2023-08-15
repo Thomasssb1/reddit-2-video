@@ -20,7 +20,7 @@ Future<List<dynamic>> getPostData(
   var client = http.Client();
   List<dynamic> postData = [];
   // check if the subreddit arg passed is a link
-  bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(subreddit);
+  bool isLink = validateLink(subreddit);
   // make a link from the subreddit if it is not already a link
   Uri linkUri = Uri.https("reddit.com", "/r/$subreddit/$sort.json");
 
