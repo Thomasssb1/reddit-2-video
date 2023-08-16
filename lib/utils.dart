@@ -130,7 +130,7 @@ bool checkStatusCode(
         "Error occurred whilst attempting to get post data. It is likely that the endpoint used is inactive and needs to be changed. Post this as an issue on github https://github.com/Thomasssb1/reddit-2-video/issues if the problem persists.\nError: ${response.statusCode}\nReason: ${response.reasonPhrase}");
   } else {
     printError(
-        "An unknown error occured when attempting to access the link.\nError: ${response.statusCode}\nReason: ${response.reasonPhrase}\n${response.body}");
+        "An unknown error occurred when attempting to access the link.\nError: ${response.statusCode}\nReason: ${response.reasonPhrase}\n${response.body}");
   }
   return false;
 }
@@ -155,7 +155,7 @@ void clearTemp() async {
   assFile.writeAsStringSync('');
 }
 
-/// calls the pythhon tts.py file whilst passing arguments
+/// calls the python tts.py file whilst passing arguments
 Future<double> generateTTS(
   String text,
   int counter,
@@ -163,7 +163,7 @@ Future<double> generateTTS(
   String voiceAccent,
   startTime,
 ) async {
-  // $ python lib/tts.py text, int, 1/0, accent, voice
+  // $ python lib/tts.py text, int, 1/0, accent/voice
   var ttsResult =
       await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0", voiceAccent]);
   // if the process did not complete successfully
@@ -303,8 +303,20 @@ bool validateLink(String link) {
       if (paths.length == 5) {
         if (uriLink.host == 'www.reddit.com' && paths[0] == 'r' && paths[2] == 'comments') {
           return true;
+        } else {
+          printError(
+              "Unable to use the link you have provided along with the --subreddit arg, try using another link that links directly to the reddit post.");
+          exit(0);
         }
+      } else {
+        printError(
+            "The link that you have provided along with the --subreddit arg is not a proper link that links directly to a reddit post. Re-run the command but instead with a reddit link that links directly to the reddit post.");
+        exit(0);
       }
+    } else {
+      printError(
+          "Unable to use the link you have provided along with the --subreddit arg, ensure that you are using a link that links directly to the reddit post");
+      exit(0);
     }
   }
   return false;
