@@ -25,6 +25,15 @@ void main() {
         expect([null, '--subreddit', 'https://www.reddit.com/r/AskReddit/comments/15lfece/why_did_you_get_fired/'],
             command);
       });
+      test("Run reddit-2-video command with no subreddit arg", () {
+        bool errorCaught = false;
+        try {
+          var results = parse([]);
+        } catch (e) {
+          errorCaught = true;
+        }
+        expect(true, errorCaught);
+      });
     });
     group("Link validation", () {
       test("Reddit link directly to a post", () {
