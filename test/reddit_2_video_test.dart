@@ -39,6 +39,17 @@ void main() {
         var results = parse(['--subreddit', 'AskReddit', '--alternate=on,off,HFF0000']);
         expect(['on', 'off', 'HFF0000'], results['args']['alternate']);
       });
+
+      test("Run reddit-2-video command with alternate command that has only two options", () {
+        bool errorCaught = false;
+        try {
+          parse(['--subreddit', 'AskReddit', '--alternate=off,on']);
+        } catch (e) {
+          print(e);
+          errorCaught = true;
+        }
+        expect(true, errorCaught);
+      });
     });
     group("Link validation", () {
       test("Reddit link directly to a post", () {
