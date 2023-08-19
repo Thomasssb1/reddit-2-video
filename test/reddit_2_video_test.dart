@@ -28,11 +28,16 @@ void main() {
       test("Run reddit-2-video command with no subreddit arg", () {
         bool errorCaught = false;
         try {
-          var results = parse([]);
+          parse([]);
         } catch (e) {
           errorCaught = true;
         }
         expect(true, errorCaught);
+      });
+
+      test("Run reddit-2-video command with correct alternate command", () {
+        var results = parse(['--subreddit', 'AskReddit', '--alternate=on,off,HFF0000']);
+        expect(['on', 'off', 'HFF0000'], results['args']['alternate']);
       });
     });
     group("Link validation", () {
