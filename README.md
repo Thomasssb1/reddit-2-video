@@ -19,7 +19,7 @@ Clone the repository
 ```sh 
 $ git clone https://github.com/Thomasssb1/reddit-2-video.git
 ```
-Activate the repo so it can be used throughout your system
+Activate the repo so it can be used throughout your system<br>
 Get the path where the reddit-2-video folder is stored, either run the command below and copy the output or do this manually. <br>
 This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder reddit2video that you cloned.
 
