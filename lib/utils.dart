@@ -161,11 +161,11 @@ Future<double> generateTTS(
   int counter,
   bool ntts,
   String voiceAccent,
-  startTime,
 ) async {
   // $ python lib/tts.py text, int, 1/0, accent/voice
   var ttsResult =
       await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0", voiceAccent]);
+  
   // if the process did not complete successfully
   if (ttsResult.exitCode != 0) {
     printError("TTS failed.\nExit code: ${ttsResult.exitCode}\nError: ${ttsResult.stderr}");

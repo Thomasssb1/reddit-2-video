@@ -77,7 +77,7 @@ Future<int> generateSubtitles(
 
         for (final text in splitInfo) {
           // generate the tts and get the duration of the file
-          final duration = await generateTTS(text, counter, nttsActive, voicesAccents[currentTTS], startTime);
+          final duration = await generateTTS(text, counter, nttsActive, voicesAccents[currentTTS]);
           ttsMessage = "\x1b[32mTTS successfully generated. $counter ...\x1b[0m";
           // calculate the new time based off the previous time and the duration
           final newTime = lengthCalculation(duration, startTime);
