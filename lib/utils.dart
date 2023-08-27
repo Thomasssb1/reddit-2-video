@@ -279,6 +279,25 @@ Future<bool> installFFmpeg() async {
   }
 }
 
+Future<bool> installPythonLibs() async{
+  print("Installing python libraries used for tts generation. This will use pip to install all libraries.");
+  final process = await Process.start('pip', ['install', 'transformers', 'datasets', 'torch', 'soundfile', 'gtts']);
+        process.stdout.transform(utf8.decoder).listen((data) {
+          stdout.write(data);
+        });
+        stdin.pipe(process.stdin);
+        var code = await process.exitCode;
+        if (code == 0) {
+          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          return true;
+        } else {
+          printWarning(
+              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
+        }
+  printSuccess("Installed transformers, datasets, torch, soundfile, gtts libraries for python.");
+  exit(0);
+}
+
 Future<bool> checkInstall(String process) async {
   try {
     await Process.start(process, []);

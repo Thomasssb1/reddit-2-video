@@ -81,7 +81,12 @@ void main(
     flushLog(results['args']['post']);
     clearTemp();
   } else if (results['command'] == 'install'){
-    installFFmpeg();
+    bool installed = await checkInstall('ffmpeg');
+    if (!installed) {
+      await installFFmpeg();
+    }
+    await installPythonLibs();
+    exit(0);
   } else{
     printError('There is no such command. Try again but instead use a pre-existing command, for more information run reddit-2-video --help');
   }
