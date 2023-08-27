@@ -80,6 +80,8 @@ void main(
     // remove data from visited_log.txt
     flushLog(results['args']['post']);
     clearTemp();
+  } else if (results['command'] == 'install'){
+    installFFmpeg();
   } else{
     printError('There is no such command. Try again but instead use a pre-existing command, for more information run reddit-2-video --help');
   }

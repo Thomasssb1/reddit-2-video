@@ -65,6 +65,8 @@ dynamic parse(
   // add a command specific option
   flush.addOption('post', abbr: 'p', help: 'Remove a specific reddit post from the visited log.');
 
+  var install = parser.addCommand('install');
+
   // parse the cli for arguments
   var results = parser.parse(args);
 
@@ -94,7 +96,10 @@ dynamic parse(
     // return map of command and args
     return {'command': null, 'args': results};
     // if the command is flush
-  } else {
+  } else if (results.command!.name == 'flush'){
     return {'command': 'flush', 'args': flush.parse(args)};
+    // if the command is install
+  } else if (results.command!.name == 'install'){
+    return {'command': 'install', 'args': install.parse(args)};
   }
 }
