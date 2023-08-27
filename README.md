@@ -1,20 +1,12 @@
 # reddit-2-video
 A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
-At the moment, it is in development and currently has no easy way to setup CLI command usage without cloning the repository yourself.
-
-## Dependencies
-Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
-Run this single command if using a linux platform that supports apt-get.
-```sh
-$ apt-get install ffmpeg dart python
-```
-For other platforms, check the individual installing guides. If your platform is not Windows or MacOS, then check the other option which contains a guide to every supported platform.<br>
-<b>ffmpeg: [Windows](https://www.gyan.dev/ffmpeg/builds/), [MacOS](https://evermeet.cx/ffmpeg/), [Other](https://ffmpeg.org/download.html)<br>
-dart: [Installation guide](https://dart.dev/get-dart#install) for Windows, Linux and MacOS.<br>
-python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://www.python.org/downloads/macos/), [Other](https://www.python.org/download/other/)
-</b>
 
 ## Setup
+
+<details>
+    <summary>For developer builds</summary><br>
+    Run the following command in your terminal in order to rebuild the executable each time something is changed whilst developing an update. You <u>do not</u> need to add the <b>reddit-2-video/bin</b> folder to path like normal.<br>
+
 Clone the repository
 ```sh 
 $ git clone https://github.com/Thomasssb1/reddit-2-video.git
@@ -23,15 +15,12 @@ Activate the repo so it can be used throughout your system<br>
 Get the path where the reddit-2-video folder is stored, either run the command below and copy the output or do this manually. <br>
 This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder reddit2video that you cloned.
 
-<details>
-    <summary>For developer builds</summary><br>
-    > Run the following commands in your terminal in order to rebuild the executable each time something is changed whilst developing an update.
-    
 ```sh
-$ cd reddit-2-video
-$ dart pub global activate --source path .
+$ dart pub global activate --source path reddit-2-video
 ```
 </details>
+
+## Usage
 
 Call the method in the command line like so
 ```sh
@@ -82,3 +71,14 @@ At the moment, the only supported args are:
 subreddit, sort, nsfw, c, o, file-type, framerate and comment-sort (undocumented).
 ### Help
 Use the flag `-help` for more help and information.
+## Dependencies
+Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
+Run this single command if using a linux platform that supports apt-get.
+```sh
+$ apt-get install ffmpeg dart python
+```
+For other platforms, check the individual installing guides. If your platform is not Windows or MacOS, then check the other option which contains a guide to every supported platform.<br>
+<b>ffmpeg: [Windows](https://www.gyan.dev/ffmpeg/builds/), [MacOS](https://evermeet.cx/ffmpeg/), [Other](https://ffmpeg.org/download.html)<br>
+dart: [Installation guide](https://dart.dev/get-dart#install) for Windows, Linux and MacOS.<br>
+python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://www.python.org/downloads/macos/), [Other](https://www.python.org/download/other/)
+</b>
