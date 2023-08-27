@@ -3,6 +3,8 @@ import 'package:http/http.dart';
 import 'package:wav/wav.dart';
 import 'dart:convert';
 
+String prePath = File(Platform.resolvedExecutable).parent.parent.path;
+
 /// returns a single string as a list which contains max 50 characters each string in the list
 List<String> splitComments(
   String comment,
@@ -151,7 +153,7 @@ void clearTemp() async {
     return;
   }));
   // clear the temporary .ass file
-  final File assFile = File("./.temp/comments.ass");
+  final File assFile = File("$prePath/.temp/comments.ass");
   assFile.writeAsStringSync('');
 }
 
@@ -164,7 +166,7 @@ Future<double> generateTTS(
 ) async {
   // $ python lib/tts.py text, int, 1/0, accent/voice
   var ttsResult =
-      await Process.run('python', ["lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0", voiceAccent]);
+      await Process.run('python', ["$prePath/lib/tts.py", text, (counter - 1).toString(), ntts ? "1" : "0", voiceAccent]);
   
   // if the process did not complete successfully
   if (ttsResult.exitCode != 0) {
@@ -172,7 +174,7 @@ Future<double> generateTTS(
     exit(0);
   }
   // get the length of the new wav file containing the tts
-  final wav = await Wav.readFile("./.temp/tts/tts-${counter - 1}.wav");
+  final wav = await Wav.readFile("$prePath/.temp/tts/tts-${counter - 1}.wav");
   return wav.duration;
 }
 

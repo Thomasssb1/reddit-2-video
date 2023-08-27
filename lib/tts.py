@@ -3,6 +3,7 @@ from datasets import load_dataset
 import torch
 import soundfile as sf
 import sys
+from os.path import dirname, realpath
 from gtts import gTTS
 
 # select cuda if available as it can lead to quicker output times
@@ -25,6 +26,11 @@ speakers = {
     "USFemale2": 6799,
 }
 
+# get the grandparent folder
+filepath = realpath(__file__)
+directory = dirname(filepath)
+working_dir = dirname(directory)
+
 
 def generateNTTS(text, count, voice):
     """
@@ -36,7 +42,7 @@ def generateNTTS(text, count, voice):
     speech = model.generate_speech(inputs["input_ids"], xvector, vocoder=vocoder)
     output_filename = f"tts-{count}.wav"
     # write to file with sr 16k otherwise it can cause issues
-    sf.write(f"./.temp/tts/{output_filename}", speech.numpy(), samplerate=16000)
+    sf.write(fr"{working_dir}\.temp\tts\{output_filename}", speech.numpy(), samplerate=16000)
 
 
 def generateGTTS(text, count, accent):
@@ -49,7 +55,7 @@ def generateGTTS(text, count, accent):
     speech = gTTS(text=text, lang="en", slow=False, tld=accent)
     # write to file
     output_filename = f"tts-{count}.wav"
-    speech.save(f"./.temp/tts/{output_filename}")
+    speech.save(fr"{working_dir}\.temp\tts\{output_filename}")
 
 
 # only runs the code when the program is run directly (not as a lib)

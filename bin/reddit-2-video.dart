@@ -6,6 +6,8 @@ import 'package:reddit_2_video/cmd.dart';
 import 'dart:io';
 import 'package:reddit_2_video/ffmpeg.dart';
 
+String prePath = File(Platform.resolvedExecutable).parent.parent.path;
+
 /// [enable preview ffplay]
 /// [add styling to title and fade in etc using .ass]
 //
@@ -13,8 +15,8 @@ void main(
   List<String> arguments,
 ) async {
   // delete .gitkeep so that it isn't counted when getting all tts files
-  if (await File('./.temp/tts/.gitkeep').exists()) {
-    await File('./.temp/tts/.gitkeep').delete().catchError((error) {
+  if (await File('$prePath/.temp/tts/.gitkeep').exists()) {
+    await File('$prePath/.temp/tts/.gitkeep').delete().catchError((error) {
       printError(
           "Something went wrong when trying to delete a temporary file. To fix this you can go to the ./reddit-2-video/.temp/tts folder and delete the .gitkeep file. Error: $error");
       exit(1);
@@ -50,7 +52,7 @@ void main(
         (args['alternate'][1].toLowerCase() == 'on') ? true : false,
         args['alternate'][2],
       );
-      int ttsCount = await Directory('./.temp/tts').list().length;
+      int ttsCount = await Directory('$prePath/.temp/tts').list().length;
 
       // create a ffmpeg command that can be run
       List<String> command = await generateCommand(

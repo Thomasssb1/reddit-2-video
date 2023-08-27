@@ -4,6 +4,8 @@ import 'package:reddit_2_video/utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 
+String prePath = File(Platform.resolvedExecutable).parent.parent.path;
+
 /// check if the visited_log.txt file contains the post that is currently being fetched
 bool checkLog(
   Object? id,
@@ -13,7 +15,7 @@ bool checkLog(
     return true;
   }
   // open log file
-  final File logFile = File("./.temp/visited_log.txt");
+  final File logFile = File("$prePath/.temp/visited_log.txt");
   try {
     /// [change to a stream instead so that it doesn't have to be fully read]
     // read the file and split the text into a list that can be read
@@ -38,7 +40,7 @@ void writeToLog(
   dynamic post,
 ) {
   // open log file for writing
-  final File logFile = File("./.temp/visited_log.txt");
+  final File logFile = File("$prePath/.temp/visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
   // write new id on a new line
   sink.writeln(post['id']);
@@ -49,8 +51,9 @@ void writeToLog(
 void flushLog(
   String? link,
 ) async {
+  print(prePath);
   // open log file
-  final File logFile = File("./.temp/visited_log.txt");
+  final File logFile = File("$prePath/.temp/visited_log.txt");
   // if the user wants to remove every entry
   if (link == null) {
     // write nothing to file to overwrite data

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'utils.dart';
 import 'package:path/path.dart' as p;
 
+String prePath = File(Platform.resolvedExecutable).parent.parent.path;
+
 /// Write subtitles to .ass file with [custom animation] and [colours]
 ///
 /// Create new tts along with each comment
@@ -30,17 +32,17 @@ Future<int> generateSubtitles(
 
   // read the config file
   // for list of voices/accents and colours
-  final config = File("./defaults/config.json");
+  final config = File("$prePath/defaults/config.json");
   final json = jsonDecode(config.readAsStringSync());
   final List<dynamic> voicesAccents = nttsActive ? json['voices'] : json['accents'];
   final List<dynamic> colours = json['colours'];
 
   // read the default subtitles file
-  final defaultASS = File("./defaults/default.ass");
+  final defaultASS = File("$prePath/defaults/default.ass");
   final contents = await defaultASS.readAsString();
 
   // open the new temporary subtitles file
-  final fileForComments = File("./.temp/comments.ass");
+  final fileForComments = File("$prePath/.temp/comments.ass");
   final sinkComments = fileForComments.openWrite();
   // write the default subtitles files contents to temporary
   sinkComments.write("$contents\n");
@@ -135,7 +137,7 @@ Future<List<String>> generateCommand(
   List<String> command = ["-i", video];
 
   // add each of the tts files to the command
-  command.addAll(List.generate(ttsCount, (index) => ["-i", "./.temp/tts/tts-$index.wav"], growable: false)
+  command.addAll(List.generate(ttsCount, (index) => ["-i", "$prePath/.temp/tts/tts-$index.wav"], growable: false)
       .expand((e) => e)
       .toList());
 
