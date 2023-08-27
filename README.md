@@ -2,19 +2,24 @@
 A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
 
 ## Setup
-
+The easiest way to get started is to download one of the [releases](https://github.com/Thomasssb1/reddit-2-video/releases). The release includes all of the dart code precompiled but still requires python & ffmpeg ([see other dependencies](https://github.com/Thomasssb1/reddit-2-video#dependencies)).<br>
+<u>Add the folder to path</u>
+This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder `reddit-2-video/bin` that you cloned. You need to add the full path to `reddit-2-video/bin` to your system path in environmental variables.<br>
+<u>Install dependencies</u>
+If you do not have ffmpeg installed nor the required python libraries, you can run the following command in an *elevated shell*.
+```sh
+$ reddit-2-video install
+```
+This will install ffmpeg and python libraries that are required. If this does not work, you can install these prerequisites [manually](https://github.com/Thomasssb1/reddit-2-video#dependencies).
 <details>
     <summary>For developer builds</summary><br>
     Run the following command in your terminal in order to rebuild the executable each time something is changed whilst developing an update. You <u>do not</u> need to add the <b>reddit-2-video/bin</b> folder to path like normal.<br>
 
-Clone the repository
+<u>Clone the repository</u>
 ```sh 
 $ git clone https://github.com/Thomasssb1/reddit-2-video.git
 ```
-Activate the repo so it can be used throughout your system<br>
-Get the path where the reddit-2-video folder is stored, either run the command below and copy the output or do this manually. <br>
-This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder reddit2video that you cloned.
-
+<u>Activate the repo so it can be used throughout your system</u>
 ```sh
 $ dart pub global activate --source path reddit-2-video
 ```
