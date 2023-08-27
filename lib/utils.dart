@@ -170,7 +170,7 @@ Future<double> generateTTS(
   
   // if the process did not complete successfully
   if (ttsResult.exitCode != 0) {
-    printError("TTS failed.\nExit code: ${ttsResult.exitCode}\nError: ${ttsResult.stderr}");
+    printError("\rTTS failed.\nExit code: ${ttsResult.exitCode}\nError: ${ttsResult.stderr}");
     exit(0);
   }
   // get the length of the new wav file containing the tts
