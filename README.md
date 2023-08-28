@@ -14,17 +14,18 @@ $ reddit-2-video install
 This will install ffmpeg and python libraries that are required to run reddit-2-video. If this does not work, you can install these prerequisites [manually](https://github.com/Thomasssb1/reddit-2-video#dependencies).
 <details>
     <summary>For developer builds</summary><br>
-    Run the following command in your terminal in order to rebuild the executable each time something is changed whilst developing an update. You <u>do not</u> need to add the <b>reddit-2-video/bin</b> folder to path like normal.<br><br>
-
-Clone the repository
-```sh 
-$ git clone https://github.com/Thomasssb1/reddit-2-video.git
-```
-Activate the repo so it can be used throughout your system
-```sh
-$ dart pub global activate --source path reddit-2-video
-```
-You willo also need to add a video file named `video1.mp4` inside of the `reddit-2-video/defaults/` folder. This will be the video that runs in the background.<br> Due to file size I have not included this myself. Although, I am considering a solution that will download them within reddit-2-video for later use.
+    
+>Run the following command in your terminal in order to rebuild the executable each time something is changed whilst developing an update. You <u>do not</u> need to add the <b>reddit-2-video/bin</b> folder to path like normal.<br><br>
+>
+>Clone the repository
+>```sh 
+>$ git clone https://github.com/Thomasssb1/reddit-2-video.git
+>```
+>Activate the repo so it can be used throughout your system
+>```sh
+>$ dart pub global activate --source path reddit-2-video
+>```
+>You will also need to add a video file named `video1.mp4` inside of the `reddit-2-video/defaults/` folder. This will be the video that runs in the background.<br> Due to file size I have not included this myself. Although, I am considering a solution that will download them within reddit-2-video for later use.
 </details>
 
 ## Usage
