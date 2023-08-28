@@ -81,8 +81,12 @@ void main(
     flushLog(results['args']['post']);
     clearTemp();
   } else if (results['command'] == 'install'){
-    bool installed = await checkInstall('ffmpeg');
-    if (!installed) {
+    bool pythonInstalled = await checkInstall('python');
+    if (!pythonInstalled){
+      printWarning("In order to continue, you need to have python installed. Download it here: \x1b[0mhttps://www.python.org/downloads/");
+    }
+    bool ffmpegInstalled = await checkInstall('ffmpeg');
+    if (!ffmpegInstalled) {
       await installFFmpeg();
     }
     await installPythonLibs();
