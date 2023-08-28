@@ -87,7 +87,7 @@ void main(
     }
     bool ffmpegInstalled = await checkInstall('ffmpeg');
     if (!ffmpegInstalled) {
-      await installFFmpeg();
+      await installFFmpeg(false);
     }
     await installPythonLibs();
     exit(0);

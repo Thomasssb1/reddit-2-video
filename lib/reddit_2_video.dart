@@ -235,7 +235,7 @@ generateVideo(
 
   bool installed = await checkInstall('ffmpeg');
   if (!installed) {
-    await installFFmpeg();
+    await installFFmpeg(true);
   }
   final process = await Process.start('ffmpeg', command);
 

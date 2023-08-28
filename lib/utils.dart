@@ -178,7 +178,7 @@ Future<double> generateTTS(
   return wav.duration;
 }
 
-Future<bool> installFFmpeg() async {
+Future<bool> installFFmpeg(bool continueGeneration) async {
   print(
       "The command ffmpeg could not be found. Do you want to install ffmpeg in order to continue? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
   String download = stdin.readLineSync() ?? 'n';
@@ -199,7 +199,7 @@ Future<bool> installFFmpeg() async {
         stdin.pipe(process.stdin);
         code = await process.exitCode;
         if (code == 0) {
-          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          printSuccess("Successfully installed ffmpeg using choco. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
           return true;
         } else {
           printWarning(
@@ -215,7 +215,7 @@ Future<bool> installFFmpeg() async {
         stdin.pipe(process.stdin);
         code = await process.exitCode;
         if (code == 0) {
-          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          printSuccess("Successfully installed ffmpeg using choco. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
           return true;
         } else {
           printWarning(
@@ -231,7 +231,7 @@ Future<bool> installFFmpeg() async {
         stdin.pipe(process.stdin);
         code = await process.exitCode;
         if (code == 0) {
-          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          printSuccess("Successfully installed ffmpeg using choco. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
           return true;
         } else {
           printWarning(
@@ -256,7 +256,7 @@ Future<bool> installFFmpeg() async {
           await Process.run('./configure', []);
           await Process.run('make', []);
           await Process.run('make', ['install']);
-          printSuccess("Successfully installed ffmpeg. Continuing reddit-2-video generation.");
+          printSuccess("Successfully installed ffmpeg. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
           return true;
         } catch (e) {
           printError("Something went wrong when trying configure or make ffmpeg from source. Error: $e");
@@ -288,13 +288,12 @@ Future<bool> installPythonLibs() async{
         stdin.pipe(process.stdin);
         var code = await process.exitCode;
         if (code == 0) {
-          printSuccess("Successfully installed ffmpeg using choco. Continuing reddit-2-video generation.");
+          printSuccess("Successfully installed python libraries using pip.\nInstalled transformers, datasets, torch, soundfile, gtts libraries for python.");
           return true;
         } else {
           printWarning(
-              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
+              "Whilst trying to install python libraries using pip something went wrong. Error code: $code");
         }
-  printSuccess("Installed transformers, datasets, torch, soundfile, gtts libraries for python.");
   exit(0);
 }
 
