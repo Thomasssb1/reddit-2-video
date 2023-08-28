@@ -1,5 +1,6 @@
 # reddit-2-video
 A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
+View the wiki [here](https://github.com/Thomasssb1/reddit-2-video/wiki) for information on how to use reddit-2-video.
 
 ## Setup
 The easiest way to get started is to download one of the [releases](https://github.com/Thomasssb1/reddit-2-video/releases). The release includes all of the dart code precompiled but still requires python & ffmpeg ([see other dependencies](https://github.com/Thomasssb1/reddit-2-video#dependencies)).<br><br>
@@ -38,40 +39,8 @@ You can add more args as talked about below.
 To use this, you need to use the command reddit-2-video along with arguments to generate a video. <br>
 The only **required** argument is `subreddit`.
 <br>
-```
---subreddit
-    --subreddit
--s, --sort                                                                            [hot (default), new, top, rising]
-    --comment-sort                                                                    [top (default), best, new, controversial, old, q&a]
-    --count                                                                           Minimum number of comments
-                                                                                      (defaults to "8")
-    --type
-          [comments] (default)                                                        Creates a video that contains a post title, body and a set number of comments for that post.
-          [multi]                                                                     Creates a video that contains multiple posts from a single subreddit, not including comments.
-          [post]                                                                      Creates a video that only contains a single post with the title and body.
+There are many other options which can be used in your command.<br>You can use the `-help` flag to see them all or view them in detail on the [wiki](https://github.com/Thomasssb1/reddit-2-video/wiki/Documentation).
 
-    --alternate=<alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)>    tts - alternate TTS voice for each comment/post (defaults to off)
-                                                                                      colour - alternate text colour for each comment/post (defaults to off)
-                                                                                      title-colour - determine title colour for post (defaults to #FF0000)
-    --[no-]post-confirmation
-    --[no-]nsfw                                                                       (defaults to on)
-    --[no-]spoiler                                                                    Add a spoiler to the video which hides the image/text before showing for 3s
-    --[no-]ntts                                                                       Determines whether to use neural tts which is generated locally or googles own TTS which requires internet.
-                                                                                      (defaults to on)
--v, --video-path=<path>                                                               (defaults to "defaults/video1.mp4")
-    --music=<path,volume>
--o, --output                                                                          Location where the generated file will be stored.
-                                                                                      (defaults to "final")
-    --file-type                                                                       [mp4 (default), avi, mov, flv]
-    --framerate                                                                       The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.
-                                                                                      [15, 30, 45 (default), 60, 75, 120, 144]
-    --[no-]verbose
-    --[no-]override
-```
-At the moment, the only supported args are:
-subreddit, sort, nsfw, c, o, file-type, framerate and comment-sort (undocumented).
-### Help
-Use the flag `-help` for more help and information.
 ## Dependencies
 Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5 and [python](https://www.python.org/) >=3.
 Run this single command if using a linux platform that supports apt-get.
@@ -85,3 +54,5 @@ python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://ww
 </b>
 ### Warning
 The TTS sometimes skips words due to the regex filter used. Any other issues you might face is likely due to the fact I am still developing this, updates will be releasing daily.<br> Another thing to mention is that I do plan on getting this added to several package managers if possible to streamline the setup process.
+### Help
+Use the flag `-help` for more help and information.
