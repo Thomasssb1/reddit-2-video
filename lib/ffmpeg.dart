@@ -170,8 +170,6 @@ Future<List<String>> generateCommand(
     }
   }
 
-  print(subtitlePath);
-
   // create a list of each argument required for ffmpeg
   command.addAll([
     // if the music argument is added then add that as an input stream
@@ -203,7 +201,6 @@ Future<List<String>> generateCommand(
     '$output.$fileType'
   ]);
 
-  print(command);
 
   // *: Add each audio stream to the start so that they can be added to the concatenation filter
   // if the music arg is passed then create a new map output 0a which feeds into a volume filter
