@@ -90,8 +90,8 @@ void main(
       await installFFmpeg(false);
     }
     await installPythonLibs();
-    exit(0);
   } else{
     printError('There is no such command. Try again but instead use a pre-existing command, for more information run reddit-2-video --help');
   }
+  exit(0);
 }
