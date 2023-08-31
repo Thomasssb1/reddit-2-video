@@ -47,7 +47,7 @@ dynamic parse(
       defaultsTo: 'USFemale2',
       allowed: ['ScottishMale', 'USMale1', 'USFemale1', 'CanadianMale', 'IndianMale', 'USMale2', 'USFemale2'],
       help: 'The voice to be used when using ntts.');
-  parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'v', valueHelp: "path");
+  parser.addOption('video-path', defaultsTo: 'defaults/video1.mp4', abbr: 'p', valueHelp: "path");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addOption('output', abbr: 'o', defaultsTo: 'final', help: 'Location where the generated file will be stored.');
   parser.addOption('file-type', defaultsTo: 'mp4', allowed: ['mp4', 'avi', 'mov', 'flv']);
@@ -56,7 +56,7 @@ dynamic parse(
       allowed: ['15', '30', '45', '60', '75', '120', '144'],
       help:
           'The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.');
-  parser.addFlag('verbose', defaultsTo: false);
+  parser.addFlag('verbose', abbr: 'v', defaultsTo: false);
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help', hide: true);
 
