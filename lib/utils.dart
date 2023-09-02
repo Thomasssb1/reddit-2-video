@@ -182,13 +182,12 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
   print(
       "The command ffmpeg could not be found. Do you want to install ffmpeg in order to continue? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
   String download = stdin.readLineSync() ?? 'n';
+  int code = 2;
   if (download.toLowerCase() == 'y') {
     if (Platform.isWindows) {
       bool chocoInstalled = await checkInstall('choco');
       bool wingetInstalled = await checkInstall('winget');
       bool scoopInstalled = await checkInstall('scoop');
-
-      int code = 2;
 
       if (chocoInstalled) {
         printSuccess("Attempting to use choco to install ffmpeg.");
@@ -242,41 +241,44 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
       print(
           "You do not have either choco, winget or scoop installed. You need to install one of these in order to use this process to install ffmpeg. Otherwise you need to install ffmpeg yourself.\nLearn more about ways to install ffmpeg here: https://www.gyan.dev/ffmpeg/builds/");
 
-      exit(0);
-    } else if (Platform.isLinux || Platform.isMacOS) {
-      final process = await Process.start('git', ['clone', 'https://git.ffmpeg.org/ffmpeg.git', 'ffmpeg']);
-      process.stdout.transform(utf8.decoder).listen((data) {
-        stdout.write(data);
-      });
-      stdin.pipe(process.stdin);
-      int code = await process.exitCode;
-      if (code == 0) {
-        try {
-          await Process.run('cd', ['ffmpeg']);
-          await Process.run('./configure', []);
-          await Process.run('make', []);
-          await Process.run('make', ['install']);
-          printSuccess("Successfully installed ffmpeg. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
+      exit(code);
+    }else if (Platform.isLinux) {
+      final process = await Process.start('sudo', ['apt', 'install', 'ffmpeg']);
+        process.stdout.transform(utf8.decoder).listen((data) {
+          stdout.write(data);
+        });
+        stdin.pipe(process.stdin);
+        code = await process.exitCode;
+        if (code == 0) {
+          printSuccess("Successfully installed ffmpeg using choco. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
           return true;
-        } catch (e) {
-          printError("Something went wrong when trying configure or make ffmpeg from source. Error: $e");
-          exit(0);
+        } else {
+          printWarning(
+              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
         }
-      } else {
-        printError(
-            "Something went wrong trying to install ffmpeg from source. You will have to install manually. Learn more here: ${Platform.isLinux ? 'https://ffmpeg.org/download.html#build-linux' : 'https://ffmpeg.org/download.html#build-mac'}");
-        exit(0);
-      }
-    } else {
-      printError(
-          "Whilst trying to install ffmpeg using something went wrong. You will have to install manually.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
-      exit(0);
+    }else if (Platform.isMacOS){
+      final process = await Process.start('brew', ['install', 'ffmpeg']);
+        process.stdout.transform(utf8.decoder).listen((data) {
+          stdout.write(data);
+        });
+        stdin.pipe(process.stdin);
+        code = await process.exitCode;
+        if (code == 0) {
+          printSuccess("Successfully installed ffmpeg using choco. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
+          return true;
+        } else {
+          printWarning(
+              "Whilst trying to install ffmpeg using choco something went wrong. Trying to use other methods before aborting. Error code: $code");
+        }
+    }else{
+      printError("Unable to determine device platform. You will need to install ffmpeg yourself before using reddit-2-video.");
     }
+      
   } else {
     printError(
         "Aborted. You need to install ffmpeg in order to use reddit-2-video.\nLearn more here: \x1b[0mhttps://github.com/Thomasssb1/reddit-2-video");
-    exit(0);
   }
+  exit(code);
 }
 
 Future<bool> installPythonLibs() async{
