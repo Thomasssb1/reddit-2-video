@@ -283,7 +283,7 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
 
 Future<bool> installPythonLibs() async{
   print("Installing python libraries used for tts generation. This will use pip to install all libraries.");
-  final process = await Process.start('pip', ['install', 'transformers', 'datasets', 'torch', 'soundfile', 'gtts']);
+    final process = await Process.start('pip', ['install', '-r', 'requirements.txt'], workingDirectory: prePath);
         process.stdout.transform(utf8.decoder).listen((data) {
           stdout.write(data);
         });
@@ -342,4 +342,13 @@ bool validateLink(String link) {
     }
   }
   return false;
+}
+
+getBackgroundVideo() async{
+  bool videoExists = await File("defaults\\video1.mp4").exists();
+  print(videoExists);
+  if (!videoExists){
+    printSuccess("Downloading video from youtube that will play in the background. The video being downloaded is https://www.youtube.com/watch?v=n_Dv4JMiwK8");
+    await Process.run("ytdl", ["-v", "https://www.youtube.com/watch?v=n_Dv4JMiwK8", "-o", "defaults/video1.mp4"], workingDirectory: prePath);
+  }
 }

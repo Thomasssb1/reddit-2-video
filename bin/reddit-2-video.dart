@@ -23,6 +23,8 @@ void main(
     });
   }
 
+  //await getBackgroundVideo();
+
   // get the arguments passed on command line
   var results = parse(arguments);
   ArgResults args = results['args'];
@@ -88,6 +90,10 @@ void main(
     bool ffmpegInstalled = await checkInstall('ffmpeg');
     if (!ffmpegInstalled) {
       await installFFmpeg(false);
+    }
+    bool pipInstalled = await checkInstall('pip');
+    if (!pipInstalled){
+      printWarning("You need to have pip installed in order to install the python dependencies");
     }
     await installPythonLibs();
   } else{
