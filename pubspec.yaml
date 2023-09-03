@@ -7,7 +7,7 @@ environment:
   sdk: ">=2.19.4 <3.0.0"
 
 executables:
-  reddit-2-video: main
+  reddit-2-video: reddit-2-video
 
 dev_dependencies:
   lints: ^2.0.0
