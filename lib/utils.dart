@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:http/http.dart';
 import 'package:wav/wav.dart';
 import 'dart:convert';
@@ -345,10 +346,22 @@ bool validateLink(String link) {
 }
 
 getBackgroundVideo() async{
-  bool videoExists = await File("defaults\\video1.mp4").exists();
-  print(videoExists);
+  bool videoExists = await File("$prePath\\defaults\\video1.mp4").exists();
   if (!videoExists){
     printSuccess("Downloading video from youtube that will play in the background. The video being downloaded is https://www.youtube.com/watch?v=n_Dv4JMiwK8");
     await Process.run("ytdl", ["-v", "https://www.youtube.com/watch?v=n_Dv4JMiwK8", "-o", "defaults/video1.mp4"], workingDirectory: prePath);
   }
+}
+
+int getRandomTime(int length){
+  final random = new Random();
+  int newTime(startTime, maxTime) => 0 + random.nextInt(maxTime);
+  
+  // temporarily store the video length as a fixed value
+  int videoLength = Duration(seconds: 4813).inMilliseconds;
+
+  int maxTime = videoLength - length;
+
+  return newTime(0, maxTime);
+
 }

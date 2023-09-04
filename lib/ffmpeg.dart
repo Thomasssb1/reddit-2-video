@@ -170,6 +170,8 @@ Future<List<String>> generateCommand(
     }
   }
 
+  int startTime = getRandomTime(end+100);
+
   // create a list of each argument required for ffmpeg
   command.addAll([
     // if the music argument is added then add that as an input stream
@@ -192,9 +194,9 @@ Future<List<String>> generateCommand(
     '[final_a]',
     // trim video between 0s and end time calculated
     '-ss',
-    '0ms',
+    '${startTime}ms',
     '-to',
-    '${end + 100}ms',
+    '${startTime + end + 100}ms',
     '-filter_complex',
     // *
     "${inputStreams.join(' ')} concat=n=$ttsCount:v=0:a=1${(music.isNotEmpty) ? "[0a];[${ttsCount + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge" : ""}[final_a], crop=585:1080, subtitles='$subtitlePath', fps=$fps",
