@@ -23,7 +23,7 @@ void main(
     });
   }
 
-  //await getBackgroundVideo();
+  await getBackgroundVideo();
 
   // get the arguments passed on command line
   var results = parse(arguments);
