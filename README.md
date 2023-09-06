@@ -56,4 +56,4 @@ python: [Windows](https://www.python.org/downloads/windows/), [MacOS](https://ww
 ### Warning
 The TTS sometimes skips words due to the regex filter used. Any other issues you might face is likely due to the fact I am still developing this, updates will be releasing daily.<br> Another thing to mention is that I do plan on getting this added to several package managers if possible to streamline the setup process.
 ### Help
-Use the flag `-help` for more help and information.
+Use the option `--help` for more help and information.
