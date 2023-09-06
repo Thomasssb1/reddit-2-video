@@ -25,6 +25,7 @@ This will install ffmpeg and whisper_timestamped that are required to run reddit
 >```sh
 >$ dart pub global activate --source path reddit-2-video
 >```
+>Ensure that the dev variable in `lib/utils/prepath.dart` is set to true.<br>
 >You can now run reddit-2-video throughout your file system and rebuild whenever you change the source code.
 </details>
 
