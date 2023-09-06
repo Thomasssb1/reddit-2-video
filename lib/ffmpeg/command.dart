@@ -1,0 +1,63 @@
+import 'package:args/args.dart';
+import 'package:reddit_2_video/utils/prepath.dart';
+import 'package:path/path.dart' as p;
+import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/tts/get.dart';
+
+List<String> generateCommand(ArgResults args, Duration endTime) {
+  String output = args['output'];
+  String fileType = args['file-type'];
+  List<String> music = args['music'];
+  String fps = args['framerate'];
+  String subtitlePath = prePath[0] +
+      r"\" +
+      prePath.substring(1, prePath.length).replaceAll(r'\', r'\\') +
+      r"\\.temp\\comments.ass";
+
+  // if the output provided is a directory
+  if (output.endsWith('/')) {
+    print("No filename provided - using a default filename.");
+    // creates new filename called final
+    output += "final";
+  } // if the output provided is a file
+  else {
+    // get the filename and file-extension from the output path provided
+    String fileName = p.basename(output);
+    String fileExtension = fileName
+        .split(RegExp(r'^.*(?=(\.[0-9a-z]+$))'))
+        .last
+        .replaceFirst('.', '');
+    // remove the file extension from the output path
+    output = output.replaceAll(".$fileExtension", '');
+    // if the file-extension from the output path provided
+    // is not the same as the file-type argument provided
+    if (fileExtension != fileType) {
+      printWarning(
+          "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the --file-type option ($fileType).\n If you do not want this to happen, then change the value of the --file-type flag to match the desired output type.\n");
+    }
+  }
+
+  List<String> ttsFiles = getTTSFiles();
+  List<String> inputStreams =
+      List.generate(ttsFiles.length, (index) => "[${index + 1}:a]");
+
+  List<String> command = [
+    "-i", "$prePath/.temp/video.mp4",
+    ...List.generate(ttsFiles.length,
+            (index) => ["-i", "$prePath/.temp/tts/tts-$index.mp3"],
+            growable: false)
+        .expand((e) => e)
+        .toList(),
+    if (args['music'].isNotEmpty) ...["-i", args['music'][0]],
+    if (args['override']) '-y',
+    if (!args['verbose']) ...['-loglevel', 'quiet'],
+    '-map',
+    '[final_a]',
+    '-filter_complex',
+    // *
+    "${inputStreams.join(' ')} concat=n=${ttsFiles.length}:v=0:a=1${(music.isNotEmpty) ? '[0a];[${ttsFiles.length + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];[0:v]crop=585:1080, subtitles='$subtitlePath', fps=$fps",
+    '$output.$fileType'
+  ];
+  print(command);
+  return command;
+}

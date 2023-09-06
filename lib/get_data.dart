@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-
-import 'package:reddit_2_video/utils.dart';
-import 'package:reddit_2_video/log.dart';
+import 'package:reddit_2_video/utils/log.dart';
+import 'package:reddit_2_video/utils/http.dart';
+import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 
@@ -29,7 +29,8 @@ Future<List<dynamic>> getPostData(
     linkUri = Uri.parse("$subreddit.json");
     if (type == 'multi') {
       // can't use a singular link if you want to have multiple posts
-      printError("Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
+      printError(
+          "Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
       exit(1);
     }
   }
@@ -47,7 +48,8 @@ Future<List<dynamic>> getPostData(
         .asListOrEmpty((p0) {
           if ((!p0('data', 'stickied').asBoolOrFalse())) {
             // ignore any comments pinned to the subreddit (normally mod posts)
-            if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >= commentCount) {
+            if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >=
+                commentCount) {
               // check if the post has enough comments specified with -c
               if (isLink ? true : nsfw) {
                 // if the user has nsfw tag set to true (default)
@@ -56,8 +58,9 @@ Future<List<dynamic>> getPostData(
                   'id': p0('data', 'id').asStringOrNull(),
                   'body': p0('data', 'selftext').asStringOrNull() ?? '',
                   'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                  'created': p0('data', 'created').letOrNull(
-                      (pick) => DateTime.fromMillisecondsSinceEpoch(((pick.asDoubleOrNull() ?? 0.0) * 1000).round())),
+                  'created': p0('data', 'created').letOrNull((pick) =>
+                      DateTime.fromMillisecondsSinceEpoch(
+                          ((pick.asDoubleOrNull() ?? 0.0) * 1000).round())),
                   'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                   'media': p0('data', 'media').asBoolOrFalse(),
                   'nsfw': p0('data', 'over_18').asBoolOrNull() ?? false,
@@ -72,8 +75,9 @@ Future<List<dynamic>> getPostData(
                     'id': p0('data', 'id').asStringOrNull(),
                     'body': p0('data', 'selftext').asStringOrNull() ?? '',
                     'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                    'created': p0('data', 'created').letOrNull(
-                        (pick) => DateTime.fromMicrosecondsSinceEpoch((pick.asDoubleOrNull() ?? 0.0).round())),
+                    'created': p0('data', 'created').letOrNull((pick) =>
+                        DateTime.fromMicrosecondsSinceEpoch(
+                            (pick.asDoubleOrNull() ?? 0.0).round())),
                     'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                     'media': p0('data', 'media').asBoolOrFalse(),
                     'nsfw': false,
@@ -85,14 +89,18 @@ Future<List<dynamic>> getPostData(
           }
           // filter out any null values from the values returned
         })
-        .where((element) => element != null && element['id'] != null && checkLog(element['id']) == false)
+        .where((element) =>
+            element != null &&
+            element['id'] != null &&
+            checkLog(element['id']) == false)
         .toList();
     if (data.isEmpty) {
       if (isLink) {
         printError(
             "The link provided in --subreddit has already had a video been generated previously. You can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
       } else {
-        printError("No posts could be found for the subreddit. Try again with another subreddit.");
+        printError(
+            "No posts could be found for the subreddit. Try again with another subreddit.");
       }
       exit(0);
     }
@@ -107,17 +115,20 @@ Future<List<dynamic>> getPostData(
       for (final post in data) {
         // output relevant information
         printUnderline("${post['title']}\n");
-        print("\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mComments: ${post['comments']} \x1b[0m\n");
+        print(
+            "\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mComments: ${post['comments']} \x1b[0m\n");
         print(
             "Created: ${post['created']}, ${post['spoiler'] ? 'This post \x1b[31mis\x1b[0m marked as a spoiler' : ''}\n");
         if (post['media']) {
           print("Media: ${post['media']}\n");
         }
         if (nsfw) {
-          print("This post is${post['nsfw'] ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
+          print(
+              "This post is${post['nsfw'] ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
         }
         printUnderline("Post ${data.indexOf(post) + 1}/${data.length}.");
-        print("Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+        print(
+            "Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
         if (type == 'multi') {
           print("You can also enter 'skip' to skip all remaining posts. ");
         }
@@ -132,7 +143,8 @@ Future<List<dynamic>> getPostData(
             break;
           }
         } // if the user entered skip and the type selected is multi
-        else if (continueGeneration.toLowerCase() == 'skip' && type == 'multi') {
+        else if (continueGeneration.toLowerCase() == 'skip' &&
+            type == 'multi') {
           break;
         } // if the user entered no or otherwise
         else {
@@ -150,7 +162,11 @@ Future<List<dynamic>> getPostData(
     if (type == 'comments') {
       // send a new request to get all comments for the post
       var commentResponse = await client.get(Uri.https(
-          "reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/${data[0]['id']}.json", {"sort": commentSort}));
+          "reddit.com",
+          isLink
+              ? linkUri.path
+              : "/r/$subreddit/comments/${data[0]['id']}.json",
+          {"sort": commentSort}));
       // check if the response returned is valid otherwise exit with an error
       bool valid = checkStatusCode(response, "Comment");
 
@@ -167,11 +183,16 @@ Future<List<dynamic>> getPostData(
               };
             })
             .where((element) =>
-                element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
+                element['body'] != null &&
+                (element['body'] ??= "").length <= 512 &&
+                element['body'] != "[removed]")
             .toList();
         // reduce the number of comments
-        commentData =
-            commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
+        commentData = commentData.sublist(
+            0,
+            commentData.length < 3 * commentCount
+                ? commentData.length
+                : 3 * commentCount);
         // combine postData about comments with post and reduce the data
         writeToLog(postData[0]);
         postData = postData.map((e) => [e['title'], e['body']]).toList();
@@ -198,7 +219,8 @@ Future<List<dynamic>> getPostData(
       } else {
         // if the user selected no posts
         if (postData.isEmpty) {
-          printError("You haven't selected any posts. Retry but ensure that atleast one post is selected.");
+          printError(
+              "You haven't selected any posts. Retry but ensure that atleast one post is selected.");
           exit(1);
         }
         // if the user selected too little posts as specified in commentCount arg
@@ -225,38 +247,4 @@ Future<List<dynamic>> getPostData(
   } else {
     exit(1);
   }
-}
-
-/// runs the ffmpeg command on cli and listens for any updates
-generateVideo(
-  List<String> command,
-) async {
-  // starts the process
-
-  bool installed = await checkInstall('ffmpeg');
-  if (!installed) {
-    await installFFmpeg(true);
-  }
-  final process = await Process.start('ffmpeg', command);
-
-  late String errorMessage;
-  // listen for anything that is written to the cli
-  process.stderr.transform(utf8.decoder).listen((data) {
-    stdout.write(data);
-    errorMessage = data;
-  });
-  // listen for any inputs from the user
-  stdin.pipe(process.stdin);
-  int code = await process.exitCode;
-  // if the process completed successfully
-  if (code == 0) {
-    printSuccess(
-        "Video generation completed, check the directory you provided for the final video otherwise it is in the directory that you called the command from.");
-  } // if the process errored
-  else {
-    printError(
-        "Video generation unable to be completed. The most common errors include using incorrect path to files, make sure to check before trying again.\nError code: $code\n$errorMessage");
-  }
-  // clear everything inside of the temporary files & tts folder
-  clearTemp();
 }

@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:reddit_2_video/utils.dart';
+import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/utils/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
-
-String prePath = File(Platform.resolvedExecutable).parent.parent.path;
+import 'package:reddit_2_video/utils/prepath.dart';
 
 /// check if the visited_log.txt file contains the post that is currently being fetched
 bool checkLog(
@@ -67,14 +67,16 @@ void flushLog(
       var json = jsonDecode(utf8.decode(response.bodyBytes));
       // try/catch used if an incorrect link is given which doesn't contain an id in the json data
       try {
-        String id = pick(json[0], 'data', 'children', 0, 'data', 'id').asStringOrThrow();
+        String id = pick(json[0], 'data', 'children', 0, 'data', 'id')
+            .asStringOrThrow();
         // read lines as a list and remove any entries that match the id
         final lines = await logFile.readAsLines();
         lines.removeWhere((element) => element == id);
         // turn the list into a \n split file
         await logFile.writeAsString(lines.join('\n'));
       } catch (e) {
-        printError("Incorrect link, the following link is not a valid link.\nLink: $link, \nError: $e");
+        printError(
+            "Incorrect link, the following link is not a valid link.\nLink: $link, \nError: $e");
         exit(1);
       }
     }
