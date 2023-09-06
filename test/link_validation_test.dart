@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:reddit_2_video/utils.dart';
+import 'package:reddit_2_video/utils/http.dart';
 
 void main() {
   group("Link validation", () {
