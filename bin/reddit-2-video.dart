@@ -133,7 +133,7 @@ void main(
       printWarning(
           "You need to have pip installed in order to install the python dependencies");
     }
-    await installPythonLibs();
+    await installWhisper();
   } else {
     printError(
         'There is no such command. Try again but instead use a pre-existing command, for more information run reddit-2-video --help');

@@ -90,18 +90,7 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
   exit(code);
 }
 
-installPythonLibs() async {
-  print(
-      "Installing python libraries used for tts generation. This will use pip to install all libraries.");
-  int libsuccess = await runCommand(
-      'pip', ['install', '-r', 'requirements.txt'], true, prePath);
-  if (libsuccess == 0) {
-    printSuccess(
-        "Successfully installed python libraries using pip.\nInstalled transformers, datasets, torch, soundfile, gtts libraries for python.");
-  } else {
-    printWarning(
-        "Whilst trying to install python libraries using pip something went wrong. Error code: $libsuccess");
-  }
+installWhisper() async {
   int wispersuccess = await runCommand('pip3',
       ['install', 'git+https://github.com/linto-ai/whisper-timestamped'], true);
   if (wispersuccess != 0) {
