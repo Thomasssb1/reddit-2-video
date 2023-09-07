@@ -2,7 +2,7 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'package:path/path.dart' as p;
 
-splitVideo(String output, String fileType) async {
+splitVideo(String output, String fileType, int count) async {
   String fileName = p.basename(output);
   String fileExtension = fileName
       .split(RegExp(r'^.*(?=(\.[0-9a-z]+$))'))
@@ -24,7 +24,7 @@ splitVideo(String output, String fileType) async {
         '00:00:55',
         '-f',
         'segment',
-        '$output%03d.mp4',
+        '$output${(count == 0) ? "" : count}%03d.mp4',
       ],
       true);
   if (code == 0) {

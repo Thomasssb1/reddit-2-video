@@ -16,6 +16,8 @@ import 'package:reddit_2_video/utils/cleanup.dart';
 import 'package:reddit_2_video/utils/install.dart';
 import 'package:reddit_2_video/tts/aws.dart';
 import 'dart:convert';
+import 'package:reddit_2_video/utils/http.dart';
+import 'package:remove_emoji/remove_emoji.dart';
 
 /// [enable preview ffplay]
 /// [add styling to title and fade in etc using .ass]
@@ -46,82 +48,98 @@ void main(
   var results = parse(arguments);
   ArgResults args = results['args'];
 
+  var removeEmoji = RemoveEmoji();
+
   //if (args['aws']) {
   //await pollyPutLexeme();
   //}
 
+  String repeat = args['repeat'];
+
+  if (validateLink(args['subreddit'])) {
+    repeat = "1";
+  }
+
   // if the command was the default generation command
   if (results['command'] == null) {
-    // get all post data
-    final List<dynamic> postData = await getPostData(
-      args['subreddit'], // subreddit
-      args['sort'], // sort
-      args['nsfw'], // nsfw tag
-      int.parse(args['count']), // min number of comments
-      args['comment-sort'], // sort for comments
-      args['post-confirmation'], // check each post
-      args['type'], // post type (e.g. comment or multi)
-    );
+    for (int i = 0; i < int.parse(repeat); i++) {
+      // get all post data
+      final List<dynamic> postData = await getPostData(
+        args['subreddit'], // subreddit
+        args['sort'], // sort
+        args['nsfw'], // nsfw tag
+        int.parse(args['count']), // min number of comments
+        args['comment-sort'], // sort for comments
+        args['post-confirmation'], // check each post
+        args['type'], // post type (e.g. comment or multi)
+      );
 
-    bool alternateTTS = (args['alternate'][0] == 'on' ? true : false);
-    bool alternateColour = (args['alternate'][1] == 'on' ? true : false);
-    String titleColour = args['alternate'][2];
+      bool alternateTTS = (args['alternate'][0] == 'on' ? true : false);
+      bool alternateColour = (args['alternate'][1] == 'on' ? true : false);
+      String titleColour = args['alternate'][2];
 
-    final config = await File("$prePath/defaults/config.json").readAsString();
-    final json = jsonDecode(config);
-    List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
-    int currentTTS = 0;
-    String voice = alternateTTS ? voices[currentTTS] : args['voice'];
+      final config = await File("$prePath/defaults/config.json").readAsString();
+      final json = jsonDecode(config);
+      List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
+      int currentTTS = 0;
+      String voice = alternateTTS ? voices[currentTTS] : args['voice'];
 
-    // if the data collected returned nothing (e.g. subreddit has no posts)
-    if (postData.isNotEmpty) {
-      int counter = 0;
+      // if the data collected returned nothing (e.g. subreddit has no posts)
+      if (postData.isNotEmpty) {
+        int counter = 0;
 
-      for (final post in postData) {
-        for (int i = 0; i < post.length; i++) {
-          // if an aspect of the post doesn't contain any text
-          // if ignored will produce weird noise in tts
-          if (post[i].isNotEmpty) {
-            List<String> textSegments = splitText(post[i]);
-            print(textSegments.length);
-            for (String text in textSegments) {
-              bool ttsSuccess =
-                  await generateTTS(text, counter, args['ntts'], voice);
+        String prevText = "";
 
-              bool alignSuccess =
-                  await alignSubtitles(counter, text, args['verbose']);
+        for (final post in postData) {
+          for (int i = 0; i < post.length; i++) {
+            // if an aspect of the post doesn't contain any text
+            // if ignored will produce weird noise in tts
+            post[i] = removeEmoji.clean(post[i]);
+            if (post[i].isNotEmpty) {
+              List<String> textSegments = splitText(post[i]);
+              for (String text in textSegments) {
+                if (text.isNotEmpty) {
+                  bool ttsSuccess = await generateTTS(
+                      text, counter, args['ntts'], voice, args['censor']);
 
-              if (!alignSuccess || !ttsSuccess) {
-                exit(0);
-              } else {
-                counter++;
+                  bool alignSuccess =
+                      await alignSubtitles(counter, prevText, args['verbose']);
+
+                  if (!alignSuccess || !ttsSuccess) {
+                    exit(0);
+                  } else {
+                    counter++;
+                  }
+                  prevText = text;
+                }
               }
             }
+            currentTTS = ++currentTTS % voices.length;
           }
-          currentTTS = ++currentTTS % voices.length;
         }
-      }
 
-      Duration endTime =
-          await generateSubtitles(titleColour, alternateColour, args['aws']);
+        Duration endTime =
+            await generateSubtitles(titleColour, alternateColour, args['aws']);
 
-      bool cutSuccess = await cutVideo(endTime, args['verbose']);
-      if (!cutSuccess) {
-        exit(0);
-      }
+        bool cutSuccess = await cutVideo(endTime, args['verbose']);
+        if (!cutSuccess) {
+          exit(0);
+        }
 
-      List<String> command = generateCommand(args, endTime);
-      bool ffmpegSuccess = await runFFMPEGCommand(command, args['output']);
-      if (!ffmpegSuccess) {
-        exit(0);
-      }
+        List<String> command = generateCommand(args, endTime, i);
+        bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
+        if (!ffmpegSuccess) {
+          exit(0);
+        }
 
-      if (args['youtube-short']) {
-        await splitVideo(args['output'], args['file-type']);
+        if (args['youtube-short']) {
+          await splitVideo(args['output'], args['file-type'], i);
+        }
+        await clearTemp();
+      } else {
+        // output error
+        printError("No post(s) found... Try again.");
       }
-    } else {
-      // output error
-      printError("No post(s) found... Try again.");
     }
     // if the command is flush
   } else if (results['command'] == 'flush') {

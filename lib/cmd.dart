@@ -64,6 +64,11 @@ dynamic parse(
     help:
         'The accent to be used when not using aws tts.\nUse a top-level-domain from google such as com.mx or co.uk. (not implemented)',
   );
+  parser.addOption('repeat',
+      help:
+          "How many times the program should repeat - does not work for links but works for subreddits.",
+      valueHelp: 'Integer value',
+      defaultsTo: "1");
   parser.addOption('video',
       defaultsTo: 'defaults/video1.mp4',
       abbr: 'p',
@@ -84,6 +89,10 @@ dynamic parse(
       allowed: ['15', '30', '45', '60', '75', '120', '144'],
       help:
           'The framerate used when generating the video - using a higher framerate will take longer and produce a larger file.');
+  parser.addFlag('censor',
+      defaultsTo: false,
+      help:
+          "Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.");
   parser.addFlag('verbose', abbr: 'v', defaultsTo: false);
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help', hide: true);
@@ -118,18 +127,24 @@ dynamic parse(
     } else if (results.wasParsed('gtts')) {
       printError(
           'GTTS does not currently work, in order to get tts you will need to use AWS-Polly which can be enabled by the -aws flag');
-    } else if (results.wasParsed('aws') && results.wasParsed('local-tts')) {
+    } else if (results.wasParsed('aws') && results.wasParsed('gtts')) {
       printError(
           'Both tts options -aws and -local-tts cannot be active at the same time.');
+      exit(0);
+    } else if (int.tryParse(results['repeat']) == null) {
+      printError('The value provided for --repeat must be an integer.');
       exit(0);
     } else if (results.wasParsed('ntts') && results.wasParsed('gtts')) {
       printError(
           'The flag -ntts does not affect local-tts but only aws tts. Using both flags at the same time will not affect the voice used for local-tts.');
+    } else if (results.wasParsed('gtts') && results.wasParsed('censor')) {
+      printError(
+          'The flag --censor does not affect local-tts but only aws tts.');
     }
     // return map of command and args
     return {'command': null, 'args': results};
     // if the command is flush
-  } else if (results.command!.name == 'f``lush') {
+  } else if (results.command!.name == 'flush') {
     return {'command': 'flush', 'args': flush.parse(args)};
     // if the command is install
   } else if (results.command!.name == 'install') {
