@@ -1,16 +1,21 @@
+import 'dart:async';
+
 import 'package:reddit_2_video/utils/prepath.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'dart:io';
 
 Future<bool> alignSubtitles(int counter, String text, bool verbose) async {
-  final loadingMessage =
-      Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
-    return "Aligning subtitles ${secondCount + 1}s";
-  });
-  var msg = loadingMessage.listen((text) {
-    stdout.write("\r$text");
-  });
+  StreamSubscription<String> msg = Stream<String>.empty().listen((event) {});
+  if (!verbose) {
+    final loadingMessage =
+        Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
+      return "Aligning subtitles ${secondCount + 1}s";
+    });
+    msg = loadingMessage.listen((text) {
+      stdout.write("\r$text");
+    });
+  }
   int code = await runCommand(
       'whisper_timestamped',
       [
@@ -26,7 +31,7 @@ Future<bool> alignSubtitles(int counter, String text, bool verbose) async {
         '--output_dir',
         '$prePath/.temp/config'
       ],
-      false);
+      verbose);
   msg.cancel();
   if (code == 0) {
     printSuccess(
