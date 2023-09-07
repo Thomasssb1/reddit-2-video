@@ -43,7 +43,7 @@ Future<bool> cutVideo(Duration endTime, bool verbose) async {
         '-ss',
         '${startTime}ms',
         '-to',
-        '${startTime + endTime.inMilliseconds + 100}ms',
+        '${startTime + endTime.inMilliseconds + 500}ms',
         '-y',
         '-nostdin',
         '-i',
