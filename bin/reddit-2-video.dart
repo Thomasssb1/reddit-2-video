@@ -1,8 +1,10 @@
 import 'package:args/args.dart';
 import 'package:reddit_2_video/ffmpeg/command.dart';
 import 'package:reddit_2_video/ffmpeg/execute.dart';
+import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'package:reddit_2_video/subtitles/align.dart';
 import 'package:reddit_2_video/subtitles/generate.dart';
+import 'package:reddit_2_video/tts/split.dart';
 import 'dart:io';
 import 'package:reddit_2_video/utils/log.dart';
 import 'package:reddit_2_video/get_data.dart';
@@ -80,16 +82,20 @@ void main(
           // if an aspect of the post doesn't contain any text
           // if ignored will produce weird noise in tts
           if (post[i].isNotEmpty) {
-            bool ttsSuccess =
-                await generateTTS(post[i], counter, args['ntts'], voice);
+            List<String> textSegments = splitText(post[i]);
+            print(textSegments.length);
+            for (String text in textSegments) {
+              bool ttsSuccess =
+                  await generateTTS(text, counter, args['ntts'], voice);
 
-            bool alignSuccess =
-                await alignSubtitles(counter, post[i], args['verbose']);
+              bool alignSuccess =
+                  await alignSubtitles(counter, text, args['verbose']);
 
-            if (!alignSuccess || !ttsSuccess) {
-              exit(0);
-            } else {
-              counter++;
+              if (!alignSuccess || !ttsSuccess) {
+                exit(0);
+              } else {
+                counter++;
+              }
             }
           }
           currentTTS = ++currentTTS % voices.length;
@@ -108,6 +114,10 @@ void main(
       bool ffmpegSuccess = await runFFMPEGCommand(command, args['output']);
       if (!ffmpegSuccess) {
         exit(0);
+      }
+
+      if (args['youtube-short']) {
+        await splitVideo(args['output'], args['file-type']);
       }
     } else {
       // output error

@@ -69,6 +69,10 @@ dynamic parse(
       abbr: 'p',
       valueHelp: "Path to the video that plays in the background.");
   parser.addMultiOption('music', valueHelp: "path,volume");
+  parser.addFlag('youtube-short',
+      help:
+          "Whether or not to produce the final long form video with several videos split by a minute length.",
+      defaultsTo: false);
   parser.addOption('output',
       abbr: 'o',
       defaultsTo: 'final',
