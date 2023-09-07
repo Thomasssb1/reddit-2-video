@@ -31,7 +31,7 @@ List<String> generateCommand(ArgResults args, Duration endTime) {
     output = output.replaceAll(".$fileExtension", '');
     // if the file-extension from the output path provided
     // is not the same as the file-type argument provided
-    if (fileExtension != fileType) {
+    if (fileExtension != fileType && fileExtension.isNotEmpty) {
       printWarning(
           "\nOutput file extension does not match the requested filetype, overriding the filetype to be the same as the value of the --file-type option ($fileType).\n If you do not want this to happen, then change the value of the --file-type flag to match the desired output type.\n");
     }

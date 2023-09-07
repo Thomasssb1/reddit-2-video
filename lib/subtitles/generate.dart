@@ -38,31 +38,36 @@ Future<Duration> generateSubtitles(
     for (final segment in json['segments']) {
       List<dynamic> wordSet = [];
       num characterCount = 0;
-      for (final word in segment['words']) {
-        if (characterCount + word['text'].length > maxCharacterCount) {
-          karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0);
-          wordSet = [
-            {
+      // whisper_timestamped sometimes hallucinates you
+      if (segment['words'] != ['you']) {
+        for (final word in segment['words']) {
+          if (characterCount + word['text'].length > maxCharacterCount) {
+            karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0,
+                bodyColour, titleColour);
+            wordSet = [
+              {
+                "text": word['text'],
+                "end": (word['end'] * 1000).toInt(),
+                "start": (word['start'] * 1000).toInt()
+              }
+            ];
+            characterCount = 0;
+          } else {
+            wordSet.add({
               "text": word['text'],
               "end": (word['end'] * 1000).toInt(),
               "start": (word['start'] * 1000).toInt()
-            }
-          ];
-          characterCount = 0;
-        } else {
-          wordSet.add({
-            "text": word['text'],
-            "end": (word['end'] * 1000).toInt(),
-            "start": (word['start'] * 1000).toInt()
-          });
-          characterCount += word['text'].length;
+            });
+            characterCount += word['text'].length;
+          }
+          time = Duration(
+              milliseconds:
+                  (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
         }
-        time = Duration(
-            milliseconds:
-                (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
-      }
-      if (wordSet.isNotEmpty) {
-        karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0);
+        if (wordSet.isNotEmpty) {
+          karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour,
+              titleColour);
+        }
       }
     }
     prevFileTime = (Duration(milliseconds: time.inMilliseconds));
@@ -73,12 +78,12 @@ Future<Duration> generateSubtitles(
 }
 
 karaokeEffect(List<dynamic> line, dynamic sinkComments, Duration prevFileTime,
-    bool isTitle) {
+    bool isTitle, String bodyColour, String titleColour) {
   for (int i = 0; i < line.length; i++) {
     print(line.sublist(0, i + 1).map((e) => e['text']).join(' '));
     sinkComments.writeln(
         "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +
-            (isTitle ? r"{\c&H0000FF}" : "") +
+            (isTitle ? r"{\c&" + "$titleColour}" : r"{\c&" + "$bodyColour}") +
             r"{\an5\frz0}" +
             line
                 .sublist(0, i + 1)

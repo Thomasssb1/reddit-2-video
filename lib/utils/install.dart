@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
-import 'package:reddit_2_video/utils/prepath.dart';
 
 Future<bool> installFFmpeg(bool continueGeneration) async {
   print(
