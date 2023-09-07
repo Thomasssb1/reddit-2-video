@@ -1,5 +1,3 @@
-// need to figure out what happens if the segment contains no punctuation
-
 int maxLength = 3000;
 List<String> splitText(String text) {
   List<String> newText = [];
@@ -15,9 +13,20 @@ List<String> splitText(String text) {
       newText.add(text.substring(endPoints[prevIndex], endPoints[i - 1]));
       prevIndex = i - 1;
     } else if (i == endPoints.length - 1) {
-      newText.add(text.substring(endPoints[prevIndex], endPoints[i]));
+      if (i != 0) {
+        newText.add(text.substring(endPoints[prevIndex], endPoints[i]));
+      }
       newText.add(text.substring(endPoints[i], text.length));
     }
   }
-  return newText;
+  List<String> tempText = [];
+  RegExp splitMatch = RegExp('.{1,$maxLength}');
+  for (final line in newText) {
+    if (line.length > maxLength) {
+      tempText.addAll(splitMatch.allMatches(line).map((e) => e[0]!).toList());
+    } else {
+      tempText.add(line);
+    }
+  }
+  return tempText;
 }
