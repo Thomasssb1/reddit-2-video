@@ -2,7 +2,8 @@ import 'package:reddit_2_video/utils/prepath.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 
-generateTTS(String text, int counter, bool ntts, String voice) async {
+generateTTS(
+    String text, int counter, bool ntts, String voice, bool censor) async {
   var ttsResult = await runCommand(
       'aws',
       [
@@ -16,6 +17,7 @@ generateTTS(String text, int counter, bool ntts, String voice) async {
         text,
         '--engine',
         ntts ? "neural" : "standard",
+        if (censor) '--lexicon-name=censor',
         '.temp/tts/tts-${counter}.mp3',
       ],
       true,
