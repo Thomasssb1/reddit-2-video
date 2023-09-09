@@ -17,3 +17,4 @@ dependencies:
   deep_pick: ^1.0.0
   http: ^0.13.6
   remove_emoji: ^0.0.10
+  path: ^1.8.3
