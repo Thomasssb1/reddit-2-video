@@ -128,6 +128,15 @@ Future<List<dynamic>> getPostData(
         }
         printUnderline("Post ${data.indexOf(post) + 1}/${data.length}.");
         print(
+            "Do you want to see the body of the post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+        // read the cli for what the user entered
+        String showBody = stdin.readLineSync() ?? 'n';
+        print(showBody);
+        // if the user entered yes
+        if (showBody.toLowerCase() == 'y') {
+          print(post['body']);
+        }
+        print(
             "Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
         if (type == 'multi') {
           print("You can also enter 'skip' to skip all remaining posts. ");
