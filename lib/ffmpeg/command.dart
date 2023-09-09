@@ -4,7 +4,8 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/tts/get.dart';
 
-List<String> generateCommand(ArgResults args, Duration endTime, int count) {
+List<String> generateCommand(
+    ArgResults args, Duration endTime, int count, bool horrorMode) {
   String output = args['output'];
   String fileType = args['file-type'];
   List<String> music = args['music'];
@@ -55,7 +56,7 @@ List<String> generateCommand(ArgResults args, Duration endTime, int count) {
     '[final_a]',
     '-filter_complex',
     // *
-    "${inputStreams.join(' ')} concat=n=${ttsFiles.length}:v=0:a=1${(music.isNotEmpty) ? '[0a];[${ttsFiles.length + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];[0:v]crop=585:1080, subtitles='$subtitlePath', fps=$fps",
+    "${inputStreams.join(' ')} concat=n=${ttsFiles.length}:v=0:a=1${horrorMode ? ',rubberband=pitch=0.8' : ''}${(music.isNotEmpty) ? '[0a];[${ttsFiles.length + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];[0:v]crop=585:1080, subtitles='$subtitlePath', fps=$fps",
     '$output${(count == 0) ? "" : count}.$fileType'
   ];
   return command;

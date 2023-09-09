@@ -17,7 +17,7 @@ dynamic parse(
       allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
   parser.addOption('count',
       defaultsTo: '8', help: 'Minimum number of comments.');
-  parser.addOption('type', defaultsTo: 'comments', allowed: [
+  parser.addOption('type', defaultsTo: 'post', allowed: [
     'comments',
     'post',
     'multi'
@@ -76,8 +76,10 @@ dynamic parse(
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addFlag('youtube-short',
       help:
-          "Whether or not to produce the final long form video with several videos split by a minute length.",
+          "Whether or not to produce the final long form video with several videos split by a minute length as well as the full video.",
       defaultsTo: false);
+  parser.addFlag('horror',
+      help: "Lowers the pitch from TTS for creepy stories.", defaultsTo: false);
   parser.addOption('output',
       abbr: 'o',
       defaultsTo: 'final',
