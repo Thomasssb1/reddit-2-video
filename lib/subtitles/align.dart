@@ -5,7 +5,7 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'dart:io';
 
-Future<bool> alignSubtitles(int counter, String text, bool verbose) async {
+Future<bool> alignSubtitles(int counter, String prevText, bool verbose) async {
   StreamSubscription<String> msg = Stream<String>.empty().listen((event) {});
   if (!verbose) {
     final loadingMessage =
@@ -26,8 +26,10 @@ Future<bool> alignSubtitles(int counter, String text, bool verbose) async {
         'json',
         '--compute_confidence',
         'False',
-        '--initial_prompt',
-        text,
+        if (prevText.isNotEmpty) ...[
+          '--initial_prompt',
+          prevText,
+        ],
         '--output_dir',
         '$prePath/.temp/config'
       ],

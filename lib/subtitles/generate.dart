@@ -39,7 +39,7 @@ Future<Duration> generateSubtitles(
       List<dynamic> wordSet = [];
       num characterCount = 0;
       // whisper_timestamped sometimes hallucinates you
-      if (segment['words'] != ['you']) {
+      if (segment['words'][0]['text'] != ['you']) {
         for (final word in segment['words']) {
           if (characterCount + word['text'].length > maxCharacterCount) {
             karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0,
