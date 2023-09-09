@@ -17,7 +17,7 @@ import 'package:reddit_2_video/utils/install.dart';
 import 'package:reddit_2_video/tts/aws.dart';
 import 'dart:convert';
 import 'package:reddit_2_video/utils/http.dart';
-import 'package:remove_emoji/remove_emoji.dart';
+import 'package:reddit_2_video/utils/remove_characters.dart';
 
 /// [enable preview ffplay]
 /// [add styling to title and fade in etc using .ass]
@@ -48,20 +48,20 @@ void main(
   var results = parse(arguments);
   ArgResults args = results['args'];
 
-  var removeEmoji = RemoveEmoji();
-
-  //if (args['aws']) {
-  //await pollyPutLexeme();
-  //}
-
-  String repeat = args['repeat'];
-
-  if (validateLink(args['subreddit'])) {
-    repeat = "1";
-  }
-
   // if the command was the default generation command
   if (results['command'] == null) {
+    var removeCharacter = RemoveCharacters();
+
+    //if (args['aws']) {
+    //await pollyPutLexeme();
+    //}
+
+    String repeat = args['repeat'];
+
+    if (validateLink(args['subreddit'])) {
+      repeat = "1";
+    }
+
     for (int i = 0; i < int.parse(repeat); i++) {
       // get all post data
       final List<dynamic> postData = await getPostData(
@@ -94,7 +94,7 @@ void main(
           for (int i = 0; i < post.length; i++) {
             // if an aspect of the post doesn't contain any text
             // if ignored will produce weird noise in tts
-            post[i] = removeEmoji.clean(post[i]);
+            post[i] = removeCharacter.cleanse(post[i]);
             if (post[i].isNotEmpty) {
               List<String> textSegments = splitText(post[i]);
               for (String text in textSegments) {
@@ -126,7 +126,8 @@ void main(
           exit(0);
         }
 
-        List<String> command = generateCommand(args, endTime, i);
+        List<String> command =
+            generateCommand(args, endTime, i, args['horror']);
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);
