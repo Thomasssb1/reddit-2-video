@@ -5,7 +5,7 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/tts/get.dart';
 
 List<String> generateCommand(
-    ArgResults args, Duration endTime, int count, bool horrorMode) {
+    ArgResults args, Duration endTime, int count, bool horrorMode, String id) {
   String output = args['output'];
   String fileType = args['file-type'];
   List<String> music = args['music'];
@@ -13,7 +13,9 @@ List<String> generateCommand(
   String subtitlePath = prePath[0] +
       r"\" +
       prePath.substring(1, prePath.length).replaceAll(r'\', r'\\') +
-      r"\\.temp\\comments.ass";
+      r"\\.temp\\" +
+      id +
+      r"\\comments.ass";
 
   // if the output provided is a directory
   if (output.endsWith('/')) {
@@ -38,14 +40,14 @@ List<String> generateCommand(
     }
   }
 
-  List<String> ttsFiles = getTTSFiles();
+  List<String> ttsFiles = getTTSFiles(id);
   List<String> inputStreams =
       List.generate(ttsFiles.length, (index) => "[${index + 1}:a]");
 
   List<String> command = [
-    "-i", "$prePath/.temp/video.mp4",
+    "-i", "$prePath/.temp/$id/video.mp4",
     ...List.generate(ttsFiles.length,
-            (index) => ["-i", "$prePath/.temp/tts/tts-$index.mp3"],
+            (index) => ["-i", "$prePath/.temp/$id/tts/tts-$index.mp3"],
             growable: false)
         .expand((e) => e)
         .toList(),

@@ -5,7 +5,8 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'dart:io';
 
-Future<bool> alignSubtitles(int counter, String prevText, bool verbose) async {
+Future<bool> alignSubtitles(
+    int counter, String prevText, bool verbose, String id) async {
   StreamSubscription<String> msg = Stream<String>.empty().listen((event) {});
   if (!verbose) {
     final loadingMessage =
@@ -19,7 +20,7 @@ Future<bool> alignSubtitles(int counter, String prevText, bool verbose) async {
   int code = await runCommand(
       'whisper_timestamped',
       [
-        "$prePath/.temp/tts/tts-$counter.mp3",
+        "$prePath/.temp/$id/tts/tts-$counter.mp3",
         '--language',
         'en',
         '--output_format',
@@ -31,7 +32,7 @@ Future<bool> alignSubtitles(int counter, String prevText, bool verbose) async {
           prevText,
         ],
         '--output_dir',
-        '$prePath/.temp/config'
+        '$prePath/.temp/$id/config'
       ],
       verbose);
   msg.cancel();

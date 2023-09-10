@@ -4,7 +4,7 @@ version: 1.0.0
 repository: https://github.com/Thomasssb1/reddit-bot
 
 environment:
-  sdk: ">=2.19.4 <3.0.0"
+  sdk: ">=3.0.0"
 
 executables:
   reddit-2-video: reddit-2-video

@@ -33,7 +33,7 @@ int getRandomTime(int length) {
   return newTime(0, maxTime);
 }
 
-Future<bool> cutVideo(Duration endTime, bool verbose) async {
+Future<bool> cutVideo(Duration endTime, bool verbose, String id) async {
   print(
       "Cutting the video to a random point. This can take a while depending on the video size. Please wait.");
   int startTime = getRandomTime(endTime.inMilliseconds + 100);
@@ -49,7 +49,7 @@ Future<bool> cutVideo(Duration endTime, bool verbose) async {
         '-i',
         'defaults/video1.mp4',
         if (!verbose) ...['-loglevel', 'quiet'],
-        '.temp/video.mp4'
+        '.temp/$id/video.mp4'
       ],
       true,
       prePath);

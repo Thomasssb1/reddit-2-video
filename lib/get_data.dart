@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:reddit_2_video/utils/log.dart';
 import 'package:reddit_2_video/utils/http.dart';
+import 'package:reddit_2_video/utils/log.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
+import 'package:reddit_2_video/utils/generate_files.dart';
 
 /// get the data from the post such as title and body text
-Future<List<dynamic>> getPostData(
+Future<(String, List<dynamic>)> getPostData(
   String subreddit,
   String sort,
   bool nsfw,
@@ -34,6 +35,9 @@ Future<List<dynamic>> getPostData(
       exit(1);
     }
   }
+
+  late String id;
+
   // send a get request to the link
   var response = await client.get(Uri.https(linkUri.authority, linkUri.path));
   // check if the response returned is valid otherwise exit with an error
@@ -203,7 +207,8 @@ Future<List<dynamic>> getPostData(
                 ? commentData.length
                 : 3 * commentCount);
         // combine postData about comments with post and reduce the data
-        writeToLog(postData[0]);
+        id = postData[0]['id'];
+        generateFiles(id);
         postData = postData.map((e) => [e['title'], e['body']]).toList();
         postData[0].addAll(commentData.map((e) => e['body']).toList());
       } // if not valid
@@ -212,7 +217,8 @@ Future<List<dynamic>> getPostData(
       }
     } else if (type == 'post') {
       // reduce the data to only contain title and body
-      writeToLog(postData[0]);
+      id = postData[0]['id'];
+      generateFiles(id);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
     } else if (type == 'multi') {
       // if the user does not have postConfirm on
@@ -247,12 +253,13 @@ Future<List<dynamic>> getPostData(
         }
       }
       // write each id from each post to the log and reduce data
-      postData.forEach(writeToLog);
+      id = postData.map((e) => e['id']!).toList().join("-");
+      generateFiles(id);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
     }
     // end the client
     client.close();
-    return postData;
+    return (id, postData);
   } else {
     exit(1);
   }

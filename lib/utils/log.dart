@@ -37,13 +37,13 @@ bool checkLog(
 
 /// write the id of the post being generated to the log
 void writeToLog(
-  dynamic post,
+  String id,
 ) {
   // open log file for writing
   final File logFile = File("$prePath/.temp/visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
   // write new id on a new line
-  sink.writeln(post['id']);
+  sink.writeln(id);
   sink.close();
 }
 

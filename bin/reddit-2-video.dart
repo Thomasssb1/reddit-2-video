@@ -64,7 +64,7 @@ void main(
 
     for (int i = 0; i < int.parse(repeat); i++) {
       // get all post data
-      final List<dynamic> postData = await getPostData(
+      var (id, postData) = await getPostData(
         args['subreddit'], // subreddit
         args['sort'], // sort
         args['nsfw'], // nsfw tag
@@ -100,10 +100,10 @@ void main(
               for (String text in textSegments) {
                 if (text.isNotEmpty) {
                   bool ttsSuccess = await generateTTS(
-                      text, counter, args['ntts'], voice, args['censor']);
+                      text, counter, args['ntts'], voice, args['censor'], id);
 
-                  bool alignSuccess =
-                      await alignSubtitles(counter, prevText, args['verbose']);
+                  bool alignSuccess = await alignSubtitles(
+                      counter, prevText, args['verbose'], id);
 
                   if (!alignSuccess || !ttsSuccess) {
                     exit(0);
@@ -118,16 +118,16 @@ void main(
           }
         }
 
-        Duration endTime =
-            await generateSubtitles(titleColour, alternateColour, args['aws']);
+        Duration endTime = await generateSubtitles(
+            titleColour, alternateColour, args['aws'], id);
 
-        bool cutSuccess = await cutVideo(endTime, args['verbose']);
+        bool cutSuccess = await cutVideo(endTime, args['verbose'], id);
         if (!cutSuccess) {
           exit(0);
         }
 
         List<String> command =
-            generateCommand(args, endTime, i, args['horror']);
+            generateCommand(args, endTime, i, args['horror'], id);
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);
@@ -136,7 +136,8 @@ void main(
         if (args['youtube-short']) {
           await splitVideo(args['output'], args['file-type'], i);
         }
-        await clearTemp();
+        writeToLog(id);
+        await clearTemp(id);
       } else {
         // output error
         printError("No post(s) found... Try again.");
