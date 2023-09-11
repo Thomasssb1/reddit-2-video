@@ -7,8 +7,6 @@ List<String> splitText(String text) {
   endPoints.insert(0, 0);
   int prevIndex = 0;
   for (int i = 0; i < endPoints.length; i++) {
-    print(endPoints[i]);
-    print(endPoints[i] - endPoints[prevIndex]);
     if (endPoints[i] - endPoints[prevIndex] >= maxLength) {
       newText.add(text.substring(endPoints[prevIndex], endPoints[i - 1]));
       prevIndex = i - 1;

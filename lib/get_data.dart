@@ -101,7 +101,7 @@ Future<(String, List<dynamic>)> getPostData(
     if (data.isEmpty) {
       if (isLink) {
         printError(
-            "The link provided in --subreddit has already had a video been generated previously. You can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
+            "The link provided in --subreddit has already had a video been generated previously or the number of comments on the post is too little as specified by the --count option.\n If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied, or change the minimum number of comments required by changing the --count option.");
       } else {
         printError(
             "No posts could be found for the subreddit. Try again with another subreddit.");

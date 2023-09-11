@@ -81,7 +81,6 @@ Future<Duration> generateSubtitles(
 karaokeEffect(List<dynamic> line, dynamic sinkComments, Duration prevFileTime,
     bool isTitle, String bodyColour, String titleColour) {
   for (int i = 0; i < line.length; i++) {
-    print(line.sublist(0, i + 1).map((e) => e['text']).join(' '));
     sinkComments.writeln(
         "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +
             (isTitle ? r"{\c&" + "$titleColour}" : r"{\c&" + "$bodyColour}") +
