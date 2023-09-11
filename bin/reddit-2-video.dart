@@ -48,6 +48,9 @@ void main(
   var results = parse(arguments);
   ArgResults args = results['args'];
 
+  // for now use static
+  int endCardLength = 2;
+
   // if the command was the default generation command
   if (results['command'] == null) {
     var removeCharacter = RemoveCharacters();
@@ -121,13 +124,14 @@ void main(
         Duration endTime = await generateSubtitles(
             titleColour, alternateColour, args['aws'], id);
 
-        bool cutSuccess = await cutVideo(endTime, args['verbose'], id);
+        bool cutSuccess =
+            await cutVideo(endTime, args['verbose'], id, endCardLength);
         if (!cutSuccess) {
           exit(0);
         }
 
-        List<String> command =
-            generateCommand(args, endTime, i, args['horror'], id);
+        List<String> command = generateCommand(
+            args, endTime, i, args['horror'], id, endCardLength);
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);

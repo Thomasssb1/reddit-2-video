@@ -33,17 +33,18 @@ int getRandomTime(int length) {
   return newTime(0, maxTime);
 }
 
-Future<bool> cutVideo(Duration endTime, bool verbose, String id) async {
+Future<bool> cutVideo(
+    Duration endTime, bool verbose, String id, int endCardLength) async {
   print(
       "Cutting the video to a random point. This can take a while depending on the video size. Please wait.");
-  int startTime = getRandomTime(endTime.inMilliseconds + 100);
+  int startTime = getRandomTime(endTime.inMilliseconds + 1500 + endCardLength);
   int code = await runCommand(
       'ffmpeg',
       [
         '-ss',
         '${startTime}ms',
         '-to',
-        '${startTime + endTime.inMilliseconds + 500}ms',
+        '${startTime + endTime.inMilliseconds + 1500 + (endCardLength * 1000)}ms',
         '-y',
         '-nostdin',
         '-i',
@@ -55,7 +56,7 @@ Future<bool> cutVideo(Duration endTime, bool verbose, String id) async {
       prePath);
   if (code == 0) {
     printSuccess(
-        "Video has been cut between times ${getNewTime(Duration(milliseconds: startTime))} and ${getNewTime(Duration(milliseconds: startTime + endTime.inMilliseconds + 100))}.");
+        "Video has been cut between times ${getNewTime(Duration(milliseconds: startTime))} and ${getNewTime(Duration(milliseconds: startTime + endTime.inMilliseconds + 1500 + (endCardLength * 1000)))}.");
     return true;
   } else {
     printError(

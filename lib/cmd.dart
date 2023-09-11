@@ -95,6 +95,9 @@ dynamic parse(
       defaultsTo: false,
       help:
           "Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.");
+  parser.addOption('end-card',
+      help: 'Path to a gif & audio that will play at the end of the video.',
+      valueHelp: "path to gif");
   parser.addFlag('verbose', abbr: 'v', defaultsTo: false);
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help', hide: true);

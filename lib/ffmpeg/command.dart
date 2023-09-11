@@ -4,8 +4,8 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/tts/get.dart';
 
-List<String> generateCommand(
-    ArgResults args, Duration endTime, int count, bool horrorMode, String id) {
+List<String> generateCommand(ArgResults args, Duration endTime, int count,
+    bool horrorMode, String id, int endCardLength) {
   String output = args['output'];
   String fileType = args['file-type'];
   List<String> music = args['music'];
@@ -41,11 +41,12 @@ List<String> generateCommand(
   }
 
   List<String> ttsFiles = getTTSFiles(id);
-  List<String> inputStreams =
-      List.generate(ttsFiles.length, (index) => "[${index + 1}:a]");
+  List<String> inputStreams = List.generate(ttsFiles.length,
+      (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
 
   List<String> command = [
     "-i", "$prePath/.temp/$id/video.mp4",
+    if (args.wasParsed('end-card')) ...["-i", args['end-card']],
     ...List.generate(ttsFiles.length,
             (index) => ["-i", "$prePath/.temp/$id/tts/tts-$index.mp3"],
             growable: false)
@@ -58,7 +59,7 @@ List<String> generateCommand(
     '[final_a]',
     '-filter_complex',
     // *
-    "${inputStreams.join(' ')} concat=n=${ttsFiles.length}:v=0:a=1${horrorMode ? ',rubberband=pitch=0.8' : ''}${(music.isNotEmpty) ? '[0a];[${ttsFiles.length + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];[0:v]crop=585:1080, subtitles='$subtitlePath', fps=$fps",
+    """${inputStreams.join(' ')} concat=n=${ttsFiles.length}:v=0:a=1${horrorMode ? ',rubberband=pitch=0.8' : ''}${(music.isNotEmpty) ? '[0a];[${ttsFiles.length + (args.wasParsed('end-card') ? 2 : 1)}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];${args.wasParsed('end-card') ? "[1:v]setpts=PTS-STARTPTS+${endTime.inSeconds + 1}/TB[gif];[0:v][gif]overlay=((main_w/2)-(overlay_w/2)):((main_h/2)-(overlay_h/2)):enable='between(t,${endTime.inSeconds + 1}, ${endTime.inSeconds + endCardLength + 1})'," : "[0:v]"}crop=585:1080, subtitles='$subtitlePath', fps=$fps""",
     '$output${(count == 0) ? "" : count}.$fileType'
   ];
   return command;
