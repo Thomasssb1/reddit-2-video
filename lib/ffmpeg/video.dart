@@ -35,8 +35,7 @@ int getRandomTime(int length) {
 
 Future<bool> cutVideo(
     Duration endTime, bool verbose, String id, int endCardLength) async {
-  print(
-      "Cutting the video to a random point. This can take a while depending on the video size. Please wait.");
+  print("Cutting the background video to a random point.");
   int startTime = getRandomTime(endTime.inMilliseconds + 1500 + endCardLength);
   int code = await runCommand(
       'ffmpeg',
@@ -49,6 +48,10 @@ Future<bool> cutVideo(
         '-nostdin',
         '-i',
         'defaults/video1.mp4',
+        '-c:v',
+        'copy',
+        '-c:a',
+        'copy',
         if (!verbose) ...['-loglevel', 'quiet'],
         '.temp/$id/video.mp4'
       ],

@@ -51,7 +51,6 @@ void writeToLog(
 void flushLog(
   String? link,
 ) async {
-  print(prePath);
   // open log file
   final File logFile = File("$prePath/.temp/visited_log.txt");
   // if the user wants to remove every entry
