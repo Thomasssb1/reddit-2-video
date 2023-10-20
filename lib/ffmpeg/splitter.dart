@@ -4,10 +4,7 @@ import 'package:path/path.dart' as p;
 
 splitVideo(String output, String fileType, int count) async {
   String fileName = p.basename(output);
-  String fileExtension = fileName
-      .split(RegExp(r'^.*(?=(\.[0-9a-z]+$))'))
-      .last
-      .replaceFirst('.', '');
+  String fileExtension = fileName.split(RegExp(r'^.*(?=(\.[0-9a-z]+$))')).last.replaceFirst('.', '');
   // remove the file extension from the output path
   output = output.replaceAll(".$fileExtension", '');
 
@@ -30,7 +27,6 @@ splitVideo(String output, String fileType, int count) async {
   if (code == 0) {
     printSuccess("Successfully split the video into ~1min segments.");
   } else {
-    printError(
-        "Something went wrong when splitting the video into segments for youtube shorts. Error code $code");
+    printError("Something went wrong when splitting the video into segments for youtube shorts. Error code $code");
   }
 }

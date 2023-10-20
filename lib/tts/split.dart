@@ -2,8 +2,7 @@ int maxLength = 3000;
 List<String> splitText(String text) {
   List<String> newText = [];
   RegExp punctuationMatch = RegExp(r"(\.|\?|!|\u2026)");
-  List<dynamic> endPoints =
-      punctuationMatch.allMatches(text).expand<int>((e) => [e.end]).toList();
+  List<dynamic> endPoints = punctuationMatch.allMatches(text).expand<int>((e) => [e.end]).toList();
   endPoints.insert(0, 0);
   int prevIndex = 0;
   for (int i = 0; i < endPoints.length; i++) {

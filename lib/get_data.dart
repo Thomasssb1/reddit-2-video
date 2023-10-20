@@ -30,8 +30,7 @@ Future<(String, List<dynamic>)> getPostData(
     linkUri = Uri.parse("$subreddit.json");
     if (type == 'multi') {
       // can't use a singular link if you want to have multiple posts
-      printError(
-          "Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
+      printError("Unable to use multi type with a direct link to a post, use a subreddit instead or change type.");
       exit(1);
     }
   }
@@ -52,8 +51,7 @@ Future<(String, List<dynamic>)> getPostData(
         .asListOrEmpty((p0) {
           if ((!p0('data', 'stickied').asBoolOrFalse())) {
             // ignore any comments pinned to the subreddit (normally mod posts)
-            if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >=
-                commentCount) {
+            if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >= commentCount) {
               // check if the post has enough comments specified with -c
               if (isLink ? true : nsfw) {
                 // if the user has nsfw tag set to true (default)
@@ -62,9 +60,8 @@ Future<(String, List<dynamic>)> getPostData(
                   'id': p0('data', 'id').asStringOrNull(),
                   'body': p0('data', 'selftext').asStringOrNull() ?? '',
                   'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                  'created': p0('data', 'created').letOrNull((pick) =>
-                      DateTime.fromMillisecondsSinceEpoch(
-                          ((pick.asDoubleOrNull() ?? 0.0) * 1000).round())),
+                  'created': p0('data', 'created').letOrNull(
+                      (pick) => DateTime.fromMillisecondsSinceEpoch(((pick.asDoubleOrNull() ?? 0.0) * 1000).round())),
                   'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                   'media': p0('data', 'media').asBoolOrFalse(),
                   'nsfw': p0('data', 'over_18').asBoolOrNull() ?? false,
@@ -79,9 +76,8 @@ Future<(String, List<dynamic>)> getPostData(
                     'id': p0('data', 'id').asStringOrNull(),
                     'body': p0('data', 'selftext').asStringOrNull() ?? '',
                     'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
-                    'created': p0('data', 'created').letOrNull((pick) =>
-                        DateTime.fromMicrosecondsSinceEpoch(
-                            (pick.asDoubleOrNull() ?? 0.0).round())),
+                    'created': p0('data', 'created').letOrNull(
+                        (pick) => DateTime.fromMicrosecondsSinceEpoch((pick.asDoubleOrNull() ?? 0.0).round())),
                     'spoiler': p0('data', 'spoiler').asBoolOrFalse(),
                     'media': p0('data', 'media').asBoolOrFalse(),
                     'nsfw': false,
@@ -93,18 +89,14 @@ Future<(String, List<dynamic>)> getPostData(
           }
           // filter out any null values from the values returned
         })
-        .where((element) =>
-            element != null &&
-            element['id'] != null &&
-            checkLog(element['id']) == false)
+        .where((element) => element != null && element['id'] != null && checkLog(element['id']) == false)
         .toList();
     if (data.isEmpty) {
       if (isLink) {
         printError(
             "The link provided in --subreddit has already had a video been generated previously or the number of comments on the post is too little as specified by the --count option.\n If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied, or change the minimum number of comments required by changing the --count option.");
       } else {
-        printError(
-            "No posts could be found for the subreddit. Try again with another subreddit.");
+        printError("No posts could be found for the subreddit. Try again with another subreddit.");
       }
       exit(0);
     }
@@ -119,20 +111,17 @@ Future<(String, List<dynamic>)> getPostData(
       for (final post in data) {
         // output relevant information
         printUnderline("${post['title']}\n");
-        print(
-            "\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mComments: ${post['comments']} \x1b[0m\n");
+        print("\x1b[32mUpvotes: ${post['upvotes']}     \x1b[33mComments: ${post['comments']} \x1b[0m\n");
         print(
             "Created: ${post['created']}, ${post['spoiler'] ? 'This post \x1b[31mis\x1b[0m marked as a spoiler' : ''}\n");
         if (post['media']) {
           print("Media: ${post['media']}\n");
         }
         if (nsfw) {
-          print(
-              "This post is${post['nsfw'] ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
+          print("This post is${post['nsfw'] ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
         }
         printUnderline("Post ${data.indexOf(post) + 1}/${data.length}.");
-        print(
-            "Do you want to see the body of the post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+        print("Do you want to see the body of the post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
         // read the cli for what the user entered
         String showBody = stdin.readLineSync() ?? 'n';
         print(showBody);
@@ -140,8 +129,7 @@ Future<(String, List<dynamic>)> getPostData(
         if (showBody.toLowerCase() == 'y') {
           print(post['body']);
         }
-        print(
-            "Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+        print("Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
         if (type == 'multi') {
           print("You can also enter 'skip' to skip all remaining posts. ");
         }
@@ -156,8 +144,7 @@ Future<(String, List<dynamic>)> getPostData(
             break;
           }
         } // if the user entered skip and the type selected is multi
-        else if (continueGeneration.toLowerCase() == 'skip' &&
-            type == 'multi') {
+        else if (continueGeneration.toLowerCase() == 'skip' && type == 'multi') {
           break;
         } // if the user entered no or otherwise
         else {
@@ -175,11 +162,7 @@ Future<(String, List<dynamic>)> getPostData(
     if (type == 'comments') {
       // send a new request to get all comments for the post
       var commentResponse = await client.get(Uri.https(
-          "reddit.com",
-          isLink
-              ? linkUri.path
-              : "/r/$subreddit/comments/${data[0]['id']}.json",
-          {"sort": commentSort}));
+          "reddit.com", isLink ? linkUri.path : "/r/$subreddit/comments/${data[0]['id']}.json", {"sort": commentSort}));
       // check if the response returned is valid otherwise exit with an error
       bool valid = checkStatusCode(response, "Comment");
 
@@ -196,16 +179,11 @@ Future<(String, List<dynamic>)> getPostData(
               };
             })
             .where((element) =>
-                element['body'] != null &&
-                (element['body'] ??= "").length <= 512 &&
-                element['body'] != "[removed]")
+                element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
             .toList();
         // reduce the number of comments
-        commentData = commentData.sublist(
-            0,
-            commentData.length < 3 * commentCount
-                ? commentData.length
-                : 3 * commentCount);
+        commentData =
+            commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
         // combine postData about comments with post and reduce the data
         id = postData[0]['id'];
         generateFiles(id);
@@ -234,8 +212,7 @@ Future<(String, List<dynamic>)> getPostData(
       } else {
         // if the user selected no posts
         if (postData.isEmpty) {
-          printError(
-              "You haven't selected any posts. Retry but ensure that atleast one post is selected.");
+          printError("You haven't selected any posts. Retry but ensure that atleast one post is selected.");
           exit(1);
         }
         // if the user selected too little posts as specified in commentCount arg

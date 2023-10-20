@@ -10,8 +10,7 @@ String animation(colour) => r"{\an5}";
 //colour +
 //r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
-Future<Duration> generateSubtitles(
-    String titleColour, bool alternateColour, bool aws, String id) async {
+Future<Duration> generateSubtitles(String titleColour, bool alternateColour, bool aws, String id) async {
   final defaultASS = await File("$prePath/defaults/default.ass").readAsString();
   final newASS = File("$prePath/.temp/$id/comments.ass");
   final sinkComments = newASS.openWrite();
@@ -32,9 +31,7 @@ Future<Duration> generateSubtitles(
   // remove time for animation to account for it
 
   for (int i = 0; i < ttsFiles.length; i++) {
-    String jsonData =
-        await File("$prePath/.temp/$id/config/tts-$i.mp3.words.json")
-            .readAsString();
+    String jsonData = await File("$prePath/.temp/$id/config/tts-$i.mp3.words.json").readAsString();
     var json = jsonDecode(jsonData);
     for (final segment in json['segments']) {
       List<dynamic> wordSet = [];
@@ -43,31 +40,20 @@ Future<Duration> generateSubtitles(
       if (segment['words'][0]['text'] != ['you']) {
         for (final word in segment['words']) {
           if (characterCount + word['text'].length > maxCharacterCount) {
-            karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0,
-                bodyColour, titleColour);
+            karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
             wordSet = [
-              {
-                "text": word['text'],
-                "end": (word['end'] * 1000).toInt(),
-                "start": (word['start'] * 1000).toInt()
-              }
+              {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()}
             ];
             characterCount = 0;
           } else {
-            wordSet.add({
-              "text": word['text'],
-              "end": (word['end'] * 1000).toInt(),
-              "start": (word['start'] * 1000).toInt()
-            });
+            wordSet.add(
+                {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()});
             characterCount += word['text'].length;
           }
-          time = Duration(
-              milliseconds:
-                  (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
+          time = Duration(milliseconds: (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
         }
         if (wordSet.isNotEmpty) {
-          karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour,
-              titleColour);
+          karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
         }
       }
     }
@@ -78,8 +64,8 @@ Future<Duration> generateSubtitles(
   return time;
 }
 
-karaokeEffect(List<dynamic> line, dynamic sinkComments, Duration prevFileTime,
-    bool isTitle, String bodyColour, String titleColour) {
+karaokeEffect(List<dynamic> line, dynamic sinkComments, Duration prevFileTime, bool isTitle, String bodyColour,
+    String titleColour) {
   for (int i = 0; i < line.length; i++) {
     sinkComments.writeln(
         "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +

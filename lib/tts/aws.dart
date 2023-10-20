@@ -2,8 +2,7 @@ import 'package:reddit_2_video/utils/prepath.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 
-generateTTS(String text, int counter, bool ntts, String voice, bool censor,
-    String id) async {
+generateTTS(String text, int counter, bool ntts, String voice, bool censor, String id) async {
   var ttsResult = await runCommand(
       'aws',
       [

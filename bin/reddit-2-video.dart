@@ -102,11 +102,9 @@ void main(
               List<String> textSegments = splitText(post[i]);
               for (String text in textSegments) {
                 if (text.isNotEmpty) {
-                  bool ttsSuccess = await generateTTS(
-                      text, counter, args['ntts'], voice, args['censor'], id);
+                  bool ttsSuccess = await generateTTS(text, counter, args['ntts'], voice, args['censor'], id);
 
-                  bool alignSuccess = await alignSubtitles(
-                      counter, prevText, args['verbose'], id);
+                  bool alignSuccess = await alignSubtitles(counter, prevText, args['verbose'], id);
 
                   if (!alignSuccess || !ttsSuccess) {
                     exit(0);
@@ -121,17 +119,14 @@ void main(
           }
         }
 
-        Duration endTime = await generateSubtitles(
-            titleColour, alternateColour, args['aws'], id);
+        Duration endTime = await generateSubtitles(titleColour, alternateColour, args['aws'], id);
 
-        bool cutSuccess =
-            await cutVideo(endTime, args['verbose'], id, endCardLength);
+        bool cutSuccess = await cutVideo(endTime, args['verbose'], id, endCardLength);
         if (!cutSuccess) {
           exit(0);
         }
 
-        List<String> command = generateCommand(
-            args, endTime, i, args['horror'], id, endCardLength);
+        List<String> command = generateCommand(args, endTime, i, args['horror'], id, endCardLength);
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);
@@ -164,8 +159,7 @@ void main(
     }
     bool pipInstalled = await checkInstall('pip');
     if (!pipInstalled) {
-      printWarning(
-          "You need to have pip installed in order to install the python dependencies");
+      printWarning("You need to have pip installed in order to install the python dependencies");
     }
     await installWhisper();
   } else {

@@ -1,7 +1,5 @@
 import 'dart:io';
 
-bool dev = false;
+bool dev = true;
 
-String prePath = dev
-    ? Directory.current.path
-    : File(Platform.resolvedExecutable).parent.parent.path;
+String prePath = dev ? Directory.current.path : File(Platform.resolvedExecutable).parent.parent.path;

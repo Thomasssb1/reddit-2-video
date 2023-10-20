@@ -4,8 +4,8 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/tts/get.dart';
 
-List<String> generateCommand(ArgResults args, Duration endTime, int count,
-    bool horrorMode, String id, int endCardLength) {
+List<String> generateCommand(
+    ArgResults args, Duration endTime, int count, bool horrorMode, String id, int endCardLength) {
   String output = args['output'];
   String fileType = args['file-type'];
   List<String> music = args['music'];
@@ -26,10 +26,7 @@ List<String> generateCommand(ArgResults args, Duration endTime, int count,
   else {
     // get the filename and file-extension from the output path provided
     String fileName = p.basename(output);
-    String fileExtension = fileName
-        .split(RegExp(r'^.*(?=(\.[0-9a-z]+$))'))
-        .last
-        .replaceFirst('.', '');
+    String fileExtension = fileName.split(RegExp(r'^.*(?=(\.[0-9a-z]+$))')).last.replaceFirst('.', '');
     // remove the file extension from the output path
     output = output.replaceAll(".$fileExtension", '');
     // if the file-extension from the output path provided
@@ -41,15 +38,13 @@ List<String> generateCommand(ArgResults args, Duration endTime, int count,
   }
 
   List<String> ttsFiles = getTTSFiles(id);
-  List<String> inputStreams = List.generate(ttsFiles.length,
-      (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
+  List<String> inputStreams =
+      List.generate(ttsFiles.length, (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
 
   List<String> command = [
     "-i", "$prePath/.temp/$id/video.mp4",
     if (args.wasParsed('end-card')) ...["-i", args['end-card']],
-    ...List.generate(ttsFiles.length,
-            (index) => ["-i", "$prePath/.temp/$id/tts/tts-$index.mp3"],
-            growable: false)
+    ...List.generate(ttsFiles.length, (index) => ["-i", "$prePath/.temp/$id/tts/tts-$index.mp3"], growable: false)
         .expand((e) => e)
         .toList(),
     if (args['music'].isNotEmpty) ...["-i", args['music'][0]],

@@ -28,9 +28,7 @@ bool checkStatusCode(
 }
 
 bool validateLink(String link) {
-  bool isLink =
-      RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''')
-          .hasMatch(link);
+  bool isLink = RegExp(r'''(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)''').hasMatch(link);
   if (isLink) {
     Uri uriLink = Uri.parse(link);
     List<String> paths = uriLink.pathSegments;
@@ -39,9 +37,7 @@ bool validateLink(String link) {
         paths = paths.sublist(0, paths.length - 1);
       }
       if (paths.length == 5) {
-        if (uriLink.host == 'www.reddit.com' &&
-            paths[0] == 'r' &&
-            paths[2] == 'comments') {
+        if (uriLink.host == 'www.reddit.com' && paths[0] == 'r' && paths[2] == 'comments') {
           return true;
         } else {
           printError(

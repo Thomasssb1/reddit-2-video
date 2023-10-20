@@ -8,16 +8,8 @@ import 'package:reddit_2_video/subtitles/time.dart';
 getBackgroundVideo() async {
   bool videoExists = await File("$prePath\\defaults\\video1.mp4").exists();
   if (!videoExists) {
-    runCommand(
-        "ytdl/ytdl.exe",
-        [
-          "-v",
-          "https://www.youtube.com/watch?v=n_Dv4JMiwK8",
-          "-o",
-          "defaults/video1.mp4"
-        ],
-        false,
-        prePath);
+    runCommand("ytdl/ytdl.exe", ["-v", "https://www.youtube.com/watch?v=n_Dv4JMiwK8", "-o", "defaults/video1.mp4"],
+        false, prePath);
   }
 }
 
@@ -33,8 +25,7 @@ int getRandomTime(int length) {
   return newTime(0, maxTime);
 }
 
-Future<bool> cutVideo(
-    Duration endTime, bool verbose, String id, int endCardLength) async {
+Future<bool> cutVideo(Duration endTime, bool verbose, String id, int endCardLength) async {
   print("Cutting the background video to a random point.");
   int startTime = getRandomTime(endTime.inMilliseconds + 1500 + endCardLength);
   int code = await runCommand(

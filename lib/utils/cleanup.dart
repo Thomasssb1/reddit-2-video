@@ -5,10 +5,7 @@ import 'dart:io';
 deleteFolders(String path) async {
   // get the tts folder and delete it
   final Directory tempTTSFolder = Directory(path);
-  await tempTTSFolder
-      .delete(recursive: true)
-      .then((_) => null)
-      .catchError((error) {
+  await tempTTSFolder.delete(recursive: true).then((_) => null).catchError((error) {
     printError(
         "Unable to clear the temporary data. This will not affect future video generation but will cause ~a few MB stored in the temporary folder. You can delete it yourself by deleting the folder: $path\nError: $error");
   });

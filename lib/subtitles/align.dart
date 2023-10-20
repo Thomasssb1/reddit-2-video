@@ -5,12 +5,10 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'dart:io';
 
-Future<bool> alignSubtitles(
-    int counter, String prevText, bool verbose, String id) async {
+Future<bool> alignSubtitles(int counter, String prevText, bool verbose, String id) async {
   StreamSubscription<String> msg = Stream<String>.empty().listen((event) {});
   if (!verbose) {
-    final loadingMessage =
-        Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
+    final loadingMessage = Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
       return "Aligning subtitles ${secondCount + 1}s";
     });
     msg = loadingMessage.listen((text) {
@@ -37,8 +35,7 @@ Future<bool> alignSubtitles(
       verbose);
   msg.cancel();
   if (code == 0) {
-    printSuccess(
-        "\nSubtitles have been aligned. Continuing with video generation.");
+    printSuccess("\nSubtitles have been aligned. Continuing with video generation.");
     return true;
   } else {
     printError(
