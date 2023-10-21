@@ -1,7 +1,7 @@
 /*
 reddit-2-video/
 └── .temp/
-    ├── post_id/
+    ├── subreddit_id-post_id/
     │   ├── config/
     │   ├── tts/
     │   ├── comments.ass

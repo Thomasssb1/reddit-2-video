@@ -67,9 +67,10 @@ void flushLog(
       // try/catch used if an incorrect link is given which doesn't contain an id in the json data
       try {
         String id = pick(json[0], 'data', 'children', 0, 'data', 'id').asStringOrThrow();
+        String subredditId = pick(json[0], 'data', 'children', 0, 'data', 'subreddit_id').asStringOrThrow();
         // read lines as a list and remove any entries that match the id
         final lines = await logFile.readAsLines();
-        lines.removeWhere((element) => element == id);
+        lines.removeWhere((element) => element == "$subredditId-$id");
         // turn the list into a \n split file
         await logFile.writeAsString(lines.join('\n'));
       } catch (e) {

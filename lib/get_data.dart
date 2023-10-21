@@ -58,6 +58,7 @@ Future<(String, List<dynamic>)> getPostData(
                 return {
                   'title': p0('data', 'title').required().asString(),
                   'id': p0('data', 'id').asStringOrNull(),
+                  'subreddit_id': p0('data', 'subreddit_id').asStringOrNull(),
                   'body': p0('data', 'selftext').asStringOrNull() ?? '',
                   'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
                   'created': p0('data', 'created').letOrNull(
@@ -74,6 +75,7 @@ Future<(String, List<dynamic>)> getPostData(
                   return {
                     'title': p0('data', 'title').required().asString(),
                     'id': p0('data', 'id').asStringOrNull(),
+                    'subreddit_id': p0('data', 'subreddit_id').asStringOrNull(),
                     'body': p0('data', 'selftext').asStringOrNull() ?? '',
                     'upvotes': p0('data', 'ups').asIntOrNull() ?? 0,
                     'created': p0('data', 'created').letOrNull(
@@ -89,7 +91,10 @@ Future<(String, List<dynamic>)> getPostData(
           }
           // filter out any null values from the values returned
         })
-        .where((element) => element != null && element['id'] != null && checkLog(element['id']) == false)
+        .where((element) =>
+            element != null &&
+            element['id'] != null &&
+            checkLog("${element['subreddit_id']}-${element['id']}") == false)
         .toList();
     if (data.isEmpty) {
       if (isLink) {
@@ -185,7 +190,7 @@ Future<(String, List<dynamic>)> getPostData(
         commentData =
             commentData.sublist(0, commentData.length < 3 * commentCount ? commentData.length : 3 * commentCount);
         // combine postData about comments with post and reduce the data
-        id = postData[0]['id'];
+        id = "${postData[0]['subreddit_id']}-${postData[0]['id']}";
         generateFiles(id);
         postData = postData.map((e) => [e['title'], e['body']]).toList();
         postData[0].addAll(commentData.map((e) => e['body']).toList());
@@ -195,7 +200,7 @@ Future<(String, List<dynamic>)> getPostData(
       }
     } else if (type == 'post') {
       // reduce the data to only contain title and body
-      id = postData[0]['id'];
+      id = "${postData[0]['subreddit_id']}-${postData[0]['id']}";
       generateFiles(id);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
     } else if (type == 'multi') {
@@ -230,7 +235,7 @@ Future<(String, List<dynamic>)> getPostData(
         }
       }
       // write each id from each post to the log and reduce data
-      id = postData.map((e) => e['id']!).toList().join("-");
+      id = "${postData[0]['subreddit_id']}-${postData.map((e) => e['id']!).toList().join('-')}";
       generateFiles(id);
       postData = postData.map((e) => [e['title'], e['body']]).toList();
     }

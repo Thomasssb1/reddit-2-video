@@ -135,7 +135,9 @@ void main(
         if (args['youtube-short']) {
           await splitVideo(args['output'], args['file-type'], i);
         }
-        writeToLog(id);
+        writeToLog(
+          id,
+        );
         await clearTemp(id);
       } else {
         // output error
