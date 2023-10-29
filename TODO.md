@@ -1,2 +1,3 @@
 - Check log for multi posts
 - Support for multi posts and comment posts
+- Use ffmpeg-cli as a ffmpeg wrapper
