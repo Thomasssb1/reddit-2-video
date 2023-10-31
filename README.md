@@ -44,7 +44,6 @@ There are many other options which can be used in your command.<br>
 You can use the `-help` flag to see them all or view them in detail on the [wiki](https://github.com/Thomasssb1/reddit-2-video/wiki/Documentation).
 
 ## Dependencies
-**This only applies if you are building the project yourself, you do not need this if you are installing from [releases](https://github.com/Thomasssb1/reddit-2-video/releases)**<br>
 Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [dart](https://dart.dev/) 3.0.5.
 Run this single command if using a linux platform that supports apt-get.
 ```sh
@@ -54,7 +53,7 @@ For other platforms, check the individual installing guides. If your platform is
 <b>ffmpeg: [Windows](https://www.gyan.dev/ffmpeg/builds/), [MacOS](https://evermeet.cx/ffmpeg/), [Other](https://ffmpeg.org/download.html)<br>
 dart: [Installation guide](https://dart.dev/get-dart#install) for Windows, Linux and MacOS.<br>
 </b>
-You will also need [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) setup if you plan on using AWS-Polly to generate TTS.
+You will also need [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) setup if you plan on using AWS-Polly to generate TTS, which currently is the only option for TTS generation.
 
 ### Help
 Use the option `--help` for more help and information.
