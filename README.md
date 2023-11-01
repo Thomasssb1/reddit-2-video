@@ -3,7 +3,7 @@ A simple command line script for generating a tiktok-style video with a large va
 View the wiki [here](https://github.com/Thomasssb1/reddit-2-video/wiki) for information on how to use reddit-2-video.
 
 ## Setup
-The easiest way to get started is to download one of the [releases](https://github.com/Thomasssb1/reddit-2-video/releases). The release includes all of the dart code precompiled ([see other dependencies](https://github.com/Thomasssb1/reddit-2-video#dependencies)).<br><br>
+The easiest way to get started is to download one of the [releases](https://github.com/Thomasssb1/reddit-2-video/releases) but is only compiled for Windows (MacOS and Linux will be compiled on release, for now you will have to compile yourself using `dart compile exe reddit-2-video/bin`). The release includes all of the dart code precompiled ([see other dependencies](https://github.com/Thomasssb1/reddit-2-video#dependencies)).<br><br>
 Add the folder to path<br>
 This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder `reddit-2-video/bin` that you cloned. You need to add the full path to `reddit-2-video/bin` to your system path in environmental variables.<br><br>
 Install dependencies<br>
