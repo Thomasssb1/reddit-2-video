@@ -7,8 +7,8 @@ Future<bool> runFFMPEGCommand(List<String> command, String path, int count) asyn
   process.stderr.transform(utf8.decoder).listen((data) {
     stdout.write(data);
   });
+  stdin.pipe(process.stdin);
   int code = await process.exitCode;
-  //await clearTemp();
   if (code == 0) {
     printSuccess("Final video has successfully generated.\nThe video has been created at $path. (${count + 1})");
     return true;
