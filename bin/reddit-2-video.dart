@@ -25,9 +25,10 @@ import 'package:reddit_2_video/utils/remove_characters.dart';
 void main(
   List<String> arguments,
 ) async {
+  print("dev");
   // delete .gitkeep so that it isn't counted when getting all tts files
-  if (await File('$prePath/.temp/tts/.gitkeep').exists()) {
-    await File('$prePath/.temp/tts/.gitkeep').delete().catchError((error) {
+  if (await File('$prePath\\.temp\\tts\\.gitkeep').exists()) {
+    await File('$prePath\\.temp\\tts\\.gitkeep').delete().catchError((error) {
       printError(
           "Something went wrong when trying to delete a temporary file. To fix this you can go to the ./reddit-2-video/.temp/tts folder and delete the .gitkeep file. Error: $error");
       exit(1);
@@ -81,7 +82,7 @@ void main(
       bool alternateColour = (args['alternate'][1] == 'on' ? true : false);
       String titleColour = args['alternate'][2];
 
-      final config = await File("$prePath/defaults/config.json").readAsString();
+      final config = await File("$prePath\\defaults\\config.json").readAsString();
       final json = jsonDecode(config);
       List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
       int currentTTS = 0;

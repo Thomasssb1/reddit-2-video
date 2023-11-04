@@ -15,7 +15,7 @@ bool checkLog(
     return true;
   }
   // open log file
-  final File logFile = File("$prePath/.temp/visited_log.txt");
+  final File logFile = File("$prePath\\.temp\\visited_log.txt");
   try {
     /// [change to a stream instead so that it doesn't have to be fully read]
     // read the file and split the text into a list that can be read
@@ -40,7 +40,7 @@ void writeToLog(
   String id,
 ) {
   // open log file for writing
-  final File logFile = File("$prePath/.temp/visited_log.txt");
+  final File logFile = File("$prePath\\.temp\\visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
   // write new id on a new line
   sink.writeln(id);
@@ -52,7 +52,7 @@ void flushLog(
   String? link,
 ) async {
   // open log file
-  final File logFile = File("$prePath/.temp/visited_log.txt");
+  final File logFile = File("$prePath\\.temp\\visited_log.txt");
   // if the user wants to remove every entry
   if (link == null) {
     // write nothing to file to overwrite data

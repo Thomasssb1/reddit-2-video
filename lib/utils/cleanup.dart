@@ -14,11 +14,11 @@ deleteFolders(String path) async {
 /// clear all of tts files inside of .temp/ and clear any data in temporary files
 clearTemp([String? id]) async {
   if (id != null) {
-    await deleteFolders("$prePath/.temp/$id");
+    await deleteFolders("$prePath\\.temp\\$id");
   } else {
-    File visited_log = File("$prePath/.temp/visited_log.txt");
+    File visited_log = File("$prePath\\.temp\\visited_log.txt");
     String contents = visited_log.readAsStringSync();
-    await deleteFolders("$prePath/.temp");
+    await deleteFolders("$prePath\\.temp");
     visited_log.createSync(recursive: true);
     visited_log.writeAsString(contents);
   }

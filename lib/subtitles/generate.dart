@@ -11,12 +11,12 @@ String animation(colour) => r"{\an5}";
 //r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
 Future<Duration> generateSubtitles(String titleColour, bool alternateColour, bool aws, String id) async {
-  final defaultASS = await File("$prePath/defaults/default.ass").readAsString();
-  final newASS = File("$prePath/.temp/$id/comments.ass");
+  final defaultASS = await File("$prePath\\defaults\\default.ass").readAsString();
+  final newASS = File("$prePath\\.temp\\$id\\comments.ass");
   final sinkComments = newASS.openWrite();
   sinkComments.writeln(defaultASS);
 
-  final config = File("$prePath/defaults/config.json");
+  final config = File("$prePath\\defaults\\config.json");
   final json = jsonDecode(config.readAsStringSync());
   List<dynamic> colours = json['colours'];
   int currentColour = 0;
@@ -31,7 +31,7 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
   // remove time for animation to account for it
 
   for (int i = 0; i < ttsFiles.length; i++) {
-    String jsonData = await File("$prePath/.temp/$id/config/tts-$i.mp3.words.json").readAsString();
+    String jsonData = await File("$prePath\\.temp\\$id\\config\\tts-$i.mp3.words.json").readAsString();
     var json = jsonDecode(jsonData);
     for (final segment in json['segments']) {
       List<dynamic> wordSet = [];

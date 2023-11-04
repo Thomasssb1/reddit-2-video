@@ -6,4 +6,4 @@ List<String> getTTSFiles(String id, [bool full = true]) =>
         .expand((e) => e)
         .toList();
 
-int getTTSCount(String id) => Directory("$prePath/.temp/$id/tts").listSync().length;
+int getTTSCount(String id) => Directory("$prePath\\.temp\\$id/tts").listSync().length;

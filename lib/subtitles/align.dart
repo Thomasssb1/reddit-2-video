@@ -18,7 +18,7 @@ Future<bool> alignSubtitles(int counter, String prevText, bool verbose, String i
   int code = await runCommand(
       'whisper_timestamped',
       [
-        "$prePath/.temp/$id/tts/tts-$counter.mp3",
+        "$prePath\\.temp\\$id\\tts\\tts-$counter.mp3",
         '--language',
         'en',
         '--output_format',
@@ -30,7 +30,7 @@ Future<bool> alignSubtitles(int counter, String prevText, bool verbose, String i
           prevText,
         ],
         '--output_dir',
-        '$prePath/.temp/$id/config'
+        '$prePath\\.temp\\$id\\config'
       ],
       verbose);
   msg.cancel();

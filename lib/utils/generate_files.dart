@@ -15,10 +15,10 @@ import 'package:reddit_2_video/utils/prepath.dart';
 
 // need to make it suitable for multi type option
 generateFiles(String id) async {
-  Directory idDirectory = Directory("$prePath/.temp/$id/tts");
+  Directory idDirectory = Directory("$prePath\\.temp\\$id/tts");
   if (idDirectory.existsSync()) {
-    await Directory("$prePath/.temp/$id").delete(recursive: true);
+    await Directory("$prePath\\.temp\\$id").delete(recursive: true);
   }
   await idDirectory.create(recursive: true);
-  await File("$prePath/.temp/$id/comments.ass").create();
+  await File("$prePath\\.temp\\$id\\comments.ass").create();
 }

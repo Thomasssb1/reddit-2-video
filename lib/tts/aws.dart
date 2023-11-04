@@ -17,7 +17,7 @@ generateTTS(String text, int counter, bool ntts, String voice, bool censor, Stri
         '--engine',
         ntts ? "neural" : "standard",
         if (censor) '--lexicon-name=censor',
-        '.temp/$id/tts/tts-${counter}.mp3',
+        '.temp/$id/tts/tts-$counter.mp3',
       ],
       true,
       prePath);

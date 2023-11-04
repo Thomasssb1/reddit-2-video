@@ -42,9 +42,9 @@ List<String> generateCommand(
       List.generate(ttsFiles.length, (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
 
   List<String> command = [
-    "-i", "$prePath/.temp/$id/video.mp4",
+    "-i", "$prePath\\.temp\\$id\\video.mp4",
     if (args.wasParsed('end-card')) ...["-i", args['end-card']],
-    ...List.generate(ttsFiles.length, (index) => ["-i", "$prePath/.temp/$id/tts/tts-$index.mp3"], growable: false)
+    ...List.generate(ttsFiles.length, (index) => ["-i", "$prePath\\.temp\\$id\\tts\\tts-$index.mp3"], growable: false)
         .expand((e) => e)
         .toList(),
     if (args['music'].isNotEmpty) ...["-i", args['music'][0]],
