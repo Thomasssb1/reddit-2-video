@@ -16,7 +16,7 @@ import 'package:reddit_2_video/utils/prettify.dart';
 
 // need to make it suitable for multi type option
 generateFiles(String id) async {
-  Directory idDirectory = Directory("$prePath\\.temp\\$id");
+  Directory idDirectory = Directory("$prePath\\.temp\\$id\\tts");
   if (idDirectory.existsSync()) {
     await Directory("$prePath\\.temp\\$id").delete(recursive: true).catchError((_) {
       // implement pop back to find new post
