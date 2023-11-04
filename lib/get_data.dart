@@ -184,7 +184,10 @@ Future<(String, List<dynamic>)> getPostData(
               };
             })
             .where((element) =>
-                element['body'] != null && (element['body'] ??= "").length <= 512 && element['body'] != "[removed]")
+                element['body'] != null &&
+                (element['body'] ??= "").length <= 512 &&
+                element['body'] != "[removed]" &&
+                element['collapsed_reason_code'] != "DELETED")
             .toList();
         // reduce the number of comments
         commentData =
