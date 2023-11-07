@@ -1,3 +1,10 @@
 - Check log for multi posts
-- Support for multi posts and comment posts
+- Support for multi posts and comment posts (add spacing between each comment)
 - Use ffmpeg-cli as a ffmpeg wrapper
+- Add max comments
+- Add max video length
+- Automatic deletion of temp if terminate batch job
+- Possibly create a sample tts wav file which can be used as pre-input for whisper_timestamped
+- Switch to standalone stt model with dart inference lib
+- Support for images/videos
+- Refactor generate subtitles function to work within the same for loop

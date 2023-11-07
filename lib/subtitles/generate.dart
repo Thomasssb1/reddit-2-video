@@ -36,25 +36,22 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
     for (final segment in json['segments']) {
       List<dynamic> wordSet = [];
       num characterCount = 0;
-      // whisper_timestamped sometimes hallucinates you
-      if (segment['words'][0]['text'] != ['you']) {
-        for (final word in segment['words']) {
-          if (characterCount + word['text'].length > maxCharacterCount) {
-            karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
-            wordSet = [
-              {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()}
-            ];
-            characterCount = 0;
-          } else {
-            wordSet.add(
-                {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()});
-            characterCount += word['text'].length;
-          }
-          time = Duration(milliseconds: (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
-        }
-        if (wordSet.isNotEmpty) {
+      for (final word in segment['words']) {
+        if (characterCount + word['text'].length > maxCharacterCount) {
           karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
+          wordSet = [
+            {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()}
+          ];
+          characterCount = 0;
+        } else {
+          wordSet.add(
+              {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()});
+          characterCount += word['text'].length;
         }
+        time = Duration(milliseconds: (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
+      }
+      if (wordSet.isNotEmpty) {
+        karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
       }
     }
     prevFileTime = (Duration(milliseconds: time.inMilliseconds));
