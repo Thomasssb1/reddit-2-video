@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 import 'package:reddit_2_video/utils/prepath.dart';
 
+final int SUBREDDIT_ID_LENGTH = 8;
+
 /// check if the visited_log.txt file contains the post that is currently being fetched
 bool checkLog(
   Object? id,
@@ -38,12 +40,22 @@ bool checkLog(
 /// write the id of the post being generated to the log
 void writeToLog(
   String id,
+  bool isMulti,
 ) {
   // open log file for writing
   final File logFile = File("$prePath\\.temp\\visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
   // write new id on a new line
-  sink.writeln(id);
+  if (isMulti) {
+    // add 2 to account for inclusivity and -
+    String subredditID = id.substring(0, SUBREDDIT_ID_LENGTH + 2);
+    id.replaceAll(subredditID, '').split('-').forEach((id) {
+      print("$subredditID$id");
+      sink.writeln("$subredditID$id");
+    });
+  } else {
+    sink.writeln(id);
+  }
   sink.close();
 }
 

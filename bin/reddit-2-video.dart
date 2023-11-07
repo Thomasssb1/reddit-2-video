@@ -25,7 +25,6 @@ import 'package:reddit_2_video/utils/remove_characters.dart';
 void main(
   List<String> arguments,
 ) async {
-  print("dev");
   // delete .gitkeep so that it isn't counted when getting all tts files
   if (await File('$prePath\\.temp\\tts\\.gitkeep').exists()) {
     await File('$prePath\\.temp\\tts\\.gitkeep').delete().catchError((error) {
@@ -34,7 +33,6 @@ void main(
       exit(1);
     });
   }
-
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
     printError("You need to install AWS CLI in order to use AWS-Polly TTS.");
@@ -42,7 +40,6 @@ void main(
         "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
     exit(0);
   }
-
   await getBackgroundVideo();
 
   // get the arguments passed on command line
@@ -56,6 +53,7 @@ void main(
   if (results['command'] == null) {
     var removeCharacter = RemoveCharacters();
 
+    // unnecessary until native tts is implemented
     //if (args['aws']) {
     //await pollyPutLexeme();
     //}
@@ -136,9 +134,7 @@ void main(
         if (args['youtube-short']) {
           await splitVideo(args['output'], args['file-type'], i);
         }
-        writeToLog(
-          id,
-        );
+        writeToLog(id, args['type'] == 'multi');
         await clearTemp(id);
       } else {
         // output error
