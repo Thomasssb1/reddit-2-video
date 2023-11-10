@@ -1,6 +1,6 @@
-- Check log for multi posts
 - Support for multi posts and comment posts (add spacing between each comment)
 - Use ffmpeg-cli as a ffmpeg wrapper
+- Add multiple TTS options including local
 - Add max comments
 - Add max video length
 - Automatic deletion of temp if terminate batch job

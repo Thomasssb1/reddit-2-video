@@ -1,8 +1,8 @@
 .dart_tool/
 *.mp4
 *.wav
+.temp/*
+!.temp/visited_log.txt
 *.srt
-*.mp3
 .vscode/
 .temp/tts/*
-!.temp/tts/.gitkeep

@@ -92,9 +92,7 @@ Future<(String, List<dynamic>)> getPostData(
           // filter out any null values from the values returned
         })
         .where((element) =>
-            element != null &&
-            element['id'] != null &&
-            checkLog("${element['subreddit_id']}-${element['id']}") == false)
+            element != null && element['id'] != null && !checkLog("${element['subreddit_id']}-${element['id']}"))
         .toList();
     if (data.isEmpty) {
       if (isLink) {
