@@ -1,4 +1,5 @@
-- Support for multi posts and comment posts (add spacing between each comment)
+- Support for multi posts (add spacing between each post not tts/aka comment)
+- Change error message in get_data for when comment < count
 - Use ffmpeg-cli as a ffmpeg wrapper
 - Add multiple TTS options including local
 - Add max comments

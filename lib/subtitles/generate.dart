@@ -20,7 +20,7 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
   final json = jsonDecode(config.readAsStringSync());
   List<dynamic> colours = json['colours'];
   int currentColour = 0;
-  String bodyColour = alternateColour ? colours[currentColour] : 'HFFFFFF';
+  String highlightColour = alternateColour ? 'HFFFFFF' : 'H00FFFF';
 
   int maxCharacterCount = 30;
 
@@ -38,7 +38,8 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
       num characterCount = 0;
       for (final word in segment['words']) {
         if (characterCount + word['text'].length > maxCharacterCount) {
-          karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
+          karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0,
+              alternateColour ? colours[currentColour] : 'HFFFFFF', titleColour, highlightColour);
           wordSet = [
             {"text": word['text'], "end": (word['end'] * 1000).toInt(), "start": (word['start'] * 1000).toInt()}
           ];
@@ -51,7 +52,8 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
         time = Duration(milliseconds: (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
       }
       if (wordSet.isNotEmpty) {
-        karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
+        karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, alternateColour ? colours[currentColour] : 'HFFFFFF',
+            titleColour, highlightColour);
       }
     }
     prevFileTime = (Duration(milliseconds: time.inMilliseconds + (addDelay ? 1000 : 0)));
@@ -62,7 +64,7 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
 }
 
 karaokeEffect(List<dynamic> line, dynamic sinkComments, Duration prevFileTime, bool isTitle, String bodyColour,
-    String titleColour) {
+    String titleColour, String highlightColour) {
   for (int i = 0; i < line.length; i++) {
     sinkComments.writeln(
         "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +
@@ -73,7 +75,7 @@ karaokeEffect(List<dynamic> line, dynamic sinkComments, Duration prevFileTime, b
                 .map((e) => (line.indexOf(e) == i)
                     ? isTitle
                         ? r"{\c&HFFFFFF}" + e['text']
-                        : r"{\c&H00FFFF}" + e['text']
+                        : r"{\c&" + "$highlightColour}" + e['text']
                     : e['text'])
                 .join(' '));
   }

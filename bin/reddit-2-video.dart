@@ -25,14 +25,6 @@ import 'package:reddit_2_video/utils/remove_characters.dart';
 void main(
   List<String> arguments,
 ) async {
-  // delete .gitkeep so that it isn't counted when getting all tts files
-  if (await File('$prePath\\.temp\\tts\\.gitkeep').exists()) {
-    await File('$prePath\\.temp\\tts\\.gitkeep').delete().catchError((error) {
-      printError(
-          "Something went wrong when trying to delete a temporary file. To fix this you can go to the ./reddit-2-video/.temp/tts folder and delete the .gitkeep file. Error: $error");
-      exit(1);
-    });
-  }
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
     printError("You need to install AWS CLI in order to use AWS-Polly TTS.");
@@ -102,14 +94,15 @@ void main(
               for (String text in textSegments) {
                 if (text.isNotEmpty) {
                   bool ttsSuccess = await generateTTS(text, counter, args['ntts'], voice, args['censor'], id);
-
-                  bool alignSuccess = await alignSubtitles(counter, prevText, args['verbose'], id);
-
-                  if (!alignSuccess || !ttsSuccess) {
-                    exit(0);
+                  if (ttsSuccess) {
+                    bool alignSuccess = await alignSubtitles(counter, prevText, args['verbose'], id);
+                    if (!alignSuccess) {
+                      exit(0);
+                    }
                   } else {
-                    counter++;
+                    exit(0);
                   }
+                  counter++;
                   prevText = text;
                 }
               }
@@ -118,14 +111,16 @@ void main(
           }
         }
 
-        Duration endTime = await generateSubtitles(titleColour, alternateColour, args['aws'], id);
+        Duration endTime =
+            await generateSubtitles(titleColour, alternateColour, args['aws'], id, args['type'] != 'post');
 
         bool cutSuccess = await cutVideo(endTime, args['verbose'], id, endCardLength);
         if (!cutSuccess) {
           exit(0);
         }
 
-        List<String> command = generateCommand(args, endTime, i, args['horror'], id, endCardLength);
+        List<String> command =
+            generateCommand(args, endTime, i, args['horror'], id, endCardLength, args['type'] != 'post');
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);

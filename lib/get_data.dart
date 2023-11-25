@@ -94,6 +94,7 @@ Future<(String, List<dynamic>)> getPostData(
         .where((element) =>
             element != null && element['id'] != null && !checkLog("${element['subreddit_id']}-${element['id']}"))
         .toList();
+    // TODO: change error message
     if (data.isEmpty) {
       if (isLink) {
         printError(
