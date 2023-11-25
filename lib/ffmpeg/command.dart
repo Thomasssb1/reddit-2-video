@@ -5,7 +5,7 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/tts/get.dart';
 
 List<String> generateCommand(
-    ArgResults args, Duration endTime, int count, bool horrorMode, String id, int endCardLength) {
+    ArgResults args, Duration endTime, int count, bool horrorMode, String id, int endCardLength, bool addDelay) {
   String output = args['output'];
   String fileType = args['file-type'];
   List<String> music = args['music'];
@@ -38,8 +38,17 @@ List<String> generateCommand(
   }
 
   List<String> ttsFiles = getTTSFiles(id);
-  List<String> inputStreams =
-      List.generate(ttsFiles.length, (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
+  late List<String> inputStreams;
+  if (!addDelay) {
+    inputStreams = List.generate(
+        calculateLength(ttsFiles.length, hasMusic: args['music'].isNotEmpty, hasDelay: addDelay),
+        (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
+  } else {
+    inputStreams =
+        addDelayStreams(ttsFiles.length, calculateLength(ttsFiles.length, hasEndCard: args.wasParsed('end-card')) + 1);
+  }
+
+  print(inputStreams);
 
   List<String> command = [
     "-i", "$prePath\\.temp\\$id\\video.mp4",
@@ -47,6 +56,7 @@ List<String> generateCommand(
     ...List.generate(ttsFiles.length, (index) => ["-i", "$prePath\\.temp\\$id\\tts\\tts-$index.mp3"], growable: false)
         .expand((e) => e)
         .toList(),
+    if (addDelay) ...["-i", "$prePath\\defaults\\silence.wav"],
     if (args['music'].isNotEmpty) ...["-i", args['music'][0]],
     if (args['override']) '-y',
     if (!args['verbose']) ...['-loglevel', 'quiet'],
@@ -54,8 +64,30 @@ List<String> generateCommand(
     '[final_a]',
     '-filter_complex',
     // *
-    """${inputStreams.join(' ')} concat=n=${ttsFiles.length}:v=0:a=1${horrorMode ? ',rubberband=pitch=0.8' : ''}${(music.isNotEmpty) ? '[0a];[${ttsFiles.length + (args.wasParsed('end-card') ? 2 : 1)}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];${args.wasParsed('end-card') ? "[1:v]setpts=PTS-STARTPTS+${endTime.inSeconds + 1}/TB[gif];[0:v][gif]overlay=((main_w/2)-(overlay_w/2)):((main_h/2)-(overlay_h/2)):enable='between(t,${endTime.inSeconds + 1}, ${endTime.inSeconds + endCardLength + 1})'," : "[0:v]"}crop=585:1080, subtitles='$subtitlePath', fps=$fps""",
+    """${inputStreams.join(' ')} 
+    concat=n=${calculateLength(ttsFiles.length, hasMusic: args['music'].isNotEmpty, hasDelay: addDelay, doubleDelay: true)}:v=0:a=1
+    ${horrorMode ? ',rubberband=pitch=0.8' : ''}
+    ${(music.isNotEmpty) ? '[0a];[${calculateLength(ttsFiles.length, hasMusic: true, hasDelay: addDelay, hasEndCard: args.wasParsed('end-card')) + 1}:a]volume=${double.tryParse(music[1]) ?? 1}[1a];[0a][1a]amerge' : ''}[final_a];
+    ${args.wasParsed('end-card') ? "[1:v]setpts=PTS-STARTPTS+${endTime.inSeconds + 1}/TB[gif];[0:v][gif]overlay=((main_w/2)-(overlay_w/2)):((main_h/2)-(overlay_h/2)):enable='between(t,${endTime.inSeconds + 1}, ${endTime.inSeconds + endCardLength + 1})'," : "[0:v]"}
+    crop=585:1080, subtitles='$subtitlePath', fps=$fps""",
     '$output${(count == 0) ? "" : count}.$fileType'
   ];
+
+  print(command);
   return command;
+}
+
+int calculateLength(int ttsFilesLength,
+        {bool hasMusic = false, bool hasDelay = false, bool hasEndCard = false, bool doubleDelay = false}) =>
+    doubleDelay
+        ? (ttsFilesLength * 2 - 1)
+        : ttsFilesLength + (hasDelay ? 1 : 0) + (hasMusic ? 1 : 0) + (hasEndCard ? 1 : 0);
+
+List<String> addDelayStreams(int inputStreamsLength, int delayIndex) {
+  List<String> newInputStreams = [];
+  for (int i = 1; i < inputStreamsLength; i++) {
+    newInputStreams.addAll(["[$i:a]", "[$delayIndex:a]"]);
+  }
+  newInputStreams.add("[$inputStreamsLength:a]");
+  return newInputStreams;
 }

@@ -10,7 +10,7 @@ String animation(colour) => r"{\an5}";
 //colour +
 //r"& \frz0\frscx0\frscy0\t(0, 150, \fscx100, \fscy100))}{\fad(150,150)}";
 
-Future<Duration> generateSubtitles(String titleColour, bool alternateColour, bool aws, String id) async {
+Future<Duration> generateSubtitles(String titleColour, bool alternateColour, bool aws, String id, bool addDelay) async {
   final defaultASS = await File("$prePath\\defaults\\default.ass").readAsString();
   final newASS = File("$prePath\\.temp\\$id\\comments.ass");
   final sinkComments = newASS.openWrite();
@@ -54,7 +54,7 @@ Future<Duration> generateSubtitles(String titleColour, bool alternateColour, boo
         karaokeEffect(wordSet, sinkComments, prevFileTime, i == 0, bodyColour, titleColour);
       }
     }
-    prevFileTime = (Duration(milliseconds: time.inMilliseconds));
+    prevFileTime = (Duration(milliseconds: time.inMilliseconds + (addDelay ? 1000 : 0)));
     currentColour = ++currentColour % colours.length;
   }
   sinkComments.close();
