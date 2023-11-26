@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 import 'package:reddit_2_video/utils/prepath.dart';
 
-final int SUBREDDIT_ID_LENGTH = 8;
+final int subredditIDCount = 8;
 
 /// check if the visited_log.txt file contains the post that is currently being fetched
 bool checkLog(
@@ -48,7 +48,7 @@ void writeToLog(
   // write new id on a new line
   if (isMulti) {
     // add 2 to account for inclusivity and -
-    String subredditID = id.substring(0, SUBREDDIT_ID_LENGTH + 2);
+    String subredditID = id.substring(0, subredditIDCount + 2);
     id.replaceAll(subredditID, '').split('-').forEach((id) {
       print("$subredditID$id");
       sink.writeln("$subredditID$id");

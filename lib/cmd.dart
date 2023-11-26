@@ -39,24 +39,27 @@ dynamic parse(
           'Determines whether to use neural tts or normal tts. (This will only affect usage if aws polly is active).');
   parser.addFlag('aws',
       defaultsTo: true,
-      help: "Whether or not to use aws-polly, but this requires setup of aws cli as well as correct details.");
+      help: "Whether or not to use AWS Polly, but this requires setup of aws cli as well as correct details.");
+  /*
   parser.addFlag('gtts',
       defaultsTo: false,
+      hide: true,
       help: "Uses googles tts to generae tts which has no cost and is generated online. (not implemented)");
-  parser.addOption('voice', defaultsTo: 'Matthew', help: 'The voice to use for AWS-Polly tts.');
   parser.addOption(
-    'accent',
-    defaultsTo: 'com.mx',
-    allowed: ['com.mx', 'co.uk', 'com.au', 'us', 'ca', 'co.in', 'ie', 'co.za'],
-    help:
-        'The accent to be used when not using aws tts.\nUse a top-level-domain from google such as com.mx or co.uk. (not implemented)',
-  );
+      'accent',
+      defaultsTo: 'com.mx',
+      allowed: ['com.mx', 'co.uk', 'com.au', 'us', 'ca', 'co.in', 'ie', 'co.za'],
+      help:
+          'The accent to be used when not using aws tts.\nUse a top-level-domain from google such as com.mx or co.uk. (not implemented)',
+    );
+  */
+  parser.addOption('voice', defaultsTo: 'Matthew', help: 'The voice to use for AWS Polly tts.');
+
   parser.addOption('repeat',
       help: "How many times the program should repeat - does not work for links but works for subreddits.",
-      valueHelp: 'Integer value',
+      valueHelp: 'integer',
       defaultsTo: "1");
-  parser.addOption('video',
-      defaultsTo: 'defaults/video1.mp4', abbr: 'p', valueHelp: "Path to the video that plays in the background.");
+  parser.addOption('video', defaultsTo: 'defaults/video1.mp4', abbr: 'p', valueHelp: "path-to-video");
   parser.addMultiOption('music', valueHelp: "path,volume");
   parser.addFlag('youtube-short',
       help:
@@ -75,10 +78,10 @@ dynamic parse(
       help:
           "Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.");
   parser.addOption('end-card',
-      help: 'Path to a gif & audio that will play at the end of the video.', valueHelp: "path to gif");
+      help: 'Path to a gif & audio that will play at the end of the video.', valueHelp: "path-to-gif");
   parser.addFlag('verbose', abbr: 'v', defaultsTo: false);
   parser.addFlag('override', defaultsTo: false);
-  parser.addFlag('help', hide: true);
+  parser.addFlag('help', abbr: 'h', hide: true);
   parser.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
 
   // create a new command

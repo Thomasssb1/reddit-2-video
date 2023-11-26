@@ -14,7 +14,7 @@ getBackgroundVideo() async {
 }
 
 int getRandomTime(int length) {
-  final random = new Random();
+  final random = Random();
   int newTime(startTime, maxTime) => 0 + random.nextInt(maxTime);
 
   // temporarily store the video length as a fixed value

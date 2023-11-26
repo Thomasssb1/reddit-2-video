@@ -16,10 +16,10 @@ clearTemp([String? id]) async {
   if (id != null) {
     await deleteFolders("$prePath\\.temp\\$id");
   } else {
-    File visited_log = File("$prePath\\.temp\\visited_log.txt");
-    String contents = visited_log.readAsStringSync();
+    File visitedLog = File("$prePath\\.temp\\visited_log.txt");
+    String contents = visitedLog.readAsStringSync();
     await deleteFolders("$prePath\\.temp");
-    visited_log.createSync(recursive: true);
-    visited_log.writeAsString(contents);
+    visitedLog.createSync(recursive: true);
+    visitedLog.writeAsString(contents);
   }
 }
