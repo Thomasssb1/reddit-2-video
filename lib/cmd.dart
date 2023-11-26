@@ -79,11 +79,13 @@ dynamic parse(
   parser.addFlag('verbose', abbr: 'v', defaultsTo: false);
   parser.addFlag('override', defaultsTo: false);
   parser.addFlag('help', hide: true);
+  parser.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
 
   // create a new command
   var flush = parser.addCommand('flush');
   // add a command specific option
   flush.addOption('post', abbr: 'p', help: 'Remove a specific reddit post from the visited log.');
+  flush.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
 
   var install = parser.addCommand('install');
 

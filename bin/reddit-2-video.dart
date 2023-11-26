@@ -32,7 +32,6 @@ void main(
         "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
     exit(0);
   }
-  await getBackgroundVideo();
 
   // get the arguments passed on command line
   var results = parse(arguments);
@@ -40,6 +39,11 @@ void main(
 
   // for now use static
   int endCardLength = 2;
+
+  // set prepath based on --dev flag
+  setPath(args['dev']);
+
+  await getBackgroundVideo();
 
   // if the command was the default generation command
   if (results['command'] == null) {
