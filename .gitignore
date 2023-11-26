@@ -6,3 +6,4 @@
 *.srt
 .vscode/
 .temp/tts/*
+!defaults/silence.wav
