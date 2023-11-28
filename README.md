@@ -49,7 +49,7 @@ You can also use the `-help` flag to view all visible options.
 
 ### Examples
 Click to expand each of the examples.
-<details>
+<details open>
 <summary>Generate a video from an r/AskReddit post</summary><br>
 
 >The below command uses the `--type comments` option in order to compile the video using comments and post title.<br>
