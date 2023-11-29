@@ -1,5 +1,6 @@
 - Support for multi posts (add spacing between each post not tts/aka comment)
 - Change error message in get_data for when comment < count
+- Need to void --count when isLink
 - Use ffmpeg-cli as a ffmpeg wrapper
 - Add multiple TTS options including local
 - Add max comments

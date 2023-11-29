@@ -40,19 +40,21 @@ dynamic parse(
   parser.addFlag('aws',
       defaultsTo: true,
       help: "Whether or not to use AWS Polly, but this requires setup of aws cli as well as correct details.");
-  /*
+
+  // not implemented
   parser.addFlag('gtts',
       defaultsTo: false,
       hide: true,
       help: "Uses googles tts to generae tts which has no cost and is generated online. (not implemented)");
   parser.addOption(
-      'accent',
-      defaultsTo: 'com.mx',
-      allowed: ['com.mx', 'co.uk', 'com.au', 'us', 'ca', 'co.in', 'ie', 'co.za'],
-      help:
-          'The accent to be used when not using aws tts.\nUse a top-level-domain from google such as com.mx or co.uk. (not implemented)',
-    );
-  */
+    'accent',
+    defaultsTo: 'com.mx',
+    hide: true,
+    allowed: ['com.mx', 'co.uk', 'com.au', 'us', 'ca', 'co.in', 'ie', 'co.za'],
+    help:
+        'The accent to be used when not using aws tts.\nUse a top-level-domain from google such as com.mx or co.uk. (not implemented)',
+  );
+
   parser.addOption('voice', defaultsTo: 'Matthew', help: 'The voice to use for AWS Polly tts.');
 
   parser.addOption('repeat',
@@ -79,10 +81,11 @@ dynamic parse(
           "Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.");
   parser.addOption('end-card',
       help: 'Path to a gif & audio that will play at the end of the video.', valueHelp: "path-to-gif");
-  parser.addFlag('verbose', abbr: 'v', defaultsTo: false);
-  parser.addFlag('override', defaultsTo: false);
+  parser
+    ..addFlag('verbose', abbr: 'v', defaultsTo: false)
+    ..addFlag('override', abbr: 'y', defaultsTo: false)
+    ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
   parser.addFlag('help', abbr: 'h', hide: true);
-  parser.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
 
   // create a new command
   var flush = parser.addCommand('flush');
