@@ -72,36 +72,60 @@ void main(
         args['type'], // post type (e.g. comment or multi)
       );
 
-      bool alternateTTS = (args['alternate'][0] == 'on' ? true : false);
-      bool alternateColour = (args['alternate'][1] == 'on' ? true : false);
-      String titleColour = args['alternate'][2];
+      final bool alternateTTS = (args['alternate'][0] == 'on' ? true : false);
+      final bool alternateColour = (args['alternate'][1] == 'on' ? true : false);
+      final String titleColour = args['alternate'][2];
 
       final config = await File("$prePath\\defaults\\config.json").readAsString();
       final json = jsonDecode(config);
-      List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
+      final List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
+      final List<dynamic> colours = json['colours'];
+
       int currentTTS = 0;
-      String voice = alternateTTS ? voices[currentTTS] : args['voice'];
+      String voice = args['voice'];
+      int currentColour = 0;
+
+      Duration endTime = Duration.zero;
 
       // if the data collected returned nothing (e.g. subreddit has no posts)
       if (postData.isNotEmpty) {
         int counter = 0;
-
         String prevText = "";
 
-        for (final post in postData) {
-          for (int i = 0; i < post.length; i++) {
+        final newASS = File("$prePath\\.temp\\$id\\comments.ass");
+        final sinkComments = newASS.openWrite();
+        final defaultASS = File("$prePath\\defaults\\default.ass").readAsStringSync();
+        sinkComments.writeln(defaultASS);
+
+        for (int i = 0; i < postData.length; i++) {
+          for (int j = 0; j < postData[i].length; j++) {
             // if an aspect of the post doesn't contain any text
             // if ignored will produce weird noise in tts
-            post[i] = removeCharacter.cleanse(post[i]);
-            if (post[i].isNotEmpty) {
-              List<String> textSegments = splitText(post[i]);
+            final post = postData[i];
+            post[j] = removeCharacter.cleanse(post[j]);
+            if (post[j].isNotEmpty) {
+              List<String> textSegments = splitText(post[j]);
               for (String text in textSegments) {
                 if (text.isNotEmpty) {
-                  bool ttsSuccess = await generateTTS(text, counter, args['ntts'], voice, args['censor'], id);
+                  bool ttsSuccess = await generateTTS(text, counter, i, args['ntts'], voice, args['censor'], id);
                   if (ttsSuccess) {
-                    bool alignSuccess = await alignSubtitles(counter, prevText, args['verbose'], id);
+                    bool alignSuccess = await alignSubtitles("$i-$counter", prevText, args['verbose'], id);
                     if (!alignSuccess) {
                       exit(0);
+                    } else {
+                      endTime = await generateSubtitles(
+                          id,
+                          "$i-$counter",
+                          alternateColour,
+                          j == 0,
+                          args['type'] != 'post',
+                          (j == 0)
+                              ? titleColour
+                              : alternateColour
+                                  ? colours[currentColour]
+                                  : 'HFFFFFF',
+                          endTime,
+                          sinkComments);
                     }
                   } else {
                     exit(0);
@@ -110,21 +134,25 @@ void main(
                   prevText = text;
                 }
               }
+              if (alternateTTS) {
+                currentTTS = ++currentTTS % voices.length;
+                voice = voices[currentTTS];
+              }
+              if (alternateColour) currentColour = ++currentColour % colours.length;
+              endTime += Duration(milliseconds: (args['type'] == 'comments' ? 1000 : 0));
             }
-            currentTTS = ++currentTTS % voices.length;
           }
+          endTime += Duration(milliseconds: (args['type'] == 'multi' ? 1000 : 0));
         }
-
-        Duration endTime =
-            await generateSubtitles(titleColour, alternateColour, args['aws'], id, args['type'] != 'post');
+        sinkComments.close();
 
         bool cutSuccess = await cutVideo(endTime, args['verbose'], id, endCardLength);
         if (!cutSuccess) {
           exit(0);
         }
 
-        List<String> command =
-            generateCommand(args, endTime, i, args['horror'], id, endCardLength, args['type'] != 'post');
+        List<String> command = generateCommand(
+            args, endTime, i, args['horror'], id, endCardLength, args['type'] != 'post', args['type'] == 'multi');
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);
@@ -134,7 +162,7 @@ void main(
           await splitVideo(args['output'], args['file-type'], i);
         }
         writeToLog(id, args['type'] == 'multi');
-        await clearTemp(id);
+        //await clearTemp(id);
       } else {
         // output error
         printError("No post(s) found... Try again.");
