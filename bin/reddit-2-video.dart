@@ -4,6 +4,7 @@ import 'package:reddit_2_video/ffmpeg/execute.dart';
 import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'package:reddit_2_video/subtitles/align.dart';
 import 'package:reddit_2_video/subtitles/generate.dart';
+import 'package:reddit_2_video/tts/get.dart';
 import 'package:reddit_2_video/tts/split.dart';
 import 'dart:io';
 import 'package:reddit_2_video/utils/log.dart';
@@ -41,7 +42,7 @@ void main(
   int endCardLength = 2;
 
   // set prepath based on --dev flag
-  setPath(args['dev']);
+  setPath(args);
 
   await getBackgroundVideo();
 
@@ -73,10 +74,11 @@ void main(
       );
 
       final bool alternateTTS = (args['alternate'][0] == 'on' ? true : false);
-      final bool alternateColour = (args['alternate'][1] == 'on' ? true : false);
+      final bool alternateColour =
+          (args['alternate'][1] == 'on' ? true : false);
       final String titleColour = args['alternate'][2];
 
-      final config = await File("$prePath\\defaults\\config.json").readAsString();
+      final config = await File("$prePath/defaults/config.json").readAsString();
       final json = jsonDecode(config);
       final List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
       final List<dynamic> colours = json['colours'];
@@ -92,9 +94,10 @@ void main(
         int counter = 0;
         String prevText = "";
 
-        final newASS = File("$prePath\\.temp\\$id\\comments.ass");
+        final newASS = File("$prePath/.temp/$id/comments.ass");
         final sinkComments = newASS.openWrite();
-        final defaultASS = File("$prePath\\defaults\\default.ass").readAsStringSync();
+        final defaultASS =
+            File("$prePath/defaults/default.ass").readAsStringSync();
         sinkComments.writeln(defaultASS);
 
         for (int i = 0; i < postData.length; i++) {
@@ -107,9 +110,11 @@ void main(
               List<String> textSegments = splitText(post[j]);
               for (String text in textSegments) {
                 if (text.isNotEmpty) {
-                  bool ttsSuccess = await generateTTS(text, counter, i, args['ntts'], voice, args['censor'], id);
+                  bool ttsSuccess = await generateTTS(text, "$i-$counter",
+                      args['ntts'], voice, args['censor'], id);
                   if (ttsSuccess) {
-                    bool alignSuccess = await alignSubtitles("$i-$counter", prevText, args['verbose'], id);
+                    bool alignSuccess = await alignSubtitles(
+                        "$i-$counter", prevText, args['verbose'], id);
                     if (!alignSuccess) {
                       exit(0);
                     } else {
@@ -138,21 +143,27 @@ void main(
                 currentTTS = ++currentTTS % voices.length;
                 voice = voices[currentTTS];
               }
-              if (alternateColour) currentColour = ++currentColour % colours.length;
-              endTime += Duration(milliseconds: (args['type'] == 'comments' ? 1000 : 0));
+              if (alternateColour)
+                currentColour = ++currentColour % colours.length;
+              endTime += Duration(
+                  milliseconds: (args['type'] == 'comments' ? 1000 : 0));
             }
           }
-          endTime += Duration(milliseconds: (args['type'] == 'multi' ? 1000 : 0));
+          endTime +=
+              Duration(milliseconds: (args['type'] == 'multi' ? 1000 : 0));
         }
         sinkComments.close();
 
-        bool cutSuccess = await cutVideo(endTime, args['verbose'], id, endCardLength);
+        bool cutSuccess =
+            await cutVideo(endTime, args['verbose'], id, endCardLength);
         if (!cutSuccess) {
           exit(0);
         }
 
-        List<String> command = generateCommand(
-            args, endTime, i, args['horror'], id, endCardLength, args['type'] != 'post', args['type'] == 'multi');
+        print(getTTSFiles(id));
+
+        List<String> command = generateCommand(args, endTime, i, args['horror'],
+            id, endCardLength, args['type'] != 'post');
         bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
         if (!ffmpegSuccess) {
           exit(0);
@@ -185,7 +196,8 @@ void main(
     }
     bool pipInstalled = await checkInstall('pip');
     if (!pipInstalled) {
-      printWarning("You need to have pip installed in order to install the python dependencies");
+      printWarning(
+          "You need to have pip installed in order to install the python dependencies");
     }
     await installWhisper();
   } else {

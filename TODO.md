@@ -1,9 +1,8 @@
-- Support for multi posts (add spacing between each post not tts/aka comment)
 - Change error message in get_data for when comment < count
 - Need to void --count when isLink
 - Use ffmpeg-cli as a ffmpeg wrapper
 - Smart split keeping words together by backtracking
-- Custom delay length
+- Custom delay length & end card length
 - Add multiple TTS options including local
 - Add max video length
 - Automatic deletion of temp if terminate batch job
@@ -15,3 +14,4 @@
 - Parallel processing
 - Docker image
 - Get the length of mp3 file and set to length if last in file + set to 0 if start using mp3_info library
+- Interface with java library for aws polly

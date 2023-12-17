@@ -4,18 +4,18 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/tts/get.dart';
 
-List<String> generateCommand(
-    ArgResults args, Duration endTime, int count, bool horrorMode, String id, int endCardLength, bool addDelay) {
+List<String> generateCommand(ArgResults args, Duration endTime, int count,
+    bool horrorMode, String id, int endCardLength, bool addDelay) {
   String output = args['output'];
   String fileType = args['file-type'];
   List<String> music = args['music'];
   String fps = args['framerate'];
   String subtitlePath = prePath[0] +
       r"\" +
-      prePath.substring(1, prePath.length).replaceAll(r'\', r'\\') +
-      r"\\.temp\\" +
+      prePath.substring(1, prePath.length).replaceAll(r'\', r'/') +
+      r"/.temp/" +
       id +
-      r"\\comments.ass";
+      r"/comments.ass";
 
   // if the output provided is a directory
   if (output.endsWith('/')) {
@@ -26,7 +26,10 @@ List<String> generateCommand(
   else {
     // get the filename and file-extension from the output path provided
     String fileName = p.basename(output);
-    String fileExtension = fileName.split(RegExp(r'^.*(?=(\.[0-9a-z]+$))')).last.replaceFirst('.', '');
+    String fileExtension = fileName
+        .split(RegExp(r'^.*(?=(\.[0-9a-z]+$))'))
+        .last
+        .replaceFirst('.', '');
     // remove the file extension from the output path
     output = output.replaceAll(".$fileExtension", '');
     // if the file-extension from the output path provided
@@ -41,22 +44,27 @@ List<String> generateCommand(
   late List<String> inputStreams;
   if (!addDelay) {
     inputStreams = List.generate(
-        calculateLength(ttsFiles.length, hasMusic: args['music'].isNotEmpty, hasDelay: addDelay),
+        calculateLength(ttsFiles.length,
+            hasMusic: args['music'].isNotEmpty, hasDelay: addDelay),
         (index) => "[${index + (args.wasParsed('end-card') ? 2 : 1)}:a]");
   } else {
-    inputStreams =
-        addDelayStreams(ttsFiles.length, calculateLength(ttsFiles.length, hasEndCard: args.wasParsed('end-card')) + 1);
+    inputStreams = addDelayStreams(
+        ttsFiles.length,
+        calculateLength(ttsFiles.length,
+                hasEndCard: args.wasParsed('end-card')) +
+            1);
   }
 
   print(inputStreams);
 
   List<String> command = [
-    "-i", "$prePath\\.temp\\$id\\video.mp4",
+    "-i", "$prePath/.temp/$id/video.mp4",
     if (args.wasParsed('end-card')) ...["-i", args['end-card']],
-    ...List.generate(ttsFiles.length, (index) => ["-i", "$prePath\\.temp\\$id\\tts\\tts-$index.mp3"], growable: false)
+    ...List.generate(ttsFiles.length, (index) => ["-i", ttsFiles[index]],
+            growable: false)
         .expand((e) => e)
         .toList(),
-    if (addDelay) ...["-i", "$prePath\\defaults\\silence.wav"],
+    if (addDelay) ...["-i", "$prePath/defaults/silence.wav"],
     if (args['music'].isNotEmpty) ...["-i", args['music'][0]],
     if (args['override']) '-y',
     if (!args['verbose']) ...['-loglevel', 'quiet'],
@@ -73,15 +81,20 @@ List<String> generateCommand(
     '$output${(count == 0) ? "" : count}.$fileType'
   ];
 
-  print(command);
   return command;
 }
 
 int calculateLength(int ttsFilesLength,
-        {bool hasMusic = false, bool hasDelay = false, bool hasEndCard = false, bool doubleDelay = false}) =>
+        {bool hasMusic = false,
+        bool hasDelay = false,
+        bool hasEndCard = false,
+        bool doubleDelay = false}) =>
     doubleDelay
         ? (ttsFilesLength * 2 - 1)
-        : ttsFilesLength + (hasDelay ? 1 : 0) + (hasMusic ? 1 : 0) + (hasEndCard ? 1 : 0);
+        : ttsFilesLength +
+            (hasDelay ? 1 : 0) +
+            (hasMusic ? 1 : 0) +
+            (hasEndCard ? 1 : 0);
 
 List<String> addDelayStreams(int inputStreamsLength, int delayIndex) {
   List<String> newInputStreams = [];

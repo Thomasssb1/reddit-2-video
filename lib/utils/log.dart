@@ -17,7 +17,7 @@ bool checkLog(
     return true;
   }
   // open log file
-  final File logFile = File("$prePath\\.temp\\visited_log.txt");
+  final File logFile = File("$prePath/.temp/visited_log.txt");
   try {
     /// [change to a stream instead so that it doesn't have to be fully read]
     // read the file and split the text into a list that can be read
@@ -43,7 +43,7 @@ void writeToLog(
   bool isMulti,
 ) {
   // open log file for writing
-  final File logFile = File("$prePath\\.temp\\visited_log.txt");
+  final File logFile = File("$prePath/.temp/visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
   // write new id on a new line
   if (isMulti) {
@@ -64,7 +64,7 @@ void flushLog(
   String? link,
 ) async {
   // open log file
-  final File logFile = File("$prePath\\.temp\\visited_log.txt");
+  final File logFile = File("$prePath/.temp/visited_log.txt");
   // if the user wants to remove every entry
   if (link == null) {
     // write nothing to file to overwrite data
@@ -78,15 +78,19 @@ void flushLog(
       var json = jsonDecode(utf8.decode(response.bodyBytes));
       // try/catch used if an incorrect link is given which doesn't contain an id in the json data
       try {
-        String id = pick(json[0], 'data', 'children', 0, 'data', 'id').asStringOrThrow();
-        String subredditId = pick(json[0], 'data', 'children', 0, 'data', 'subreddit_id').asStringOrThrow();
+        String id = pick(json[0], 'data', 'children', 0, 'data', 'id')
+            .asStringOrThrow();
+        String subredditId =
+            pick(json[0], 'data', 'children', 0, 'data', 'subreddit_id')
+                .asStringOrThrow();
         // read lines as a list and remove any entries that match the id
         final lines = await logFile.readAsLines();
         lines.removeWhere((element) => element == "$subredditId-$id");
         // turn the list into a \n split file
         await logFile.writeAsString(lines.join('\n'));
       } catch (e) {
-        printError("Incorrect link, the following link is not a valid link.\nLink: $link, \nError: $e");
+        printError(
+            "Incorrect link, the following link is not a valid link.\nLink: $link, \nError: $e");
         exit(1);
       }
     }

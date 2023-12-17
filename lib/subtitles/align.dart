@@ -5,10 +5,12 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'dart:io';
 
-Future<bool> alignSubtitles(int counter, String prevText, bool verbose, String id) async {
+Future<bool> alignSubtitles(
+    String ttsID, String prevText, bool verbose, String id) async {
   StreamSubscription<String> msg = Stream<String>.empty().listen((event) {});
   if (!verbose) {
-    final loadingMessage = Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
+    final loadingMessage =
+        Stream<String>.periodic(const Duration(seconds: 1), (secondCount) {
       return "Aligning subtitles ${secondCount + 1}s";
     });
     msg = loadingMessage.listen((text) {
@@ -18,7 +20,7 @@ Future<bool> alignSubtitles(int counter, String prevText, bool verbose, String i
   int code = await runCommand(
       'whisper_timestamped',
       [
-        "$prePath\\.temp\\$id\\tts\\tts-$counter.mp3",
+        "$prePath/.temp/$id/tts/tts-$ttsID.mp3",
         '--language',
         'en',
         '--output_format',
@@ -30,12 +32,13 @@ Future<bool> alignSubtitles(int counter, String prevText, bool verbose, String i
           prevText,
         ],
         '--output_dir',
-        '$prePath\\.temp\\$id\\config'
+        '$prePath/.temp/$id/config'
       ],
       verbose);
   msg.cancel();
   if (code == 0) {
-    printSuccess("\nSubtitles have been aligned. Continuing with video generation.");
+    printSuccess(
+        "\nSubtitles have been aligned. Continuing with video generation.");
     return true;
   } else {
     printError(
