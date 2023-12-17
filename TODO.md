@@ -14,3 +14,4 @@
 - Change to min_count, max_count then omit min_count on urls if not explicitly set
 - Parallel processing
 - Docker image
+- Get the length of mp3 file and set to length if last in file + set to 0 if start using mp3_info library
