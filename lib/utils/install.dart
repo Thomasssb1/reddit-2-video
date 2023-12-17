@@ -47,7 +47,8 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
               "Successfully installed ffmpeg using scoop. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
           return true;
         } else {
-          printWarning("Whilst trying to install ffmpeg using scoop something went wrong. Error code: $code");
+          printWarning(
+              "Whilst trying to install ffmpeg using scoop something went wrong. Error code: $code");
         }
       }
 
@@ -62,17 +63,26 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
             "Successfully installed ffmpeg using  sudo apt install. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
         return true;
       } else {
-        printError("Whilst trying to install ffmpeg using choco something went wrong. Error code: $code");
+        printError(
+            "Whilst trying to install ffmpeg using choco something went wrong. Error code: $code");
         exit(code);
       }
     } else if (Platform.isMacOS) {
-      code = await runCommand('brew', ['install', 'ffmpeg'], true);
-      if (code == 0) {
-        printSuccess(
-            "Successfully installed ffmpeg using brew. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
-        return true;
+      bool hasBrew = await checkInstall('brew');
+      if (hasBrew) {
+        code = await runCommand('brew', ['install', 'ffmpeg'], true);
+        if (code == 0) {
+          printSuccess(
+              "Successfully installed ffmpeg using brew. ${continueGeneration ? 'Continuing reddit-2-video generation.' : ''}");
+          return true;
+        } else {
+          printError(
+              "Whilst trying to install ffmpeg using brew something went wrong. Error code: $code");
+          exit(code);
+        }
       } else {
-        printError("Whilst trying to install ffmpeg using brew something went wrong. Error code: $code");
+        printError(
+            "You need to install brew in order to install ffmpeg. Learn more here: https://brew.sh/. You can also try installing yourself using this guide: https://www.ffmpeg.org/download.html#build-mac");
         exit(code);
       }
     } else {
@@ -87,8 +97,8 @@ Future<bool> installFFmpeg(bool continueGeneration) async {
 }
 
 installWhisper() async {
-  int wispersuccess =
-      await runCommand('pip3', ['install', 'git+https://github.com/linto-ai/whisper-timestamped'], true);
+  int wispersuccess = await runCommand('pip3',
+      ['install', 'git+https://github.com/linto-ai/whisper-timestamped'], true);
   if (wispersuccess != 0) {
     printWarning(
         "Whilst trying to install whisper-timestamped using pip3 something went wrong. Error code: $wispersuccess");
@@ -103,7 +113,8 @@ Future<bool> checkInstall(String process) async {
     if (e.errorCode == 2) {
       return false;
     } else {
-      printError("Something went wrong. Try again later. Error code: ${e.errorCode}\nError: ${e.message}");
+      printError(
+          "Something went wrong. Try again later. Error code: ${e.errorCode}\nError: ${e.message}");
       exit(0);
     }
   }
