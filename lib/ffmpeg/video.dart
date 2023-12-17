@@ -4,12 +4,45 @@ import 'package:reddit_2_video/utils/prepath.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/run.dart';
 import 'package:reddit_2_video/subtitles/time.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+String getVideoId(String video) {
+  try {
+    var link = Uri.parse(video);
+    return link.query.replaceFirst('v=', '');
+  } catch (e) {
+    // check if valid id in future
+    print(
+        "Continuing with video generation, assuming the value you put for --video is the id.");
+    return video;
+  }
+}
 
 getBackgroundVideo() async {
-  bool videoExists = await File("$prePath\\defaults\\video1.mp4").exists();
+  // change to allow video input then make name the same as vid/id
+  bool videoExists = await File("$prePath/defaults/video1.mp4").exists();
+  print(videoExists);
+  print("vid");
   if (!videoExists) {
-    runCommand("ytdl/ytdl.exe", ["-v", "https://www.youtube.com/watch?v=n_Dv4JMiwK8", "-o", "defaults/video1.mp4"],
-        false, prePath);
+    String videoID = getVideoId("https://www.youtube.com/watch?v=n_Dv4JMiwK8");
+    print("1.5");
+
+    print(
+        "\rDownloading background video from youtube. The video being downloaded is https://www.youtube.com/watch?v=$videoID. This is a one time process and will not need to be dowloaded again.");
+    var yt = YoutubeExplode();
+    var manifest = await yt.videos.streams.getManifest(videoID);
+    late var streamInfo;
+    streamInfo = manifest.videoOnly.sortByVideoQuality().first;
+    var stream = yt.videos.streamsClient.get(streamInfo);
+    await File("$prePath/defaults/video1.mp4").create().then((File file) async {
+      var fileStream = file.openWrite();
+
+      await stream.pipe(fileStream).whenComplete(() => print(
+          "\rBackground video successfully downloaded. You will not have to redownload the video again."));
+      await fileStream.flush();
+      await fileStream.close();
+    });
+    yt.close();
   }
 }
 
@@ -25,7 +58,8 @@ int getRandomTime(int length) {
   return newTime(0, maxTime);
 }
 
-Future<bool> cutVideo(Duration endTime, bool verbose, String id, int endCardLength) async {
+Future<bool> cutVideo(
+    Duration endTime, bool verbose, String id, int endCardLength) async {
   print("Cutting the background video to a random point.");
   int startTime = getRandomTime(endTime.inMilliseconds + 1500 + endCardLength);
   int code = await runCommand(
