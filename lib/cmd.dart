@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:args/args.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
+import 'utils/http.dart';
 
 /// parse the command line arguments entered.
 dynamic parse(
@@ -140,6 +141,7 @@ dynamic parse(
     } else if (results.wasParsed('gtts')) {
       printError(
           'GTTS does not currently work, in order to get tts you will need to use AWS-Polly which can be enabled by the -aws flag');
+      exit(0);
     } else if (results.wasParsed('aws') && results.wasParsed('gtts')) {
       printError(
           'Both tts options -aws and -local-tts cannot be active at the same time.');
@@ -148,11 +150,15 @@ dynamic parse(
       printError('The value provided for --repeat must be an integer.');
       exit(0);
     } else if (results.wasParsed('ntts') && results.wasParsed('gtts')) {
-      printError(
+      printWarning(
           'The flag -ntts does not affect local-tts but only aws tts. Using both flags at the same time will not affect the voice used for local-tts.');
     } else if (results.wasParsed('gtts') && results.wasParsed('censor')) {
-      printError(
+      printWarning(
           'The flag --censor does not affect local-tts but only aws tts.');
+    } else if (results.wasParsed('count') &&
+        validateLink(results['subreddit'])) {
+      printWarning(
+          'The option --count does not work with a link, generation will continue but the --count option will be omitted.');
     }
     // return map of command and args
     return {'command': null, 'args': results};

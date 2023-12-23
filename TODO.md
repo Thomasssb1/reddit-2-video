@@ -1,5 +1,3 @@
-- Change error message in get_data for when comment < count
-- Need to void --count when isLink
 - Use ffmpeg-cli as a ffmpeg wrapper
 - Smart split keeping words together by backtracking
 - Custom delay length & end card length
@@ -15,3 +13,4 @@
 - Get the length of mp3 file and set to length if last in file + set to 0 if start using mp3_info library
 - Interface with java library for aws polly
 - Handle the rare case where a post is deleted during fetch?? happened once on multi t5_2t0no-118of33z never existed and so reset endtime to 0
+- Swap to stdout from print

@@ -23,8 +23,6 @@ Future<Duration> generateSubtitles(
       alternateColour | isTitle ? 'HFFFFFF' : 'H00FFFF';
   final int maxCharacterCount = 30;
 
-  Duration time = Duration.zero;
-
   String jsonData =
       await File("$prePath/.temp/$id/config/tts-$ttsID.mp3.words.json")
           .readAsString();
@@ -84,7 +82,6 @@ Future<Duration> generateSubtitles(
       }
     }
   }
-  print("space");
   return Duration(
       milliseconds:
           ttsFile.duration.inMilliseconds + prevFileTime.inMilliseconds);
@@ -102,10 +99,6 @@ karaokeEffect(
     Duration ttsFileDuration) {
   for (int i = 0; i < line.length; i++) {
     // start: ${(position == 0 && i == 0)}
-    print(line[i]['segmentID']);
-    print("segend: ${segmentCount - 1}");
-    print(
-        "end: ${position + i == lineCount - 1 && i == line.length - 1 && line[i]['segmentID'] == segmentCount - 1}");
     sinkComments.writeln(
         "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: (position + i == lineCount - 1 && i == line.length - 1 && line[i]['segmentID'] == segmentCount - 1) ? ttsFileDuration.inMilliseconds : line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +
             r"{\c&" +

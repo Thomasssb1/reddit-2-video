@@ -53,7 +53,8 @@ Future<(String, List<dynamic>)> getPostData(
           if ((!p0('data', 'stickied').asBoolOrFalse())) {
             // ignore any comments pinned to the subreddit (normally mod posts)
             if ((p0('data', 'num_comments').asIntOrNull() ?? 0) >=
-                commentCount) {
+                    commentCount ||
+                isLink) {
               // check if the post has enough comments specified with -c
               if (isLink ? true : nsfw) {
                 // if the user has nsfw tag set to true (default)
@@ -91,6 +92,9 @@ Future<(String, List<dynamic>)> getPostData(
                   };
                 }
               }
+            } else {
+              printWarning(
+                  "The post ${p0('data', 'title').required().asString()} has less than the minimum number of comments specified by the --count option. Skipping post...");
             }
           }
           // filter out any null values from the values returned
@@ -100,11 +104,10 @@ Future<(String, List<dynamic>)> getPostData(
             element['id'] != null &&
             !checkLog("${element['subreddit_id']}-${element['id']}"))
         .toList();
-    // TODO: change error message
     if (data.isEmpty) {
       if (isLink) {
         printError(
-            "The link provided in --subreddit has already had a video been generated previously or the number of comments on the post is too little as specified by the --count option.\n If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied, or change the minimum number of comments required by changing the --count option.");
+            "The link provided in --subreddit has already had a video been generated previously\n If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
       } else {
         printError(
             "No posts could be found for the subreddit. Try again with another subreddit.");
