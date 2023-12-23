@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/utils/prepath.dart';
 import 'package:reddit_2_video/subtitles/time.dart';
+import 'package:mp3_info/mp3_info.dart';
 
 /// [Remember] ffmpeg uses `HBBGGRR`
 String animation(colour) => r"{\an5}";
@@ -28,49 +29,85 @@ Future<Duration> generateSubtitles(
       await File("$prePath/.temp/$id/config/tts-$ttsID.mp3.words.json")
           .readAsString();
   var json = jsonDecode(jsonData);
+
+  MP3Info ttsFile =
+      MP3Processor.fromFile(File("$prePath/.temp/$id//tts/tts-$ttsID.mp3"));
+
   for (final segment in json['segments']) {
     List<dynamic> wordSet = [];
     num characterCount = 0;
     // whisper_timestamped sometimes hallucinates you
-    if (segment['words'][0]['text'] != ['you']) {
-      for (final word in segment['words']) {
-        if (characterCount + word['text'].length > maxCharacterCount) {
-          karaokeEffect(wordSet, sinkComments, prevFileTime, highlightColour,
-              currentColour);
+    int segmentCount = json['segments'].length;
+    if (segment['words'][0]['text'] != 'you') {
+      var words = segment['words'];
+      int lineCount = words.length;
+      //final word in segment['words']
+      int position = 0;
+      for (int i = 0; i < words.length; i++) {
+        if (characterCount + words[i]['text'].length > maxCharacterCount) {
+          karaokeEffect(
+              wordSet,
+              sinkComments,
+              prevFileTime,
+              highlightColour,
+              currentColour,
+              position,
+              lineCount,
+              segmentCount,
+              ttsFile.duration);
           wordSet = [
             {
-              "text": word['text'],
-              "end": (word['end'] * 1000).toInt(),
-              "start": (word['start'] * 1000).toInt()
+              "text": words[i]['text'],
+              "end": (words[i]['end'] * 1000).toInt(),
+              "start": (words[i]['start'] * 1000).toInt(),
+              "segmentID": segment['id']
             }
           ];
           characterCount = 0;
+          position = i;
         } else {
           wordSet.add({
-            "text": word['text'],
-            "end": (word['end'] * 1000).toInt(),
-            "start": (word['start'] * 1000).toInt()
+            "text": words[i]['text'],
+            "end": (words[i]['end'] * 1000).toInt(),
+            "start": (words[i]['start'] * 1000).toInt(),
+            "segmentID": segment['id']
           });
-          characterCount += word['text'].length;
+          characterCount += words[i]['text'].length;
         }
-        time = Duration(
+        /*time = Duration(
             milliseconds:
-                (word['end'] * 1000).toInt() + prevFileTime.inMilliseconds);
+                (words[i]['end'] * 1000).toInt() + prevFileTime.inMilliseconds);*/
       }
       if (wordSet.isNotEmpty) {
         karaokeEffect(wordSet, sinkComments, prevFileTime, highlightColour,
-            currentColour);
+            currentColour, position, lineCount, segmentCount, ttsFile.duration);
       }
     }
   }
-  return time;
+  print("space");
+  return Duration(
+      milliseconds:
+          ttsFile.duration.inMilliseconds + prevFileTime.inMilliseconds);
 }
 
-karaokeEffect(List<dynamic> line, IOSink sinkComments, Duration prevFileTime,
-    String highlightColour, String textColour) {
+karaokeEffect(
+    List<dynamic> line,
+    IOSink sinkComments,
+    Duration prevFileTime,
+    String highlightColour,
+    String textColour,
+    int position,
+    int lineCount,
+    int segmentCount,
+    Duration ttsFileDuration) {
   for (int i = 0; i < line.length; i++) {
+    // start: ${(position == 0 && i == 0)}
+    print(line[i]['segmentID']);
+    print("segend: ${segmentCount - 1}");
+    print(
+        "end: ${position + i == lineCount - 1 && i == line.length - 1 && line[i]['segmentID'] == segmentCount - 1}");
     sinkComments.writeln(
-        "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +
+        "Dialogue: 0,${getNewTime(Duration(milliseconds: line[i]['start'] + prevFileTime.inMilliseconds))},${getNewTime(Duration(milliseconds: (position + i == lineCount - 1 && i == line.length - 1 && line[i]['segmentID'] == segmentCount - 1) ? ttsFileDuration.inMilliseconds : line[i]['end'] + prevFileTime.inMilliseconds))},Default,,0,0,0,," +
             r"{\c&" +
             "$textColour}" +
             r"{\an5\frz0}" +

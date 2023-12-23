@@ -4,7 +4,6 @@ import 'package:reddit_2_video/ffmpeg/execute.dart';
 import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'package:reddit_2_video/subtitles/align.dart';
 import 'package:reddit_2_video/subtitles/generate.dart';
-import 'package:reddit_2_video/tts/get.dart';
 import 'package:reddit_2_video/tts/split.dart';
 import 'dart:io';
 import 'package:reddit_2_video/utils/log.dart';
@@ -20,9 +19,7 @@ import 'dart:convert';
 import 'package:reddit_2_video/utils/http.dart';
 import 'package:reddit_2_video/utils/remove_characters.dart';
 
-/// [enable preview ffplay]
-/// [add styling to title and fade in etc using .ass]
-//
+// [enable preview ffplay]
 void main(
   List<String> arguments,
 ) async {
@@ -143,8 +140,9 @@ void main(
                 currentTTS = ++currentTTS % voices.length;
                 voice = voices[currentTTS];
               }
-              if (alternateColour)
+              if (alternateColour) {
                 currentColour = ++currentColour % colours.length;
+              }
               endTime += Duration(
                   milliseconds: (args['type'] == 'comments' ? 1000 : 0));
             }
@@ -154,13 +152,11 @@ void main(
         }
         sinkComments.close();
 
-        bool cutSuccess =
-            await cutVideo(endTime, args['verbose'], id, endCardLength);
+        bool cutSuccess = await cutVideo(endTime, args['verbose'], id,
+            endCardLength, args.wasParsed('end-card'));
         if (!cutSuccess) {
           exit(0);
         }
-
-        print(getTTSFiles(id));
 
         List<String> command = generateCommand(args, endTime, i, args['horror'],
             id, endCardLength, args['type'] != 'post');
@@ -172,8 +168,8 @@ void main(
         if (args['youtube-short']) {
           await splitVideo(args['output'], args['file-type'], i);
         }
-        writeToLog(id, args['type'] == 'multi');
-        //await clearTemp(id);
+        await writeToLog(id, args['type'] == 'multi');
+        await clearTemp(id);
       } else {
         // output error
         printError("No post(s) found... Try again.");

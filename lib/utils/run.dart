@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 Future<int> runCommand(String executable, List<String> arguments, bool verbose,
-    [String? workingDirectory]) async {
+    {String? workingDirectory, bool addBackcarriage = false}) async {
   final process = await Process.start(executable, arguments,
       workingDirectory: workingDirectory);
   if (verbose) {

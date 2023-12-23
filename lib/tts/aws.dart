@@ -23,7 +23,7 @@ generateTTS(String text, String ttsID, bool ntts, String voice, bool censor,
         '.temp/$id/tts/tts-$ttsID.mp3',
       ],
       true,
-      prePath);
+      workingDirectory: prePath);
   if (ttsResult == 0) {
     counter++;
     printSuccess("\rSuccessfully generated TTS. ($counter).");

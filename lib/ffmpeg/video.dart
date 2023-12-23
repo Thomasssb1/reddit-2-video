@@ -21,12 +21,8 @@ String getVideoId(String video) {
 getBackgroundVideo() async {
   // change to allow video input then make name the same as vid/id
   bool videoExists = await File("$prePath/defaults/video1.mp4").exists();
-  print(videoExists);
-  print("vid");
   if (!videoExists) {
     String videoID = getVideoId("https://www.youtube.com/watch?v=n_Dv4JMiwK8");
-    print("1.5");
-
     print(
         "\rDownloading background video from youtube. The video being downloaded is https://www.youtube.com/watch?v=$videoID. This is a one time process and will not need to be dowloaded again.");
     var yt = YoutubeExplode();
@@ -58,17 +54,19 @@ int getRandomTime(int length) {
   return newTime(0, maxTime);
 }
 
-Future<bool> cutVideo(
-    Duration endTime, bool verbose, String id, int endCardLength) async {
+Future<bool> cutVideo(Duration endTime, bool verbose, String id,
+    int endCardLength, bool hasEndCard) async {
   print("Cutting the background video to a random point.");
-  int startTime = getRandomTime(endTime.inMilliseconds + 1500 + endCardLength);
+  int startTime = getRandomTime(endTime.inMilliseconds +
+      1500 +
+      (hasEndCard ? (endCardLength * 1000) : 0));
   int code = await runCommand(
       'ffmpeg',
       [
         '-ss',
         '${startTime}ms',
         '-to',
-        '${startTime + endTime.inMilliseconds + 1500 + (endCardLength * 1000)}ms',
+        '${startTime + endTime.inMilliseconds + 1500 + (hasEndCard ? (endCardLength * 1000) : 0)}ms',
         '-y',
         '-nostdin',
         '-i',
@@ -81,7 +79,7 @@ Future<bool> cutVideo(
         '.temp/$id/video.mp4'
       ],
       true,
-      prePath);
+      workingDirectory: prePath);
   if (code == 0) {
     printSuccess(
         "Video has been cut between times ${getNewTime(Duration(milliseconds: startTime))} and ${getNewTime(Duration(milliseconds: startTime + endTime.inMilliseconds + 1500 + (endCardLength * 1000)))}.");

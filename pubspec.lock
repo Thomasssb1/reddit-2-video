@@ -217,6 +217,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  mp3_info:
+    dependency: "direct main"
+    description:
+      name: mp3_info
+      sha256: aa2999c47c4f0fbd1e60da0512e44763f6b8a50ee1a382421c29feb37a981fad
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   node_preamble:
     dependency: transitive
     description:

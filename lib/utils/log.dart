@@ -38,10 +38,10 @@ bool checkLog(
 }
 
 /// write the id of the post being generated to the log
-void writeToLog(
+Future writeToLog(
   String id,
   bool isMulti,
-) {
+) async {
   // open log file for writing
   final File logFile = File("$prePath/.temp/visited_log.txt");
   final sink = logFile.openWrite(mode: FileMode.append);
@@ -56,7 +56,7 @@ void writeToLog(
   } else {
     sink.writeln(id);
   }
-  sink.close();
+  await sink.close();
 }
 
 /// remove all ids from the file or a specific id if specified
