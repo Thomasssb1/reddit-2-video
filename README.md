@@ -140,6 +140,17 @@ To build the exe, you will need to compile which requires [dart](https://dart.de
 ```zsh
 $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
 ```
+<details>
+    <summary>
+    However, <b>if you are using windows</b> you need to add the .exe file extension for it to work
+    </summary>
+
+> Run the below command if you are on windows
+>
+> ```sh
+> $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video.exe
+> ```
+</details>
 
 You will also need [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) setup if you plan on using AWS-Polly to generate TTS, which currently is the only option for TTS generation.
 
