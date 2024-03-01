@@ -10,7 +10,6 @@
 - Change to min_count, max_count then omit min_count on urls if not explicitly set
 - Parallel processing
 - Docker image
-- Get the length of mp3 file and set to length if last in file + set to 0 if start using mp3_info library
 - Interface with java library for aws polly
 - Handle the rare case where a post is deleted during fetch?? happened once on multi t5_2t0no-118of33z never existed and so reset endtime to 0
 - Swap to stdout from print
