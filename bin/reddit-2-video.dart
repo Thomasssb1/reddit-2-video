@@ -41,6 +41,7 @@ void main(
     int endCardLength = 2;
 
     // set prepath based on --dev flag
+    assert(results.isDev, true);
     prePath = results.prePath;
 
     await getBackgroundVideo();
