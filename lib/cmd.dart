@@ -1,10 +1,62 @@
 import 'dart:io';
 import 'package:args/args.dart';
+import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/exceptions/no_command_exception.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'utils/http.dart';
 
+class ParsedCommand {
+  final Command? _command;
+  final ArgResults? _args;
+  final Directory _prePath;
+
+  ParsedCommand({
+    required Command? command,
+    required ArgResults args,
+  })  : _command = command,
+        _args = args,
+        _prePath = _determinePath(args);
+
+  ParsedCommand.defaultCommand({
+    required ArgResults args,
+  })  : _command = Command.defaultCommand,
+        _args = args,
+        _prePath = _determinePath(args);
+
+  ParsedCommand.noArgs({
+    required Command command,
+  })  : _command = command,
+        _args = null,
+        _prePath = Directory.current;
+
+  ParsedCommand.none()
+      : _command = null,
+        _args = null,
+        _prePath = Directory.current;
+
+  Command? get command => _command;
+  ArgResults? get args => _args;
+  String get prePath => _prePath.path;
+
+  bool get isDefault => _command == Command.defaultCommand;
+  bool get isDev => _args?['dev'] ?? false;
+
+  static Directory _determinePath(ArgResults args) {
+    return args['dev']
+        ? Directory.current
+        : File(Platform.resolvedExecutable).parent.parent;
+  }
+}
+
+enum Command {
+  defaultCommand,
+  flush,
+  install,
+  help,
+}
+
 /// parse the command line arguments entered.
-dynamic parse(
+ParsedCommand parse(
   args,
 ) {
   // init parser
@@ -12,7 +64,7 @@ dynamic parse(
   // add parser options
   parser.addOption('subreddit');
   parser.addOption('sort',
-      defaultsTo: 'hot', abbr: "s", allowed: ['hot', 'new', 'top', 'rising']);
+      defaultsTo: 'hot', abbr: 's', allowed: ['hot', 'new', 'top', 'rising']);
   parser.addOption('comment-sort',
       defaultsTo: 'top',
       allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
@@ -33,10 +85,10 @@ dynamic parse(
   // Look into getting info such as female/male when assigning voices in future
   parser.addMultiOption('alternate',
       valueHelp:
-          "alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)",
+          'alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)',
       help:
-          "tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).",
-      defaultsTo: ["off", "off", "H0000FF"]);
+          'tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).',
+      defaultsTo: ['off', 'off', 'H0000FF']);
   parser.addFlag('post-confirmation', defaultsTo: false);
   parser
     ..addFlag('nsfw', defaultsTo: true)
@@ -51,14 +103,14 @@ dynamic parse(
   parser.addFlag('aws',
       defaultsTo: true,
       help:
-          "Whether or not to use AWS Polly, but this requires setup of aws cli as well as correct details.");
+          'Whether or not to use AWS Polly, but this requires setup of aws cli as well as correct details.');
 
   // not implemented
   parser.addFlag('gtts',
       defaultsTo: false,
       hide: true,
       help:
-          "Uses googles tts to generae tts which has no cost and is generated online. (not implemented)");
+          'Uses googles tts to generae tts which has no cost and is generated online. (not implemented)');
   parser.addOption(
     'accent',
     defaultsTo: 'com.mx',
@@ -73,18 +125,18 @@ dynamic parse(
 
   parser.addOption('repeat',
       help:
-          "How many times the program should repeat - does not work for links but works for subreddits.",
+          'How many times the program should repeat - does not work for links but works for subreddits.',
       valueHelp: 'integer',
-      defaultsTo: "1");
+      defaultsTo: '1');
   parser.addOption('video',
-      defaultsTo: 'defaults/video1.mp4', abbr: 'p', valueHelp: "path-to-video");
-  parser.addMultiOption('music', valueHelp: "path,volume");
+      defaultsTo: 'defaults/video1.mp4', abbr: 'p', valueHelp: 'path-to-video');
+  parser.addMultiOption('music', valueHelp: 'path,volume');
   parser.addFlag('youtube-short',
       help:
-          "Whether or not to produce the final long form video with several videos split by a minute length as well as the full video.",
+          'Whether or not to produce the final long form video with several videos split by a minute length as well as the full video.',
       defaultsTo: false);
   parser.addFlag('horror',
-      help: "Lowers the pitch from TTS for creepy stories.", defaultsTo: false);
+      help: 'Lowers the pitch from TTS for creepy stories.', defaultsTo: false);
   parser.addOption('output',
       abbr: 'o',
       defaultsTo: 'final',
@@ -99,10 +151,10 @@ dynamic parse(
   parser.addFlag('censor',
       defaultsTo: false,
       help:
-          "Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.");
+          'Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.');
   parser.addOption('end-card',
       help: 'Path to a gif & audio that will play at the end of the video.',
-      valueHelp: "path-to-gif");
+      valueHelp: 'path-to-gif');
   parser
     ..addFlag('verbose', abbr: 'v', defaultsTo: false)
     ..addFlag('override', abbr: 'y', defaultsTo: false)
@@ -127,28 +179,26 @@ dynamic parse(
     // if the cli contained help argument
     if (results.wasParsed('help')) {
       // output the help message
-      printHelp(parser.usage);
-      exit(1);
+      parser.printHelp();
+      return ParsedCommand.noArgs(command: Command.help);
       // if the cli did not contain a subreddit/link
     } else if (!results.wasParsed('subreddit')) {
-      stderr.writeln(
+      throw ArgumentMissingException(
           'Argument <subreddit> is required. \nUse -help to get more information about usage.');
-      exit(1);
-    } else if (results['alternate'].length < 3) {
-      printError(
+    } else if (results['alternate'].length != 3) {
+      throw ArgumentMissingException(
           'The option --alternate needs 3 options each split by a comma. Check --help to see the syntax.');
-      exit(0);
     } else if (results.wasParsed('gtts')) {
-      printError(
+      throw ArgumentNotImplementedException(
           'GTTS does not currently work, in order to get tts you will need to use AWS-Polly which can be enabled by the -aws flag');
-      exit(0);
     } else if (results.wasParsed('aws') && results.wasParsed('gtts')) {
-      printError(
-          'Both tts options -aws and -local-tts cannot be active at the same time.');
-      exit(0);
+      throw ArgumentConflictException(
+          'Both tts options --aws and --gtts cannot be active at the same time.',
+          'aws',
+          'gtts');
     } else if (int.tryParse(results['repeat']) == null) {
-      printError('The value provided for --repeat must be an integer.');
-      exit(0);
+      throw FormatException(
+          'The value provided for --repeat must be an integer.');
     } else if (results.wasParsed('ntts') && results.wasParsed('gtts')) {
       printWarning(
           'The flag -ntts does not affect local-tts but only aws tts. Using both flags at the same time will not affect the voice used for local-tts.');
@@ -161,12 +211,13 @@ dynamic parse(
           'The option --count does not work with a link, generation will continue but the --count option will be omitted.');
     }
     // return map of command and args
-    return {'command': null, 'args': results};
+    return ParsedCommand.defaultCommand(args: results);
     // if the command is flush
   } else if (results.command!.name == 'flush') {
-    return {'command': 'flush', 'args': flush.parse(args)};
+    return ParsedCommand(command: Command.flush, args: flush.parse(args));
     // if the command is install
   } else if (results.command!.name == 'install') {
-    return {'command': 'install', 'args': install.parse(args)};
+    return ParsedCommand(command: Command.install, args: install.parse(args));
   }
+  throw NoCommandException('There is no such command ${results.command?.name}');
 }
