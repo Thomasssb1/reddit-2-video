@@ -1,5 +1,5 @@
 import 'package:reddit_2_video/utils/prettify.dart';
-import 'package:reddit_2_video/utils/prepath.dart';
+import 'package:reddit_2_video/utils/globals.dart' show prePath;
 import 'dart:io';
 
 deleteFolders(String path) async {

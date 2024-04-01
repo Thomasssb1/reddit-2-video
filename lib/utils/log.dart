@@ -4,7 +4,7 @@ import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/utils/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
-import 'package:reddit_2_video/utils/prepath.dart';
+import 'package:reddit_2_video/utils/globals.dart' show prePath;
 
 final int subredditIDCount = 8;
 

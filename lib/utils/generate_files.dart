@@ -11,7 +11,7 @@ reddit-2-video/
 */
 
 import 'dart:io';
-import 'package:reddit_2_video/utils/prepath.dart';
+import 'package:reddit_2_video/utils/globals.dart' show prePath;
 import 'package:reddit_2_video/utils/prettify.dart';
 
 // need to make it suitable for multi type option
