@@ -26,24 +26,29 @@ void printUnderline(
   print("\x1b[4m$message\x1b[0m");
 }
 
-/// print the usage formatted with colours for particular uses
+/// print the usage formatted with colours
 void printHelp(
-  String usage,
-) {
+  String usage, {
+  String defaultsColourCode = "\x1b[33m",
+  String optionsColourCode = "\x1b[35m",
+  String flagsColourCode = "\x1b[32m",
+}) {
   var bracketsRegex = RegExp(r'\((defaults.+)\)');
   var sqBracketsRegex = RegExp(r'\[(.*?)\]');
   var dashRegex = RegExp(r'(?!-level|-colour|-domain)(\-\S+)');
 
   for (final match in bracketsRegex.allMatches(usage)) {
-    usage = usage.replaceAll(match[0]!, '\x1b[33m${match[0]}\x1b[0m');
+    usage =
+        usage.replaceAll(match[0]!, '$defaultsColourCode${match[0]}\x1b[0m');
   }
   for (final match in sqBracketsRegex.allMatches(usage)) {
     if (match[0] != '[no-]') {
-      usage = usage.replaceAll(match[0]!, '\x1b[35m${match[0]}\x1b[0m');
+      usage =
+          usage.replaceAll(match[0]!, '$optionsColourCode${match[0]}\x1b[0m');
     }
   }
   for (final match in dashRegex.allMatches(usage)) {
-    usage = usage.replaceAll(match[0]!, '\x1b[32m${match[0]}\x1b[0m');
+    usage = usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}\x1b[0m');
   }
   print(usage);
 }
