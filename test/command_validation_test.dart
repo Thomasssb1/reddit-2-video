@@ -1,6 +1,7 @@
-import 'package:reddit_2_video/cmd.dart';
+import 'package:reddit_2_video/command/parse.dart';
 import 'package:test/test.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/command/parsed_command.dart';
 
 void main() {
   List<String> defaultArguments = ["--subreddit", "AskReddit", "-d"];

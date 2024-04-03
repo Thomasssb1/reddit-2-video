@@ -10,7 +10,7 @@ import 'package:reddit_2_video/utils/globals.dart';
 import 'dart:io';
 import 'package:reddit_2_video/utils/log.dart';
 import 'package:reddit_2_video/get_data.dart';
-import 'package:reddit_2_video/cmd.dart';
+import 'package:reddit_2_video/command/parse.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:reddit_2_video/ffmpeg/video.dart';
 import 'package:reddit_2_video/utils/cleanup.dart';
@@ -20,6 +20,7 @@ import 'dart:convert';
 import 'package:reddit_2_video/utils/http.dart';
 import 'package:reddit_2_video/utils/remove_characters.dart';
 import 'package:reddit_2_video/utils/globals.dart' show prePath;
+import 'package:reddit_2_video/command/parsed_command.dart';
 
 // [enable preview ffplay]
 void main(

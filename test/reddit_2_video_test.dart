@@ -1,6 +1,7 @@
 import 'package:args/args.dart';
-import 'package:reddit_2_video/cmd.dart';
+import 'package:reddit_2_video/command/parse.dart';
 import 'package:test/test.dart';
+import 'package:reddit_2_video/command/parsed_command.dart';
 
 void main() {
   group("CLI parsing", () {
