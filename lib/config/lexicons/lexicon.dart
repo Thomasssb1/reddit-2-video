@@ -13,4 +13,17 @@ class Lexicon {
   String toString() {
     return 'grapheme: $_grapheme, alias: $_alias';
   }
+
+  @override
+  bool operator ==(Object obj) {
+    if (obj is Lexicon) {
+      if (obj.grapheme == _grapheme && obj.alias == _alias) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => Object.hash(_grapheme, _alias);
 }

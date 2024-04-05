@@ -12,7 +12,7 @@ class BackgroundVideo extends ConfigItem {
 
   BackgroundVideo({
     required this.url,
-    required this.type,
+    this.type = VideoType.video,
     super.path = "/defaults/video1.mp4",
   });
 
