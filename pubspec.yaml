@@ -20,3 +20,4 @@ dependencies:
   path: ^1.8.3
   youtube_explode_dart: ^2.0.3
   mp3_info: ^0.2.1
+  xml: ^6.5.0
