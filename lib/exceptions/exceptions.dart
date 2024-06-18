@@ -5,4 +5,8 @@ export 'no_command_exception.dart';
 export 'invalid_video_url_exception.dart';
 export 'invalid_file_format_exception.dart';
 export 'invalid_post_url_exception.dart';
+export 'post_already_generated_exception.dart';
+export 'empty_post_selection_exception.dart';
+export 'posts_exhausted_exception.dart';
+export 'reddit_api_exception.dart';
 export 'warning.dart';
