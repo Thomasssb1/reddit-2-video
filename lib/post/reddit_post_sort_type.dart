@@ -1,7 +1,7 @@
 enum RedditPostSortType {
   best(name: 'best'),
   hot(name: 'hot'),
-  newest(name: 'newest'),
+  newest(name: 'new'),
   top(name: 'top'),
   rising(name: 'rising');
 
@@ -26,5 +26,10 @@ enum RedditPostSortType {
       default:
         return null;
     }
+  }
+
+  @override
+  String toString() {
+    return name;
   }
 }

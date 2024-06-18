@@ -49,6 +49,7 @@ class RedditUrl {
   }
 
   Uri get getUri => Uri.https("$linkAuthority/r/$_subreddit/comments/$_id");
+  String get id => _id;
 
   @override
   String toString() {
