@@ -150,29 +150,36 @@ class Subtitles {
 
   void parse(ParsedCommand command) async {
     Voice.set(command.voice);
+    Subtitle prevSubtitle = Subtitle.none();
+    Duration prevDuration = Duration.zero;
     for (RedditPost post in video.posts) {
       String title = _removeCharacters(post.title);
       String body = _removeCharacters(post.body);
       List<String> comments =
           post.comments.map((e) => _removeCharacters(e.body)).toList();
-      Subtitle prevSubtitle = Subtitle.none();
+
       if (title.isNotEmpty) {
-        prevSubtitle = await _parse(post, command, title, prevSubtitle, true);
+        (prevSubtitle, prevDuration) =
+            await _parse(command, title, prevSubtitle, prevDuration, true);
       }
       if (body.isNotEmpty) {
-        prevSubtitle = await _parse(post, command, body, prevSubtitle, false);
+        (prevSubtitle, prevDuration) =
+            await _parse(command, body, prevSubtitle, prevDuration, false);
       }
       if (comments.isNotEmpty) {
         for (String comment in comments) {
-          prevSubtitle =
-              await _parse(post, command, comment, prevSubtitle, false);
+          (prevSubtitle, prevDuration) =
+              await _parse(command, comment, prevSubtitle, prevDuration, false);
         }
+      }
+      if (command.type == RedditVideoType.multi) {
+        prevDuration += delay;
       }
     }
   }
 
-  Future<Subtitle> _parse(RedditPost post, ParsedCommand command, String text,
-      Subtitle prevSubtitle, bool isTitle) async {
+  Future<(Subtitle, Duration)> _parse(ParsedCommand command, String text,
+      Subtitle prevSubtitle, Duration prevDuration, bool isTitle) async {
     if (text.isNotEmpty) {
       List<String> segments = _splitText(text);
       for (String textSegment in segments) {
@@ -187,7 +194,7 @@ class Subtitles {
           Subtitle subtitle = Subtitle(
               text: text, voice: command.voice, color: color, config: config);
 
-          subtitle.generate(_assFile, prevSubtitle);
+          subtitle.generate(_assFile, prevDuration);
 
           _subtitles.add(subtitle);
           prevSubtitle = subtitle;
@@ -199,7 +206,8 @@ class Subtitles {
       if (alternate.color) {
         TextColor.next();
       }
+      prevDuration += delay;
     }
-    return prevSubtitle;
+    return (prevSubtitle, prevDuration);
   }
 }

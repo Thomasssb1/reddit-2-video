@@ -22,7 +22,7 @@ class Subtitle {
 
   void generate(
     File assFile,
-    Subtitle prevSubtitle,
+    Duration prevDuration,
   ) {
     for (final segment in config.segments) {
       List<SubtitleLineData> lineData = [];
@@ -32,14 +32,14 @@ class Subtitle {
         for (int i = 0; i < words.length; i++) {
           if (characterCount + words[i]['text'].length > maxCharacterCount) {
             _karaokeEffect(
-                lineData, assFile, prevSubtitle, config.segments.length);
+                lineData, assFile, prevDuration, config.segments.length);
             lineData = [];
             characterCount = 0;
           }
           lineData.add(SubtitleLineData(
             text: words[i]['text'],
-            end: (words[i]['end'] * 1000).toInt(),
-            start: (words[i]['start'] * 1000).toInt(),
+            end: Duration(milliseconds: (words[i]['end'] * 1000).toInt()),
+            start: Duration(milliseconds: (words[i]['start'] * 1000).toInt()),
             finalWord: (i == words.length - 1),
             segmentID: segment['id'],
           ));
@@ -47,7 +47,7 @@ class Subtitle {
         }
         if (lineData.isNotEmpty) {
           _karaokeEffect(
-              lineData, assFile, prevSubtitle, config.segments.length);
+              lineData, assFile, prevDuration, config.segments.length);
         }
       }
     }
@@ -63,19 +63,15 @@ class Subtitle {
       "${time.inHours}:${time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${time.inSeconds.remainder(60).toString().padLeft(2, '0')}.${time.inMilliseconds.remainder(1000).toString().padLeft(3, '0').substring(0, 2)}";
 
   void _karaokeEffect(List<SubtitleLineData> lineData, File assFile,
-      Subtitle prevSubtitle, int segmentCount) {
+      Duration prevDuration, int segmentCount) {
     IOSink sink = assFile.openWrite();
     for (int i = 0; i < lineData.length; i++) {
-      String start = _getNewTime(Duration(
-          milliseconds:
-              lineData[i].start + prevSubtitle.duration.inMilliseconds));
+      String start = _getNewTime(lineData[i].start + prevDuration);
 
       String end = _getNewTime(
           lineData[i].isFinalWord && lineData[i].isFinalSegment(segmentCount)
               ? duration
-              : Duration(
-                  milliseconds:
-                      lineData[i].end + prevSubtitle.duration.inMilliseconds));
+              : lineData[i].end + prevDuration);
 
       List<SubtitleLineData> words = lineData.sublist(0, i + 1);
       SubtitleLineData word =
@@ -85,6 +81,7 @@ class Subtitle {
       sink.writeln(
           "Dialogue: 0,$start,$end,Default,,0,0,0,,{\\c&$color}{\\an5\\frz0}${words.cast<String>().join(' ')}");
     }
+    sink.close();
   }
 
   Duration get duration => MP3Processor.fromFile(config.tts).duration;

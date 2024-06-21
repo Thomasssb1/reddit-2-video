@@ -2,8 +2,8 @@ class SubtitleLineData {
   final String highlightColour = '#00FFFF';
 
   String text;
-  final int end;
-  final int start;
+  final Duration end;
+  final Duration start;
   final bool finalWord;
   final segmentID;
 
