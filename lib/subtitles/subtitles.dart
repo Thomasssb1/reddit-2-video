@@ -1,34 +1,39 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/config/text_color.dart';
 import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
+import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/subtitles/subtitle_config.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:reddit_2_video/subtitles/subtitle.dart';
+import 'package:reddit_2_video/post/reddit_video_type.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
-import 'package:reddit_2_video/config/voice.dart';
 import 'package:remove_emoji/remove_emoji.dart';
+import 'package:reddit_2_video/config/voice.dart';
 
 class Subtitles {
-  bool ntts;
-  bool censor;
-  Duration delay;
   late File _assFile;
-  late Duration length;
-  late Alternate alternate;
+  final RedditVideo video;
+  final bool ntts;
+  final bool censor;
+  final Duration delay;
+  final Alternate alternate;
 
   List<Subtitle> _subtitles = <Subtitle>[];
 
   Subtitles({
-    required RedditPost post,
-    required Alternate alternate,
-    this.delay = Duration.zero,
-    this.ntts = true,
-    this.censor = false,
-  }) {
+    required this.video,
+    required ParsedCommand command,
+  })  : ntts = command.ntts,
+        censor = command.censor,
+        delay = command.type == RedditVideoType.post
+            ? Duration.zero
+            : Duration(seconds: 1),
+        alternate = command.alternate {
     File defaultASS = File("defaults/default.ass");
-    _assFile = defaultASS.copySync(".temp/${post.id}/comments.ass");
+    _assFile = defaultASS.copySync(".temp/${video.id}/comments.ass");
   }
 
   String _removeCharacters(String text) {
@@ -69,7 +74,7 @@ class Subtitles {
   }
 
   Future<File> _generateTTS(
-      String text, ParsedCommand command, RedditPost post) async {
+      String text, Voice voice, ParsedCommand command) async {
     final process = await Process.start(
         "aws",
         [
@@ -78,13 +83,13 @@ class Subtitles {
           "--output-format",
           "mp3",
           "--voice-id",
-          command.voice.id,
+          voice.id,
           "--text",
           text,
           "--engine",
           ntts ? "neural" : "standard",
           if (censor) "--lexicon-name=censor",
-          ".temp/${post.id}/tts/tts-${_subtitles.length}.mp3",
+          ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
         ],
         workingDirectory: command.prePath);
     if (command.verbose) {
@@ -96,13 +101,15 @@ class Subtitles {
     int code = await process.exitCode;
     if (code != 0) {
       throw TTSFailedException(
-          message: "TTS failed to generate. Exiting.", id: post.id, text: text);
+          message: "TTS failed to generate. Exiting.",
+          id: video.id,
+          text: text);
     }
-    return File(".temp/${post.id}/tts/tts-${_subtitles.length}.mp3");
+    return File(".temp/${video.id}/tts/tts-${_subtitles.length}.mp3");
   }
 
-  Future<SubtitleConfig> _alignSubtitles(Subtitle prevSubtitle,
-      ParsedCommand command, RedditPost post, File tts) async {
+  Future<SubtitleConfig> _alignSubtitles(
+      Subtitle prevSubtitle, ParsedCommand command, File tts) async {
     final process = await Process.start(
       "whisper_timestamped",
       [
@@ -118,7 +125,7 @@ class Subtitles {
           prevSubtitle.text,
         ],
         "--output_dir",
-        "/.temp/${post.id}/config",
+        "/.temp/${video.id}/config",
       ],
       workingDirectory: command.prePath,
     );
@@ -132,22 +139,36 @@ class Subtitles {
     if (code != 0) {
       throw TTSFailedException(
           message: "Aligning TTS to subtitles failed. Exiting.",
-          id: post.id,
+          id: video.id,
           text: prevSubtitle.text);
     }
     return SubtitleConfig.fromFile(
         tts: tts,
         configFile: File(
-            "${command.prePath}/.temp/${post.id}/config/tts-${post.id}.mp3.words.json"));
+            "${command.prePath}/.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json"));
   }
 
-  void parse(RedditPost post, ParsedCommand command) async {
-    String title = _removeCharacters(post.title);
-    String body = _removeCharacters(post.body);
-    // comments also need to be done here
-    Subtitle prevSubtitle = Subtitle.none();
-    prevSubtitle = await _parse(post, command, title, prevSubtitle, true);
-    prevSubtitle = await _parse(post, command, body, prevSubtitle, false);
+  void parse(ParsedCommand command) async {
+    Voice.set(command.voice);
+    for (RedditPost post in video.posts) {
+      String title = _removeCharacters(post.title);
+      String body = _removeCharacters(post.body);
+      List<String> comments =
+          post.comments.map((e) => _removeCharacters(e.body)).toList();
+      Subtitle prevSubtitle = Subtitle.none();
+      if (title.isNotEmpty) {
+        prevSubtitle = await _parse(post, command, title, prevSubtitle, true);
+      }
+      if (body.isNotEmpty) {
+        prevSubtitle = await _parse(post, command, body, prevSubtitle, false);
+      }
+      if (comments.isNotEmpty) {
+        for (String comment in comments) {
+          prevSubtitle =
+              await _parse(post, command, comment, prevSubtitle, false);
+        }
+      }
+    }
   }
 
   Future<Subtitle> _parse(RedditPost post, ParsedCommand command, String text,
@@ -156,13 +177,12 @@ class Subtitles {
       List<String> segments = _splitText(text);
       for (String textSegment in segments) {
         if (textSegment.isNotEmpty) {
-          File tts = await _generateTTS(textSegment, command, post);
+          File tts = await _generateTTS(textSegment, Voice.current, command);
           SubtitleConfig config =
-              await _alignSubtitles(prevSubtitle, command, post, tts);
+              await _alignSubtitles(prevSubtitle, command, tts);
 
-          SubstationAlphaSubtitleColor color = isTitle
-              ? alternate.titleColour
-              : SubstationAlphaSubtitleColor("#FFFFFF");
+          SubstationAlphaSubtitleColor color =
+              isTitle ? alternate.titleColour : TextColor.current;
 
           Subtitle subtitle = Subtitle(
               text: text, voice: command.voice, color: color, config: config);
@@ -172,6 +192,12 @@ class Subtitles {
           _subtitles.add(subtitle);
           prevSubtitle = subtitle;
         }
+      }
+      if (alternate.tts) {
+        Voice.next();
+      }
+      if (alternate.color) {
+        TextColor.next();
       }
     }
     return prevSubtitle;
