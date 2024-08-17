@@ -1,14 +1,19 @@
 import 'package:reddit_2_video/config/config_item.dart';
+import 'package:reddit_2_video/exceptions/background_video_cutting_exception.dart';
 import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
+import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
 import 'dart:io';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'dart:math';
+import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/reddit_video.dart';
 
 enum VideoType { muxed, video }
 
 class BackgroundVideo extends ConfigItem {
   final Uri url;
   final VideoType type;
+  int position = 0;
 
   BackgroundVideo({
     required this.url,
@@ -48,33 +53,69 @@ class BackgroundVideo extends ConfigItem {
         });
       } catch (e) {
         print("Error downloading video: $e");
-        // throw the error
+        throw VideoDownloadFailedException(
+            message: "Error downloading video", url: url);
       } finally {
         yt.close();
         if (fileStream != null) {
           await fileStream!.flush();
           await fileStream!.close();
         }
-        return path;
       }
+      return path;
     } else {
       return path;
     }
   }
 
-  int _getRandomTime(int length) {
+  (int, int) _getRandomTime(Duration duration) {
     final random = Random();
     int newTime(startTime, maxTime) => 0 + random.nextInt(maxTime);
 
     // temporarily store the video length as a fixed value
     int videoLength = Duration(seconds: 4813).inMilliseconds;
 
-    int maxTime = videoLength - length;
+    int maxTime = videoLength - duration.inMilliseconds;
 
-    return newTime(0, maxTime);
+    int start = newTime(0, maxTime);
+
+    return (start, start + duration.inMilliseconds);
   }
 
-  void cutVideo() async {
-    // cut the video
+  Future<void> cutVideo(
+      Duration duration, RedditVideo video, ParsedCommand command) async {
+    stdout.write("Cutting the background video to a random point.");
+    Duration endCardLength = command.endCard?.duration ?? Duration.zero;
+    var (startTime, endTime) =
+        _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
+    final process = await Process.start(
+        'ffmpeg',
+        [
+          '-ss',
+          '${startTime}ms'
+              '-to'
+              '${endTime}ms',
+          '-y',
+          '-nostdin',
+          '-i',
+          path.path,
+          '-c:v',
+          'copy',
+          '-c:a',
+          'copy',
+          if (!command.verbose) ...['-loglevel', 'quiet'],
+          '.temp/${video.id}/video.mp4'
+        ],
+        workingDirectory: command.prePath);
+    int code = await process.exitCode;
+    if (code != 0) {
+      throw BackgroundVideoCuttingException(
+          message:
+              "Something went wrong when trying to cut the background video.",
+          url: url,
+          duration: duration);
+    } else {
+      path = ".temp/${video.id}/video.mp4";
+    }
   }
 }

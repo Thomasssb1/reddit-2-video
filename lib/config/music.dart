@@ -3,6 +3,7 @@ import 'package:reddit_2_video/exceptions/warning.dart';
 
 class Music extends ConfigItem {
   double volume = 1.0;
+  int? position;
 
   Music({
     required String path,

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/config/config_item.dart';
+import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/text_color.dart';
 import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
 import 'package:reddit_2_video/reddit_video.dart';
@@ -15,6 +17,7 @@ import 'package:reddit_2_video/config/voice.dart';
 
 class Subtitles {
   late File _assFile;
+  late Duration duration;
   final RedditVideo video;
   final bool ntts;
   final bool censor;
@@ -148,7 +151,7 @@ class Subtitles {
             "${command.prePath}/.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json"));
   }
 
-  void parse(ParsedCommand command) async {
+  Future<void> parse(ParsedCommand command) async {
     Voice.set(command.voice);
     Subtitle prevSubtitle = Subtitle.none();
     Duration prevDuration = Duration.zero;
@@ -176,6 +179,7 @@ class Subtitles {
         prevDuration += delay;
       }
     }
+    duration = prevDuration;
   }
 
   Future<(Subtitle, Duration)> _parse(ParsedCommand command, String text,
@@ -210,4 +214,23 @@ class Subtitles {
     }
     return (prevSubtitle, prevDuration);
   }
+
+  List<String> getTTSFilesAsInput() {
+    List<String> files = [];
+    for (Subtitle subtitle in _subtitles) {
+      files.addAll(["-i", subtitle.config.tts.path]);
+    }
+    return files;
+  }
+
+  List<String> getTTSStream(EmptyNoise? emptyNoise) {
+    List<String> stream = [];
+    bool hasDelay = emptyNoise?.position != null;
+    for (int i = 0; i < _subtitles.length; ++i) {
+      stream.addAll(["[$i:a]", if (hasDelay) "[${emptyNoise!.position}:a]"]);
+    }
+    return stream.sublist(0, stream.length - 1);
+  }
+
+  File get assFile => _assFile;
 }
