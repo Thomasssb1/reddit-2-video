@@ -24,7 +24,7 @@ class Subtitles {
   final Duration delay;
   final Alternate alternate;
 
-  List<Subtitle> _subtitles = <Subtitle>[];
+  final List<Subtitle> _subtitles = <Subtitle>[];
 
   Subtitles({
     required this.video,
