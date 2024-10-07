@@ -15,4 +15,16 @@ enum RedditVideoType {
         return null;
     }
   }
+
+  @override
+  String toString() {
+    switch (this) {
+      case RedditVideoType.multi:
+        return 'multi';
+      case RedditVideoType.post:
+        return 'post';
+      case RedditVideoType.comments:
+        return 'comments';
+    }
+  }
 }

@@ -14,6 +14,7 @@ import 'package:reddit_2_video/post/reddit_video_type.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:reddit_2_video/config/voice.dart';
+import 'package:mp3_info/mp3_info.dart';
 
 class Subtitles {
   late File _assFile;
@@ -35,8 +36,9 @@ class Subtitles {
             ? Duration.zero
             : Duration(seconds: 1),
         alternate = command.alternate {
-    File defaultASS = File("defaults/default.ass");
-    _assFile = defaultASS.copySync(".temp/${video.id}/comments.ass");
+    File defaultASS = File("${command.prePath}/defaults/default.ass");
+    _assFile = defaultASS
+        .copySync("${command.prePath}/.temp/${video.id}/comments.ass");
   }
 
   String _removeCharacters(String text) {
@@ -102,6 +104,7 @@ class Subtitles {
       process.stdin.write(process.stdin);
     }
     int code = await process.exitCode;
+    print(code);
     if (code != 0) {
       throw TTSFailedException(
           message: "TTS failed to generate. Exiting.",
@@ -116,7 +119,7 @@ class Subtitles {
     final process = await Process.start(
       "whisper_timestamped",
       [
-        tts.path,
+        tts.absolute.path,
         "--language",
         "en",
         "--output_format",
@@ -128,7 +131,7 @@ class Subtitles {
           prevSubtitle.text,
         ],
         "--output_dir",
-        "/.temp/${video.id}/config",
+        ".temp/${video.id}/config/",
       ],
       workingDirectory: command.prePath,
     );
@@ -173,6 +176,7 @@ class Subtitles {
         for (String comment in comments) {
           (prevSubtitle, prevDuration) =
               await _parse(command, comment, prevSubtitle, prevDuration, false);
+          prevDuration += delay;
         }
       }
       if (command.type == RedditVideoType.multi) {
@@ -188,20 +192,29 @@ class Subtitles {
       List<String> segments = _splitText(text);
       for (String textSegment in segments) {
         if (textSegment.isNotEmpty) {
+          Directory("${command.prePath}/.temp/${video.id}/tts/")
+              .createSync(recursive: true);
           File tts = await _generateTTS(textSegment, Voice.current, command);
+
+          Directory("${command.prePath}/.temp/${video.id}/config/")
+              .createSync(recursive: true);
           SubtitleConfig config =
               await _alignSubtitles(prevSubtitle, command, tts);
 
-          SubstationAlphaSubtitleColor color =
-              isTitle ? alternate.titleColour : TextColor.current;
+          SubstationAlphaSubtitleColor color = TextColor.current;
 
           Subtitle subtitle = Subtitle(
               text: text, voice: command.voice, color: color, config: config);
 
-          subtitle.generate(_assFile, prevDuration);
+          if (isTitle) {
+            subtitle.updateTitleColours(alternate.titleColour);
+          }
+
+          await subtitle.generate(_assFile, prevDuration);
 
           _subtitles.add(subtitle);
           prevSubtitle = subtitle;
+          prevDuration += subtitle.duration;
         }
       }
       if (alternate.tts) {
@@ -210,7 +223,6 @@ class Subtitles {
       if (alternate.color) {
         TextColor.next();
       }
-      prevDuration += delay;
     }
     return (prevSubtitle, prevDuration);
   }
@@ -218,18 +230,25 @@ class Subtitles {
   List<String> getTTSFilesAsInput() {
     List<String> files = [];
     for (Subtitle subtitle in _subtitles) {
-      files.addAll(["-i", subtitle.config.tts.path]);
+      files.addAll(["-i", subtitle.config.tts.absolute.path]);
     }
+    print(files);
     return files;
   }
 
   List<String> getTTSStream(EmptyNoise? emptyNoise) {
     List<String> stream = [];
     bool hasDelay = emptyNoise?.position != null;
+    print(_subtitles);
     for (int i = 0; i < _subtitles.length; ++i) {
-      stream.addAll(["[$i:a]", if (hasDelay) "[${emptyNoise!.position}:a]"]);
+      print(i);
+      stream.addAll([
+        "[${i + 1}:a]",
+        if (hasDelay && i < _subtitles.length - 1) "[${emptyNoise!.position}:a]"
+      ]);
     }
-    return stream.sublist(0, stream.length - 1);
+    print(stream);
+    return stream;
   }
 
   File get assFile => _assFile;

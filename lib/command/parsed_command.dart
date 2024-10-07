@@ -1,38 +1,54 @@
 import 'package:reddit_2_video/command/command.dart';
 import 'package:args/args.dart';
+import 'package:reddit_2_video/config/end_card.dart';
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/ffmpeg/file_type.dart';
+import 'package:reddit_2_video/post/reddit_comment_sort_type.dart';
+import 'package:reddit_2_video/post/reddit_post_sort_type.dart';
+import 'package:reddit_2_video/post/reddit_video_type.dart';
+import 'package:reddit_2_video/subtitles/alternate.dart';
+import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
+import 'package:reddit_2_video/config/voice.dart';
+import 'package:reddit_2_video/config/music.dart';
+import 'package:reddit_2_video/ffmpeg/fps.dart';
 export 'package:reddit_2_video/command/command.dart';
+import 'package:reddit_2_video/utils/boolean_conversion.dart';
 
 class ParsedCommand {
   final Command? _command;
   final ArgResults? _args;
   final Directory _prePath;
+  final ArgParser? _parser;
 
   ParsedCommand({
     required Command? command,
     required ArgResults args,
   })  : _command = command,
         _args = args,
-        _prePath = _determinePath(args);
+        _prePath = _determinePath(args),
+        _parser = null;
 
   ParsedCommand.defaultCommand({
     required ArgResults args,
   })  : _command = Command.defaultCommand,
         _args = args,
-        _prePath = _determinePath(args);
+        _prePath = _determinePath(args),
+        _parser = null;
 
   ParsedCommand.noArgs({
     required Command command,
+    required ArgParser parser,
   })  : _command = command,
         _args = null,
-        _prePath = Directory.current;
+        _prePath = Directory.current,
+        _parser = parser;
 
   ParsedCommand.none()
       : _command = null,
         _args = null,
-        _prePath = Directory.current;
+        _prePath = Directory.current,
+        _parser = null;
 
   factory ParsedCommand.parse(List<String> args) {
     // init parser
@@ -58,13 +74,13 @@ class ParsedCommand {
       'multi':
           'Creates a video that contains multiple posts from a single subreddit, not including comments.'
     });
-    // Look into getting info such as female/male when assigning voices in future
+    // TODO: Look into getting info from text such as female/male when assigning voices in future
     parser.addMultiOption('alternate',
         valueHelp:
             'alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)',
         help:
             'tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).',
-        defaultsTo: ['off', 'off', 'H0000FF']);
+        defaultsTo: ['off', 'off', '#0000FF']);
     parser.addFlag('post-confirmation', defaultsTo: false);
     parser
       ..addFlag('nsfw', defaultsTo: true)
@@ -167,8 +183,7 @@ class ParsedCommand {
       // if the cli contained help argument
       if (results.wasParsed('help')) {
         // output the help message
-        parser.printHelp();
-        return ParsedCommand.noArgs(command: Command.help);
+        return ParsedCommand.noArgs(command: Command.help, parser: parser);
         // if the cli did not contain a subreddit/link
       } else if (!results.wasParsed('subreddit')) {
         throw ArgumentMissingException(
@@ -211,12 +226,94 @@ class ParsedCommand {
         'There is no such command ${results.command?.name}');
   }
 
-  Command? get command => _command;
+  void printHelp({
+    String defaultsColourCode = "\x1b[33m",
+    String optionsColourCode = "\x1b[35m",
+    String flagsColourCode = "\x1b[32m",
+  }) {
+    if (_parser == null) {
+      throw ArgumentMissingException(
+          "No parser was provided. Unable to print help message.");
+    }
+
+    var usage = _parser.usage;
+
+    var bracketsRegex = RegExp(r'\((defaults.+)\)');
+    var sqBracketsRegex = RegExp(r'\[(.*?)\]');
+    var dashRegex = RegExp(r'(?!-level|-colour|-domain)(\-\S+)');
+
+    for (final match in bracketsRegex.allMatches(usage)) {
+      usage =
+          usage.replaceAll(match[0]!, '$defaultsColourCode${match[0]}\x1b[0m');
+    }
+    for (final match in sqBracketsRegex.allMatches(usage)) {
+      if (match[0] != '[no-]') {
+        usage =
+            usage.replaceAll(match[0]!, '$optionsColourCode${match[0]}\x1b[0m');
+      }
+    }
+    for (final match in dashRegex.allMatches(usage)) {
+      usage = usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}\x1b[0m');
+    }
+    print(usage);
+  }
+
+  Command? get name => _command;
   ArgResults? get args => _args;
   String get prePath => _prePath.path;
 
+  // individual argument getters and setters
+  String get subreddit => _args!['subreddit'];
+  RedditPostSortType get sort => RedditPostSortType.called(args!['sort'])!;
+  RedditCommentSortType get commentSort =>
+      RedditCommentSortType.called(args!['comment-sort'])!;
+  int get commentCount => int.parse(args!['count']);
+  RedditVideoType get type => RedditVideoType.called(args!['type'])!;
+  Alternate get alternate => Alternate(
+        tts: BooleanConversion(args!['alternate'][0]).parseBool(),
+        color: BooleanConversion(args!['alternate'][1]).parseBool(),
+        titleColour: SubstationAlphaSubtitleColor(args!['alternate'][2]),
+      );
+  bool get postConfirmation => args!['post-confirmation'];
+  bool get nsfw => args!['nsfw'];
+  bool get spoiler => args!['spoiler'];
+  bool get ntts => args!['ntts'];
+  bool get aws => args!['aws'];
+  Voice get voice => Voice.called(args!['voice']);
+  int get repeat => subredditIsLink ? 1 : int.parse(args!['repeat']);
+  // need to figure out what to do with video
+  String get videoPath => args!['video'];
+  Music? get music => args!['music'].length > 0
+      ? Music(
+          path: args!['music'][0],
+          prePath: prePath,
+          volume: args!['music'].length == 2 ? args!['music'][1] : "1.0",
+        )
+      : null;
+  bool get youtubeShort => args!['youtube-short'];
+  bool get horror => args!['horror'];
+  String get output => args!['output'];
+  FileType get fileType => FileType.called(args!['file-type'])!;
+  FPS get framerate => FPS.fpsValue(int.parse(args!['framerate']));
+  bool get censor => args!['censor'];
+  EndCard? get endCard => args!['end-card'] != null
+      ? EndCard(
+          path: args!['end-card'],
+          prePath: prePath,
+        )
+      : null;
+  bool get verbose => args!['verbose'];
+  bool get override => args!['override'];
+
+  String? get post => args!['post'];
+
+  T getArg<T>(String key) => _args![key] as T;
+
   bool get isDefault => _command == Command.defaultCommand;
   bool get isDev => _args?['dev'] ?? false;
+  bool get isHelp => _args?['help'] ?? false;
+  bool get subredditIsLink =>
+      Uri.tryParse(_args!['subreddit'])?.hasAbsolutePath ?? false;
 
   static Directory _determinePath(ArgResults args) {
     return args['dev']

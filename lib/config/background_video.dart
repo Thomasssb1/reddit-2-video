@@ -1,4 +1,3 @@
-import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/exceptions/background_video_cutting_exception.dart';
 import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
 import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
@@ -10,16 +9,18 @@ import 'package:reddit_2_video/reddit_video.dart';
 
 enum VideoType { muxed, video }
 
-class BackgroundVideo extends ConfigItem {
+class BackgroundVideo {
   final Uri url;
   final VideoType type;
+  File path;
   int position = 0;
 
   BackgroundVideo({
     required this.url,
+    required String prePath,
     this.type = VideoType.video,
-    super.path = "/defaults/video1.mp4",
-  });
+    String path = "/defaults/video1.mp4",
+  }) : path = File("$prePath$path");
 
   bool _videoExists() {
     // store the last downloaded url and compare
@@ -27,7 +28,7 @@ class BackgroundVideo extends ConfigItem {
   }
 
   Future<File> downloadVideo() async {
-    bool exists = await _videoExists();
+    bool exists = _videoExists();
     if (!exists) {
       String? videoID = url.queryParameters['v'];
       if (videoID == null) {
@@ -51,16 +52,15 @@ class BackgroundVideo extends ConfigItem {
           await stream.pipe(fileStream!).whenComplete(() => print(
               "\rBackground video successfully downloaded. You will not have to redownload the video again."));
         });
+
+        await fileStream!.flush();
+        await fileStream!.close();
       } catch (e) {
         print("Error downloading video: $e");
         throw VideoDownloadFailedException(
             message: "Error downloading video", url: url);
       } finally {
         yt.close();
-        if (fileStream != null) {
-          await fileStream!.flush();
-          await fileStream!.close();
-        }
       }
       return path;
     } else {
@@ -88,13 +88,31 @@ class BackgroundVideo extends ConfigItem {
     Duration endCardLength = command.endCard?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
+
+    print([
+      '-ss',
+      '${startTime}ms',
+      '-to',
+      '${endTime}ms',
+      '-y',
+      '-nostdin',
+      '-i',
+      path.path,
+      '-c:v',
+      'copy',
+      '-c:a',
+      'copy',
+      if (!command.verbose) ...['-loglevel', 'quiet'],
+      '.temp/${video.id}/video.mp4'
+    ]);
+
     final process = await Process.start(
         'ffmpeg',
         [
           '-ss',
-          '${startTime}ms'
-              '-to'
-              '${endTime}ms',
+          '${startTime}ms',
+          '-to',
+          '${endTime}ms',
           '-y',
           '-nostdin',
           '-i',
@@ -115,7 +133,7 @@ class BackgroundVideo extends ConfigItem {
           url: url,
           duration: duration);
     } else {
-      path = ".temp/${video.id}/video.mp4";
+      path = File(".temp/${video.id}/video.mp4");
     }
   }
 }

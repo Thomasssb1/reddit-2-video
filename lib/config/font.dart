@@ -7,10 +7,11 @@ class Font extends ConfigItem {
 
   Font({
     required super.path,
+    required super.prePath,
     this.size = 18,
   }) : _fontName = _getFontName(path);
 
-  Font.verdana()
+  Font.verdana({required super.prePath})
       : size = 18,
         _fontName = 'verdana',
         super(path: 'defaults/fonts/verdana.ttf');

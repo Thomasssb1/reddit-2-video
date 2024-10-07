@@ -4,7 +4,7 @@ class EndCard extends ConfigItem {
   final Duration duration;
   int? position;
 
-  EndCard({required String path})
+  EndCard({required String path, required super.prePath})
       // TODO: allow for custom duration
       : duration = Duration(milliseconds: 2000),
         super(path: path);

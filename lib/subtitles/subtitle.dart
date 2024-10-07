@@ -10,20 +10,22 @@ class Subtitle {
 
   final String text;
   final Voice voice;
-  final SubstationAlphaSubtitleColor color;
+  SubstationAlphaSubtitleColor color;
+  SubstationAlphaSubtitleColor highlightColour =
+      SubstationAlphaSubtitleColor("#FFFF00");
   final SubtitleConfig config;
 
-  const Subtitle({
+  Subtitle({
     required this.text,
     required this.voice,
     required this.color,
     required this.config,
   });
 
-  void generate(
+  Future<void> generate(
     File assFile,
     Duration prevDuration,
-  ) {
+  ) async {
     for (final segment in config.segments) {
       List<SubtitleLineData> lineData = [];
       num characterCount = 0;
@@ -31,7 +33,7 @@ class Subtitle {
         var words = segment['words'];
         for (int i = 0; i < words.length; i++) {
           if (characterCount + words[i]['text'].length > maxCharacterCount) {
-            _karaokeEffect(
+            await _karaokeEffect(
                 lineData, assFile, prevDuration, config.segments.length);
             lineData = [];
             characterCount = 0;
@@ -45,8 +47,9 @@ class Subtitle {
           ));
           characterCount += words[i]['text'].length;
         }
+        print("final : ${lineData.map((e) => e.text).join(' ')}");
         if (lineData.isNotEmpty) {
-          _karaokeEffect(
+          await _karaokeEffect(
               lineData, assFile, prevDuration, config.segments.length);
         }
       }
@@ -62,9 +65,9 @@ class Subtitle {
   String _getNewTime(Duration time) =>
       "${time.inHours}:${time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${time.inSeconds.remainder(60).toString().padLeft(2, '0')}.${time.inMilliseconds.remainder(1000).toString().padLeft(3, '0').substring(0, 2)}";
 
-  void _karaokeEffect(List<SubtitleLineData> lineData, File assFile,
-      Duration prevDuration, int segmentCount) {
-    IOSink sink = assFile.openWrite();
+  Future<void> _karaokeEffect(List<SubtitleLineData> lineData, File assFile,
+      Duration prevDuration, int segmentCount) async {
+    IOSink sink = assFile.openWrite(mode: FileMode.append);
     for (int i = 0; i < lineData.length; i++) {
       String start = _getNewTime(lineData[i].start + prevDuration);
 
@@ -76,13 +79,31 @@ class Subtitle {
       List<SubtitleLineData> words = lineData.sublist(0, i + 1);
       SubtitleLineData word =
           words.firstWhere((e) => e.text == lineData[i].text);
-      word.addHighlight();
+      addHighlight(word);
+
+      print(words.map((e) => e.toString()).join(' '));
 
       sink.writeln(
-          "Dialogue: 0,$start,$end,Default,,0,0,0,,{\\c&$color}{\\an5\\frz0}${words.cast<String>().join(' ')}");
+          "Dialogue: 0,$start,$end,Default,,0,0,0,,{\\c&$color}{\\an5\\frz0}${words.map((e) => e.toString()).join(' ')}");
+
+      removeHighlight(word);
     }
-    sink.close();
+    await sink.close();
   }
 
   Duration get duration => MP3Processor.fromFile(config.tts).duration;
+
+  void addHighlight(SubtitleLineData lineData) {
+    lineData.text = "{\\c&$highlightColour}${lineData.text}";
+  }
+
+  void removeHighlight(SubtitleLineData lineData) {
+    int index = "{\\c&$highlightColour}".length;
+    lineData.text = lineData.text.substring(index);
+  }
+
+  void updateTitleColours(SubstationAlphaSubtitleColor titleColour) {
+    highlightColour = SubstationAlphaSubtitleColor("#FFFFFF");
+    color = titleColour;
+  }
 }

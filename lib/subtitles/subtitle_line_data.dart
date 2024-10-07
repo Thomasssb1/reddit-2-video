@@ -1,11 +1,11 @@
-class SubtitleLineData {
-  final String highlightColour = '#00FFFF';
+import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 
+class SubtitleLineData {
   String text;
   final Duration end;
   final Duration start;
   final bool finalWord;
-  final segmentID;
+  final int segmentID;
 
   SubtitleLineData({
     required this.text,
@@ -14,10 +14,6 @@ class SubtitleLineData {
     required this.finalWord,
     required this.segmentID,
   });
-
-  void addHighlight() {
-    text = "{\\c&$highlightColour}$text";
-  }
 
   bool isFinalSegment(int segmentCount) {
     return segmentCount == segmentID;

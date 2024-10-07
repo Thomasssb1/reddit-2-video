@@ -10,4 +10,8 @@ class Alternate {
     required this.color,
     required this.titleColour,
   });
+
+  @override
+  String toString() =>
+      "Alternate(tts: $tts, color: $color, titleColour: $titleColour)";
 }

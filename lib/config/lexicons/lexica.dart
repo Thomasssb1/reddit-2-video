@@ -1,7 +1,6 @@
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/config/lexicons/lexicon.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:xml/xml.dart';
 import 'dart:io';
 export 'package:reddit_2_video/config/lexicons/lexicon.dart';
@@ -15,11 +14,13 @@ class Lexica extends ConfigItem {
     required this.xmlVersion,
     required this.languageCode,
     required this.lexicons,
+    required super.prePath,
     super.path = 'defaults/config/lexica.xml',
   });
 
   Lexica.fromXML({
     required super.path,
+    required super.prePath,
     this.xmlVersion = 1.0,
     this.languageCode = "en-US",
     this.lexicons = const [],
@@ -70,7 +71,7 @@ class Lexica extends ConfigItem {
     });
     final document = builder.buildDocument();
     if (!path.existsSync()) {
-      printWarning("File $path already exists, overwriting.");
+      Warning.warn("File $path already exists, overwriting.");
     }
     return document.toXmlString();
   }

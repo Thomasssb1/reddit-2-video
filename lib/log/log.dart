@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/post/reddit_url.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
 import 'dart:io';
@@ -16,9 +17,8 @@ class Log {
   })  : _logfile = logfile,
         _urls = urls;
 
-  static Future<Log> fromFile(
-    File logfile,
-  ) async {
+  static Future<Log> fromFile(String prePath) async {
+    File logfile = File("$prePath/.temp/visited_log.txt");
     if (!logfile.existsSync()) {
       logfile.createSync();
     }
@@ -52,7 +52,7 @@ class Log {
     await sink.close();
   }
 
-  void remove({RedditPost? post}) async {
+  void remove(RedditPost? post) async {
     if (post == null) {
       _urls.clear();
       _logfile.writeAsStringSync('');

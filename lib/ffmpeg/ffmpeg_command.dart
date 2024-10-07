@@ -34,6 +34,9 @@ class FFmpegCommand {
       backgroundVideo.path.path,
     ];
     int currentPosition = backgroundVideo.position + 1;
+    print(emptyNoise);
+    print(music);
+    print(endCard);
     if (emptyNoise != null) {
       emptyNoise!.position = currentPosition;
       currentPosition++;
@@ -49,13 +52,14 @@ class FFmpegCommand {
       currentPosition++;
       inputs.addAll(["-i", endCard!.path.path]);
     }
+    print(inputs);
     inputs.addAll(subtitles.getTTSFilesAsInput());
     return inputs;
   }
 
   List<String> _getFlags(ParsedCommand command) {
     return [
-      if (command.verbose) "-y",
+      if (command.override) "-y",
       if (!command.verbose) ...["-loglevel", "quiet"],
     ];
   }
@@ -63,6 +67,7 @@ class FFmpegCommand {
   List<String> get audioStream => subtitles.getTTSStream(emptyNoise);
 
   String _concat() {
+    print(audioStream);
     return "${audioStream.join(' ')} concat=n=${audioStream.length}:v=0:a=1";
   }
 
@@ -72,7 +77,7 @@ class FFmpegCommand {
 
   String _addMusic() {
     if (music?.position == null) return '';
-    return "[${music!.position!}:a]volume=${music!.volume}[1a];[0a][1a]amerge[final_a]";
+    return "[${music!.position!}:a]volume=${music!.volume}[1a];[0a][1a]amerge";
   }
 
   String _addEndCard() {
@@ -91,11 +96,11 @@ class FFmpegCommand {
   }
 
   String _addFps(FPS fps) {
-    return "fps=${fps.value}";
+    return ",fps=${fps.value}";
   }
 
   String _getFilter(ParsedCommand command) {
-    return "${_concat()}${_horrorMode(command.horror)}[0a];${_addMusic()};${_addEndCard()}${_cropVideo()},${_addSubtitles()},${_addFps(command.framerate)}";
+    return """${_concat()}${_horrorMode(command.horror)}${_addMusic()}[final_a];${_addEndCard()}${_cropVideo()},${_addSubtitles()}${_addFps(command.framerate)}""";
   }
 
   String _getOutput(ParsedCommand command) {
@@ -114,17 +119,14 @@ class FFmpegCommand {
       }
       output = p.withoutExtension(output);
     }
-    return "output.$fileType";
+    return "output.${fileType.name}";
     // need to handle youtube short naming
   }
 
   List<String> generate(ParsedCommand command) {
     /// Generate the command to be executed
     return [
-      for (String path in inputFiles) ...[
-        "-i",
-        path,
-      ],
+      ...inputFiles,
       ..._getFlags(command),
       "-map",
       "[final_a]",

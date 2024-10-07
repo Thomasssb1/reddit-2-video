@@ -19,7 +19,7 @@ class RedditPost {
 
   late final String _title;
   late final String _body;
-  late final String _subreddit;
+  String? _subreddit;
   late final String _subredditId;
   late final int _upvotes;
   late final DateTime _created;
@@ -35,18 +35,35 @@ class RedditPost {
   late final RedditCommentSortType _commentSortType;
   List<RedditComment> comments = [];
 
-  RedditPost.fromUrl({
+  RedditPost.url({
     required String url,
-  }) : _url = RedditUrl.fromUrl(url: url) {
-    _fillAttributes();
-  }
+  }) : _url = RedditUrl.fromUrl(url: url);
 
   RedditPost({
     required String subreddit,
     required String id,
   })  : _subreddit = subreddit,
-        _url = RedditUrl(subreddit: subreddit, id: id) {
-    _fillAttributes();
+        _url = RedditUrl(subreddit: subreddit, id: id);
+
+  static Future<RedditPost> fromUrl({
+    required String url,
+  }) async {
+    RedditPost post = RedditPost.url(url: url);
+    await post._fillAttributes();
+    return post;
+  }
+
+  static Future<RedditPost> fromId({
+    required String subreddit,
+    required String id,
+  }) async {
+    RedditPost post = RedditPost(subreddit: subreddit, id: id);
+    try {
+      await post._fillAttributes();
+    } catch (e) {
+      rethrow;
+    }
+    return post;
   }
 
   void addComments(ParsedCommand command) async {
@@ -74,7 +91,7 @@ class RedditPost {
             }
           })
           .whereType<RedditComment>()
-          .where((comment) => comment.body.length <= 32 && !comment.isRemoved())
+          .where((comment) => comment.body.length >= 32 && !comment.isRemoved())
           .toList();
 
       comments = comments.sublist(
@@ -90,37 +107,58 @@ class RedditPost {
     }
   }
 
-  void generateFiles() {
-    // generate relevant files
-  }
-
-  void _fillAttributes() async {
-    var response = await http.get(_url.getUri);
+  Future<void> _fillAttributes() async {
+    http.Response response = await http.get(_url.getJsonUri);
     // check if 200 OK
+    print(_url.getJsonUri);
+    if (response.body.isEmpty) {
+      throw throw RedditApiException(
+          message:
+              "An error occurred whilst trying to fetch the subreddit data. Returned empty response body.",
+          statusCode: response.statusCode);
+    }
     var json = jsonDecode(response.body);
-    pick(json[0], 'data', 'children', 0, 'data').asListOrEmpty((p0) {
-      _stickied = p0('stickied').asBoolOrFalse();
-      _commentCount = p0('num_comments').asIntOrNull() ?? 0;
-      _title = p0('title').required().asString();
-      _subreddit = p0('subreddit').required().asString();
-      _subredditId = p0('subreddit_id').required().asString();
-      _body = p0('selftext').required().asString();
-      _upvotes = p0('ups').asIntOrNull() ?? 0;
-      _created = p0('created').letOrNull((pick) =>
-              DateTime.fromMillisecondsSinceEpoch(
-                  ((pick.asDoubleOrNull() ?? 0.0) * 1000).round())) ??
-          DateTime.now();
-      _spoiler = p0('spoiler').asBoolOrFalse();
-      _hasMedia = p0('media').asBoolOrFalse();
-      _nsfw = p0('over_18').asBoolOrFalse();
-    });
+    //print(json[0]['data']['children'][0]['data']);
+    Map<String, dynamic> p0 = pick(json[0], 'data', 'children', 0, 'data')
+        .asMapOrThrow<String, dynamic>();
+    print(p0['stickied'] is bool);
+
+    DateTime createdAt(created) {
+      return (created != null)
+          ? DateTime.fromMillisecondsSinceEpoch((created * 1000).round())
+          : DateTime.now();
+    }
+
+    _subreddit ??= p0['subreddit'];
+    _stickied = p0['stickied'];
+    _commentCount = p0['num_comments'] ?? 0;
+    _title = p0['title'];
+    _subredditId = p0['subreddit_id'];
+    _body = p0['selftext'];
+    _upvotes = p0['ups'] ?? 0;
+    _created = createdAt(p0['created']);
+    _spoiler = p0['spoiler'] ?? false;
+    _hasMedia = p0['media'] ?? false;
+    _nsfw = p0['over_18'] ?? false;
+
+    print(_stickied);
+    print(_commentCount);
+    print(_title);
+    print(_subreddit);
+    print(_subredditId);
+    print(_body);
+    print(_upvotes);
+    print(_created);
+    print(_spoiler);
+    print(_hasMedia);
+    print(_nsfw);
   }
 
   // post attributes
   Uri get url => _url.getUri;
   String get title => _title;
   String get body => _body;
-  String get subreddit => _subreddit;
+  String get subreddit => _subreddit!;
   String get subredditId => _subredditId;
   int get upvotes => _upvotes;
   DateTime get created => _created;

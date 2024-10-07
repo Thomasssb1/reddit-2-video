@@ -48,7 +48,9 @@ class RedditUrl {
     // Checks if the id is valid within the url
   }
 
-  Uri get getUri => Uri.https("$linkAuthority/r/$_subreddit/comments/$_id");
+  Uri get getUri => Uri.https(linkAuthority, "/r/$_subreddit/comments/$_id");
+  Uri get getJsonUri =>
+      Uri.https(linkAuthority, "/r/$_subreddit/comments/$_id.json");
   String get id => _id;
 
   @override

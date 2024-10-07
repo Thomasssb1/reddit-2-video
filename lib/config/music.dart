@@ -7,6 +7,7 @@ class Music extends ConfigItem {
 
   Music({
     required String path,
+    required super.prePath,
     String? volume = "1.0",
   }) : super(path: path) {
     try {
