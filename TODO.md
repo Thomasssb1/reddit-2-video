@@ -13,3 +13,4 @@
 - Interface with java library for aws polly
 - Handle the rare case where a post is deleted during fetch?? happened once on multi t5_2t0no-118of33z never existed and so reset endtime to 0
 - Swap to stdout from print
+- Implement ffplay to get a preview
