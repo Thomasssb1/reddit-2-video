@@ -1,6 +1,7 @@
 # reddit-2-video
+> This is currently being [rewritten](https://github.com/Thomasssb1/reddit-2-video/pull/3), certain functionality may change
 
-A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
+An advanced, but intuitive, command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
 View the wiki [here](https://github.com/Thomasssb1/reddit-2-video/wiki) for information on how to use reddit-2-video.
 
 ## Setup
