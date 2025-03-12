@@ -1,4 +1,5 @@
 # reddit-2-video
+
 > This is currently being [rewritten](https://github.com/Thomasssb1/reddit-2-video/pull/3), certain functionality may change
 
 An advanced, but intuitive, command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
@@ -121,7 +122,7 @@ Click to expand each of the examples.
 > $ reddit-2-video --subreddit https://www.reddit.com/r/TrueOffMyChest/comments/1850nn6/my_husband_is_cheating_on_me_with_our_best_friend/ --end-card <path-to-gif> -v
 > ```
 >
-> This command also adds an end card to the end of the video by using the gif passed to it (in this case it is the placeholder _<path-to-gif>_). It also sets verbosity to true in order to see extra debugging information whilst generating the video.
+> This command also adds an end card to the end of the video by using the gif passed to it (in this case it is the placeholder _\<path-to-gif\>_). It also sets verbosity to true in order to see extra debugging information whilst generating the video.
 
 </details>
 
@@ -141,6 +142,7 @@ To build the exe, you will need to compile which requires [dart](https://dart.de
 ```zsh
 $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
 ```
+
 <details>
     <summary>
     However, <b>if you are using windows</b> you need to add the .exe file extension for it to work
@@ -151,6 +153,7 @@ $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
 > ```sh
 > $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video.exe
 > ```
+
 </details>
 
 You will also need [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) setup if you plan on using AWS-Polly to generate TTS, which currently is the only option for TTS generation.
