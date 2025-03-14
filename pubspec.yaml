@@ -18,7 +18,7 @@ dependencies:
   http: ^1.0.0
   remove_emoji: ^0.0.10
   path: ^1.8.3
-  youtube_explode_dart: ^2.0.3
+  youtube_explode_dart: ^2.3.10
   mp3_info: ^0.2.1
   xml: ^6.5.0
   color: ^3.0.0

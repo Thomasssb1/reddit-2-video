@@ -1,6 +1,6 @@
 # reddit-2-video
 
-A simple command line script for generating a tiktok-style video with a large variety of different options to change the output. <br>
+A highly customisable command line script for generating a tiktok-style video offering granular controls over output settings. <br>
 View the wiki [here](https://github.com/Thomasssb1/reddit-2-video/wiki) for information on how to use reddit-2-video.
 
 ## Setup
@@ -140,6 +140,7 @@ To build the exe, you will need to compile which requires [dart](https://dart.de
 ```zsh
 $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
 ```
+
 <details>
     <summary>
     However, <b>if you are using windows</b> you need to add the .exe file extension for it to work
@@ -150,6 +151,7 @@ $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
 > ```sh
 > $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video.exe
 > ```
+
 </details>
 
 You will also need [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) setup if you plan on using AWS-Polly to generate TTS, which currently is the only option for TTS generation.
