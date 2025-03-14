@@ -10,6 +10,8 @@ import 'dart:convert';
 class Log {
   final File _logfile;
   HashSet<RedditPost> _urls = HashSet<RedditPost>();
+  // Files within .temp to not delete
+  final Iterable<String> protectedFiles = <String>["visited_log.txt"];
 
   Log._fromFile({
     required File logfile,
@@ -52,7 +54,7 @@ class Log {
     await sink.close();
   }
 
-  void remove(RedditPost? post) async {
+  void remove({RedditPost? post}) async {
     if (post == null) {
       _urls.clear();
       _logfile.writeAsStringSync('');
@@ -62,5 +64,14 @@ class Log {
       lines.removeWhere((line) => line == post.id);
       await _logfile.writeAsString(lines.join('\n'));
     }
+  }
+
+  Future<void> clearTemporaryFiles() async {
+    Directory tempDirectory = _logfile.parent;
+
+    await tempDirectory
+        .list()
+        .where((e) => !protectedFiles.contains(e.uri.pathSegments.last))
+        .forEach((e) => e.deleteSync(recursive: true));
   }
 }
