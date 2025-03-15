@@ -1,21 +1,14 @@
 import 'package:deep_pick/deep_pick.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/exceptions/post_already_generated_exception.dart';
-import 'package:reddit_2_video/exceptions/posts_exhausted_exception.dart';
 import 'package:reddit_2_video/post/reddit_comment_sort_type.dart';
-import 'package:reddit_2_video/post/reddit_post_sort_type.dart';
-import 'package:reddit_2_video/reddit_video.dart';
 import 'dart:convert';
 import 'reddit_url.dart';
-import 'reddit_video_type.dart';
 import 'reddit_comment.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
-import 'package:http/http.dart' as http;
-import 'dart:io';
 
 class RedditPost {
-  final RedditUrl _url;
+  late final RedditUrl _url;
 
   late final String _title;
   late final String _body;
@@ -42,14 +35,17 @@ class RedditPost {
   RedditPost({
     required String subreddit,
     required String id,
-  })  : _subreddit = subreddit,
-        _url = RedditUrl(subreddit: subreddit, id: id);
+  }) : _url = RedditUrl(subreddit: subreddit, id: id);
 
   static Future<RedditPost> fromUrl({
     required String url,
   }) async {
     RedditPost post = RedditPost.url(url: url);
-    await post._fillAttributes();
+    try {
+      await post._fillAttributes();
+    } catch (e) {
+      rethrow;
+    }
     return post;
   }
 
@@ -66,9 +62,22 @@ class RedditPost {
     return post;
   }
 
-  void addComments(ParsedCommand command) async {
-    http.Response response = await http
-        .get(Uri.https(url.authority, url.path, {"sort": command.sort.name}));
+  static Future<RedditPost> fromSubredditId({
+    required String subredditId,
+    required String id,
+  }) async {
+    try {
+      RedditUrl url =
+          await RedditUrl.fromSubredditId(subredditId: subredditId, id: id);
+      return await RedditPost.fromUrl(url: url.toString());
+    } on RedditApiException {
+      rethrow;
+    }
+  }
+
+  Future<void> addComments(ParsedCommand command) async {
+    http.Response response = await http.get(Uri.https(
+        url.authority, "${url.path}.json", {"sort": command.commentSort.name}));
 
     if (response.statusCode == 200) {
       var json = jsonDecode(utf8.decode(response.bodyBytes));
@@ -94,11 +103,11 @@ class RedditPost {
           .where((comment) => comment.body.length >= 32 && !comment.isRemoved())
           .toList();
 
-      comments = comments.sublist(
+      this.comments = comments.sublist(
           0,
-          comments.length < 3 * command.commentCount
+          comments.length < command.commentCount
               ? comments.length
-              : 3 * command.commentCount);
+              : command.commentCount);
     } else {
       throw RedditApiException(
           message:
@@ -107,10 +116,15 @@ class RedditPost {
     }
   }
 
+  static DateTime _createdAt(created) {
+    return (created != null)
+        ? DateTime.fromMillisecondsSinceEpoch((created * 1000).round())
+        : DateTime.now();
+  }
+
   Future<void> _fillAttributes() async {
     http.Response response = await http.get(_url.getJsonUri);
     // check if 200 OK
-    print(_url.getJsonUri);
     if (response.body.isEmpty) {
       throw throw RedditApiException(
           message:
@@ -118,40 +132,34 @@ class RedditPost {
           statusCode: response.statusCode);
     }
     var json = jsonDecode(response.body);
-    //print(json[0]['data']['children'][0]['data']);
-    Map<String, dynamic> p0 = pick(json[0], 'data', 'children', 0, 'data')
-        .asMapOrThrow<String, dynamic>();
-    print(p0['stickied'] is bool);
+    try {
+      Map<String, dynamic> p0 = pick(json[0], 'data', 'children', 0, 'data')
+          .asMapOrThrow<String, dynamic>();
 
-    DateTime createdAt(created) {
-      return (created != null)
-          ? DateTime.fromMillisecondsSinceEpoch((created * 1000).round())
-          : DateTime.now();
+      _subreddit ??= p0['subreddit'];
+      _stickied = p0['stickied'];
+      _commentCount = p0['num_comments'] ?? 0;
+      _title = p0['title'];
+      _subredditId = p0['subreddit_id'];
+      _body = p0['selftext'];
+      _upvotes = p0['ups'] ?? 0;
+      _created = _createdAt(p0['created']);
+      _spoiler = p0['spoiler'] ?? false;
+      _hasMedia = p0['media'] ?? false;
+      _nsfw = p0['over_18'] ?? false;
+    } on PickException {
+      String reason = pick(json, "reason").asStringOrNull() ?? "unknown";
+      throw RedditApiException(
+          message: "Unable to get information for post $_url - reason: $reason",
+          statusCode: response.statusCode);
     }
+  }
 
-    _subreddit ??= p0['subreddit'];
-    _stickied = p0['stickied'];
-    _commentCount = p0['num_comments'] ?? 0;
-    _title = p0['title'];
-    _subredditId = p0['subreddit_id'];
-    _body = p0['selftext'];
-    _upvotes = p0['ups'] ?? 0;
-    _created = createdAt(p0['created']);
-    _spoiler = p0['spoiler'] ?? false;
-    _hasMedia = p0['media'] ?? false;
-    _nsfw = p0['over_18'] ?? false;
-
-    print(_stickied);
-    print(_commentCount);
-    print(_title);
-    print(_subreddit);
-    print(_subredditId);
-    print(_body);
-    print(_upvotes);
-    print(_created);
-    print(_spoiler);
-    print(_hasMedia);
-    print(_nsfw);
+  String wrapBody({int limit = 30}) {
+    if (body.length < limit) {
+      limit = body.length;
+    }
+    return "${body.substring(limit)}...";
   }
 
   // post attributes
@@ -171,4 +179,26 @@ class RedditPost {
 
   String get id => "${_url.id}-$subredditId";
   RedditCommentSortType get commentSortType => _commentSortType;
+
+  @override
+  String toString() {
+    StringBuffer sb = StringBuffer();
+    sb.writeln("Url: $url");
+    sb.writeln("Title: $title");
+    sb.writeln("Body: ${wrapBody()}");
+    sb.writeln("Subreddit: $subreddit, Upvotes: $upvotes, Created: $created");
+    return sb.toString();
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other.runtimeType is! RedditPost) {
+      return false;
+    }
+    other = other as RedditPost;
+    return id == other.id;
+  }
+
+  @override
+  int get hashCode => Object.hash(_url.id, _subredditId);
 }

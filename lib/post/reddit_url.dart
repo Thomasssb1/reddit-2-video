@@ -1,4 +1,10 @@
+import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/exceptions/invalid_post_url_exception.dart';
+
+import 'package:deep_pick/deep_pick.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:reddit_2_video/exceptions/warning.dart';
 
 class RedditUrl {
   static const String linkAuthority = "reddit.com";
@@ -15,7 +21,8 @@ class RedditUrl {
     required String url,
   }) {
     try {
-      ({String id, String subreddit}) values = extractIdAndSubreddit(url);
+      ({String id, String subreddit}) values =
+          RedditUrl._extractIdAndSubreddit(url);
       _id = values.id;
       _subreddit = values.subreddit;
     } catch (e) {
@@ -23,7 +30,19 @@ class RedditUrl {
     }
   }
 
-  ({String id, String subreddit}) extractIdAndSubreddit(String url) {
+  static Future<RedditUrl> fromSubredditId({
+    required String subredditId,
+    required String id,
+  }) async {
+    try {
+      String subreddit = await RedditUrl._extractSubredditUrl(subredditId);
+      return RedditUrl(subreddit: subreddit, id: id);
+    } on RedditApiException {
+      rethrow;
+    }
+  }
+
+  static ({String id, String subreddit}) _extractIdAndSubreddit(String url) {
     try {
       Uri uri = Uri.parse(url).removeFragment();
       List<String> paths = uri.pathSegments;
@@ -52,6 +71,27 @@ class RedditUrl {
     } on FormatException {
       throw InvalidPostUrlException(
           "The url provided does not have a valid url scheme", url);
+    }
+  }
+
+  static Future<String> _extractSubredditUrl(String subredditId) async {
+    http.Response response = await http
+        .get(Uri.https("reddit.com", "/api/info.json", {"id": subredditId}));
+
+    if (response.statusCode == 200) {
+      try {
+        var json = jsonDecode(utf8.decode(response.bodyBytes));
+        return pick(json, "data", "children", 0, "data", "url")
+            .asStringOrThrow();
+      } on PickException {
+        throw RedditApiException(
+            message: "Unable to find subreddit url from subreddit id",
+            statusCode: response.statusCode);
+      }
+    } else {
+      throw RedditApiException(
+          message: "Unable to find subreddit url from subreddit id",
+          statusCode: response.statusCode);
     }
   }
 
