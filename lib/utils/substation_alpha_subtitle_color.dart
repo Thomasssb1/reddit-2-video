@@ -1,4 +1,5 @@
 import 'package:color/color.dart';
+import 'package:reddit_2_video/exceptions/exceptions.dart';
 
 /// Used to store the colour for each individual subtitle
 /// The format that .ass uses is `HBBGGRR` so requires a bit of manipulation
@@ -23,12 +24,19 @@ class SubstationAlphaSubtitleColor {
   String _convertToHex(num val) => val.toInt().toRadixString(16);
 
   static String _convertToRRGGBB(String value) {
-    String blue = value.substring(1, 3);
-    String green = value.substring(3, 5);
-    String red = value.substring(5, 7);
-    return "$red$green$blue";
+    try {
+      String blue = value.substring(1, 3);
+      String green = value.substring(3, 5);
+      String red = value.substring(5, 7);
+      return "$red$green$blue";
+    } on RangeError {
+      throw ArgumentMissingException(
+          "Color $value is not valid. Colors need to be in the format #RRGGBB");
+    }
   }
 
   @override
   String toString() => "\\1c&H$_blue$_green$_red";
+
+  String toHash() => "#$_red$_green$_blue";
 }
