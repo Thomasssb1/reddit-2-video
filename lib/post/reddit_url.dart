@@ -35,7 +35,9 @@ class RedditUrl {
     required String id,
   }) async {
     try {
-      String subreddit = await RedditUrl._extractSubredditUrl(subredditId);
+      String subredditLink = await RedditUrl._extractSubredditUrl(subredditId);
+      String subreddit =
+          subredditLink.split("/").lastWhere((e) => e.isNotEmpty);
       return RedditUrl(subreddit: subreddit, id: id);
     } on RedditApiException {
       rethrow;

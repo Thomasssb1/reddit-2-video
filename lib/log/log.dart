@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:collection';
-
-import 'package:reddit_2_video/command/parsed_command.dart';
-import 'package:reddit_2_video/post/reddit_url.dart';
-import 'package:reddit_2_video/post/reddit_post.dart';
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:reddit_2_video/exceptions/reddit_api_exception.dart';
+import 'package:reddit_2_video/exceptions/warning.dart';
+import 'package:reddit_2_video/post/reddit_post.dart';
+import 'package:reddit_2_video/reddit_video.dart';
 
 class Log {
   final File _logfile;
-  HashSet<RedditPost> _urls = HashSet<RedditPost>();
+  late final HashSet<RedditPost> _urls;
   // Files within .temp to not delete
-  final Iterable<String> protectedFiles = <String>["visited_log.txt"];
+  final Iterable<String> _protectedFiles = <String>["visited_log.txt"];
 
   Log._fromFile({
     required File logfile,
@@ -24,20 +25,24 @@ class Log {
     if (!logfile.existsSync()) {
       logfile.createSync();
     }
-    Stream<RedditPost> stream = logfile
+    List<RedditPost?> stream = await logfile
         .openRead()
         .transform(utf8.decoder)
         .transform(LineSplitter())
-        .map((line) => RedditPost(
-            subreddit: line.split("-").last, id: line.split("-").first));
-    HashSet<RedditPost> lines = HashSet<RedditPost>();
-    try {
-      await for (RedditPost line in stream) {
-        lines.add(line);
+        .asyncMap((line) async {
+      String subredditId = line.split("-").last;
+      String id = line.split("-").first;
+      try {
+        return await RedditPost.fromSubredditId(
+            subredditId: subredditId, id: id);
+      } on RedditApiException {
+        Warning.warn("Unable to find post id $id in subreddit $subredditId.");
+        return null;
       }
-    } catch (e) {
-      print(e);
-    }
+    }).toList();
+
+    HashSet<RedditPost> lines = HashSet<RedditPost>();
+    stream.where((e) => e != null).forEach((e) => lines.add(e!));
 
     return Log._fromFile(logfile: logfile, urls: lines);
   }
@@ -46,10 +51,19 @@ class Log {
     return _urls.contains(post);
   }
 
-  void add(RedditPost post) async {
+  Function(RedditPost post) _partialAdd(IOSink sink) {
+    return (RedditPost post) => _add(post, sink);
+  }
+
+  void _add(RedditPost post, IOSink sink) {
     _urls.add(post);
-    IOSink sink = _logfile.openWrite();
     sink.writeln(post.id);
+  }
+
+  void add(RedditVideo video) async {
+    IOSink sink = _logfile.openWrite(mode: FileMode.append);
+    var partial = _partialAdd(sink);
+    video.posts.forEach(partial);
     await sink.flush();
     await sink.close();
   }
@@ -71,7 +85,7 @@ class Log {
 
     await tempDirectory
         .list()
-        .where((e) => !protectedFiles.contains(e.uri.pathSegments.last))
+        .where((e) => !_protectedFiles.contains(e.uri.pathSegments.last))
         .forEach((e) => e.deleteSync(recursive: true));
   }
 }
