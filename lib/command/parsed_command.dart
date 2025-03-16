@@ -1,67 +1,70 @@
-import 'package:reddit_2_video/command/command.dart';
+import 'package:reddit_2_video/command/command_type.dart';
 import 'package:args/args.dart';
 import 'package:reddit_2_video/config/end_card.dart';
+import 'package:reddit_2_video/config/voices.dart';
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/post/reddit_comment_sort_type.dart';
 import 'package:reddit_2_video/post/reddit_post_sort_type.dart';
+import 'package:reddit_2_video/post/reddit_url.dart';
 import 'package:reddit_2_video/post/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:reddit_2_video/config/voice.dart';
 import 'package:reddit_2_video/config/music.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
-export 'package:reddit_2_video/command/command.dart';
+export 'package:reddit_2_video/command/command_type.dart';
+import 'package:reddit_2_video/command/command.dart';
 import 'package:reddit_2_video/utils/boolean_conversion.dart';
 
-class ParsedCommand {
-  final Command? _command;
+class ParsedCommand extends Command {
+  final CommandType? _command;
   final ArgResults? _args;
   final Directory _prePath;
-  final ArgParser? _parser;
 
   ParsedCommand({
-    required Command? command,
+    required CommandType? command,
     required ArgResults args,
+    ArgParser? parser,
   })  : _command = command,
         _args = args,
         _prePath = _determinePath(args),
-        _parser = null;
+        super(parser);
 
   ParsedCommand.defaultCommand({
     required ArgResults args,
-  })  : _command = Command.defaultCommand,
+    ArgParser? parser,
+  })  : _command = CommandType.defaultCommand,
         _args = args,
         _prePath = _determinePath(args),
-        _parser = null;
+        super(parser);
 
   ParsedCommand.noArgs({
-    required Command command,
+    required CommandType command,
     required ArgParser parser,
   })  : _command = command,
         _args = null,
         _prePath = Directory.current,
-        _parser = parser;
+        super(parser);
 
   ParsedCommand.none()
       : _command = null,
         _args = null,
         _prePath = Directory.current,
-        _parser = null;
+        super(null);
 
-  factory ParsedCommand.parse(List<String> args) {
-    // init parser
-    var parser = ArgParser();
+  static ArgParser getParser() {
+    ArgParser parser = ArgParser();
     // add parser options
-    parser.addOption('subreddit');
+    parser.addOption('subreddit', mandatory: true);
     parser.addOption('sort',
-        defaultsTo: 'hot', abbr: 's', allowed: ['hot', 'new', 'top', 'rising']);
+        defaultsTo: 'top', abbr: 's', allowed: ['hot', 'new', 'top', 'rising']);
     parser.addOption('comment-sort',
-        defaultsTo: 'top',
+        defaultsTo: 'best',
         allowed: ['top', 'best', 'new', 'controversial', 'old', 'q&a']);
     parser.addOption('count',
-        defaultsTo: '8', help: 'Minimum number of comments.');
+        defaultsTo: '8', help: 'Maximum number of comments.');
     parser.addOption('type', defaultsTo: 'post', allowed: [
       'comments',
       'post',
@@ -76,11 +79,13 @@ class ParsedCommand {
     });
     // TODO: Look into getting info from text such as female/male when assigning voices in future
     parser.addMultiOption('alternate',
-        valueHelp:
-            'alternate-tts(on/off),alternate-colour(on/off),title-colour(hex)',
+        valueHelp: 'alternate-tts(on/off),alternate-colour(on/off)',
         help:
-            'tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)\ntitle-colour - determine title colour for post (defaults to #FF0000).',
-        defaultsTo: ['off', 'off', '#0000FF']);
+            'tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)',
+        defaultsTo: ['off', 'off']);
+    parser.addOption('title-color',
+        valueHelp: 'the title colour for post in the format RRGGBB',
+        defaultsTo: 'FF0000');
     parser.addFlag('post-confirmation', defaultsTo: false);
     parser
       ..addFlag('nsfw', defaultsTo: true)
@@ -92,34 +97,6 @@ class ParsedCommand {
         defaultsTo: true,
         help:
             'Determines whether to use neural tts or normal tts. (This will only affect usage if aws polly is active).');
-    parser.addFlag('aws',
-        defaultsTo: true,
-        help:
-            'Whether or not to use AWS Polly, but this requires setup of aws cli as well as correct details.');
-
-    // not implemented
-    parser.addFlag('gtts',
-        defaultsTo: false,
-        hide: true,
-        help:
-            'Uses googles tts to generae tts which has no cost and is generated online. (not implemented)');
-    parser.addOption(
-      'accent',
-      defaultsTo: 'com.mx',
-      hide: true,
-      allowed: [
-        'com.mx',
-        'co.uk',
-        'com.au',
-        'us',
-        'ca',
-        'co.in',
-        'ie',
-        'co.za'
-      ],
-      help:
-          'The accent to be used when not using aws tts.\nUse a top-level-domain from google such as com.mx or co.uk. (not implemented)',
-    );
 
     parser.addOption('voice',
         defaultsTo: 'Matthew', help: 'The voice to use for AWS Polly tts.');
@@ -174,8 +151,15 @@ class ParsedCommand {
 
     var install = parser.addCommand('install');
     install.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
+    return parser;
+  }
+
+  factory ParsedCommand.parse(List<String> args) {
+    // init parser
+    ArgParser parser = ParsedCommand.getParser();
 
     // parse the cli for arguments
+    // throws an ArgParserException if the arguments are invalid
     var results = parser.parse(args);
 
     // if the command was the default generation command
@@ -183,82 +167,47 @@ class ParsedCommand {
       // if the cli contained help argument
       if (results.wasParsed('help')) {
         // output the help message
-        return ParsedCommand.noArgs(command: Command.help, parser: parser);
+        return ParsedCommand.noArgs(command: CommandType.help, parser: parser);
         // if the cli did not contain a subreddit/link
       } else if (!results.wasParsed('subreddit')) {
         throw ArgumentMissingException(
             'Argument <subreddit> is required. \nUse -help to get more information about usage.');
-      } else if (results['alternate'].length != 3) {
+      } else if (results['alternate'].length != 2) {
         throw ArgumentMissingException(
-            'The option --alternate needs 3 options each split by a comma. Check --help to see the syntax.');
-      } else if (results.wasParsed('gtts')) {
-        throw ArgumentNotImplementedException(
-            'GTTS does not currently work, in order to get tts you will need to use AWS-Polly which can be enabled by the -aws flag');
-      } else if (results.wasParsed('aws') && results.wasParsed('gtts')) {
-        throw ArgumentConflictException(
-            'Both tts options --aws and --gtts cannot be active at the same time.',
-            'aws',
-            'gtts');
+            'The option --alternate needs 2 options each split by a comma. Check --help to see the syntax.');
       } else if (int.tryParse(results['repeat']) == null) {
         throw FormatException(
             'The value provided for --repeat must be an integer.');
-      } else if (results.wasParsed('ntts') && results.wasParsed('gtts')) {
-        Warning.warn(
-            'The flag -ntts does not affect local-tts but only aws tts. Using both flags at the same time will not affect the voice used for local-tts.');
-      } else if (results.wasParsed('gtts') && results.wasParsed('censor')) {
-        Warning.warn(
-            'The flag --censor does not affect local-tts but only aws tts.');
-      } else if (results.wasParsed('count') &&
-          Uri.tryParse(results['subreddit']) != null) {
-        Warning.warn(
-            'The option --count does not work with a link, generation will continue but the --count option will be omitted.');
+      } else {
+        // Non-terminating errors
+        if (results.wasParsed('count') &&
+            RedditUrl.validLink(results['subreddit'])) {
+          Warning.warn(
+              'The option --count does not work with a link, generation will continue but the --count option will be omitted.');
+        }
+        if (results.wasParsed('spoiler')) {
+          Warning.warn(
+              'Currently, --spoiler is not implemented, generation will continue as normal.');
+        }
       }
       // return map of command and args
       return ParsedCommand.defaultCommand(args: results);
       // if the command is flush
     } else if (results.command!.name == 'flush') {
-      return ParsedCommand(command: Command.flush, args: flush.parse(args));
+      return ParsedCommand(
+          command: CommandType.flush,
+          args: parser.commands['flush']!.parse(args));
       // if the command is install
     } else if (results.command!.name == 'install') {
-      return ParsedCommand(command: Command.install, args: install.parse(args));
+      return ParsedCommand(
+          command: CommandType.install,
+          args: parser.commands['install']!.parse(args));
     }
     throw NoCommandException(
         'There is no such command ${results.command?.name}');
   }
 
-  void printHelp({
-    String defaultsColourCode = "\x1b[33m",
-    String optionsColourCode = "\x1b[35m",
-    String flagsColourCode = "\x1b[32m",
-  }) {
-    if (_parser == null) {
-      throw ArgumentMissingException(
-          "No parser was provided. Unable to print help message.");
-    }
-
-    var usage = _parser.usage;
-
-    var bracketsRegex = RegExp(r'\((defaults.+)\)');
-    var sqBracketsRegex = RegExp(r'\[(.*?)\]');
-    var dashRegex = RegExp(r'(?!-level|-colour|-domain)(\-\S+)');
-
-    for (final match in bracketsRegex.allMatches(usage)) {
-      usage =
-          usage.replaceAll(match[0]!, '$defaultsColourCode${match[0]}\x1b[0m');
-    }
-    for (final match in sqBracketsRegex.allMatches(usage)) {
-      if (match[0] != '[no-]') {
-        usage =
-            usage.replaceAll(match[0]!, '$optionsColourCode${match[0]}\x1b[0m');
-      }
-    }
-    for (final match in dashRegex.allMatches(usage)) {
-      usage = usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}\x1b[0m');
-    }
-    print(usage);
-  }
-
-  Command? get name => _command;
+  CommandType? get name => _command;
   ArgResults? get args => _args;
   String get prePath => _prePath.path;
 
@@ -272,14 +221,14 @@ class ParsedCommand {
   Alternate get alternate => Alternate(
         tts: BooleanConversion(args!['alternate'][0]).parseBool(),
         color: BooleanConversion(args!['alternate'][1]).parseBool(),
-        titleColour: SubstationAlphaSubtitleColor(args!['alternate'][2]),
       );
+  SubstationAlphaSubtitleColor get titleColor =>
+      SubstationAlphaSubtitleColor(args!['title-color']);
   bool get postConfirmation => args!['post-confirmation'];
   bool get nsfw => args!['nsfw'];
   bool get spoiler => args!['spoiler'];
   bool get ntts => args!['ntts'];
-  bool get aws => args!['aws'];
-  Voice get voice => Voice.called(args!['voice']);
+  Voice get voice => Voices.called(args!['voice']);
   int get repeat => subredditIsLink ? 1 : int.parse(args!['repeat']);
   // need to figure out what to do with video
   String get videoPath => args!['video'];
@@ -309,7 +258,7 @@ class ParsedCommand {
 
   T getArg<T>(String key) => _args![key] as T;
 
-  bool get isDefault => _command == Command.defaultCommand;
+  bool get isDefault => _command == CommandType.defaultCommand;
   bool get isDev => _args?['dev'] ?? false;
   bool get isHelp => _args?['help'] ?? false;
   bool get subredditIsLink =>

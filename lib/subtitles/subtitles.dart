@@ -23,6 +23,7 @@ class Subtitles {
   final bool censor;
   final Duration delay;
   final Alternate alternate;
+  final SubstationAlphaSubtitleColor titleColor;
   int _position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
@@ -35,7 +36,8 @@ class Subtitles {
         delay = command.type == RedditVideoType.post
             ? Duration.zero
             : Duration(seconds: 1),
-        alternate = command.alternate {
+        alternate = command.alternate,
+        titleColor = command.titleColor {
     File defaultASS = File("${command.prePath}/defaults/default.ass");
     _assFile = defaultASS
         .copySync("${command.prePath}/.temp/${video.id}/comments.ass");
@@ -215,8 +217,11 @@ class Subtitles {
               text: text, voice: command.voice, color: color, config: config);
 
           if (isTitle) {
-            subtitle.updateTitleColours(alternate.titleColour);
+            subtitle.updateTitleColours(titleColor);
           }
+
+          print(
+              "title: $isTitle, color: ${subtitle.color}, title: $titleColor");
 
           await subtitle.generate(_assFile, prevDuration);
 
