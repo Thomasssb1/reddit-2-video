@@ -65,10 +65,11 @@ class RedditPost {
   static Future<RedditPost> fromSubredditId({
     required String subredditId,
     required String id,
+    required http.Client client,
   }) async {
     try {
-      RedditUrl url =
-          await RedditUrl.fromSubredditId(subredditId: subredditId, id: id);
+      RedditUrl url = await RedditUrl.fromSubredditId(
+          subredditId: subredditId, id: id, client: client);
       return await RedditPost.fromUrl(url: url.toString());
     } on RedditApiException {
       rethrow;

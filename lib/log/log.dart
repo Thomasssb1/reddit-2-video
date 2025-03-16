@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:reddit_2_video/exceptions/reddit_api_exception.dart';
 import 'package:reddit_2_video/exceptions/warning.dart';
@@ -25,6 +26,9 @@ class Log {
     if (!logfile.existsSync()) {
       logfile.createSync();
     }
+
+    http.Client client = http.Client();
+
     List<RedditPost?> stream = await logfile
         .openRead()
         .transform(utf8.decoder)
@@ -34,7 +38,7 @@ class Log {
       String id = line.split("-").first;
       try {
         return await RedditPost.fromSubredditId(
-            subredditId: subredditId, id: id);
+            subredditId: subredditId, id: id, client: client);
       } on RedditApiException {
         Warning.warn("Unable to find post id $id in subreddit $subredditId.");
         return null;
@@ -43,6 +47,7 @@ class Log {
 
     HashSet<RedditPost> lines = HashSet<RedditPost>();
     stream.where((e) => e != null).forEach((e) => lines.add(e!));
+    client.close();
 
     return Log._fromFile(logfile: logfile, urls: lines);
   }

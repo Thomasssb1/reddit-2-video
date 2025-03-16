@@ -1,10 +1,8 @@
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/exceptions/invalid_post_url_exception.dart';
 
 import 'package:deep_pick/deep_pick.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:reddit_2_video/exceptions/warning.dart';
 
 class RedditUrl {
   static const String linkAuthority = "reddit.com";
@@ -33,9 +31,11 @@ class RedditUrl {
   static Future<RedditUrl> fromSubredditId({
     required String subredditId,
     required String id,
+    required http.Client client,
   }) async {
     try {
-      String subredditLink = await RedditUrl._extractSubredditUrl(subredditId);
+      String subredditLink =
+          await RedditUrl._extractSubredditUrl(subredditId, client);
       String subreddit =
           subredditLink.split("/").lastWhere((e) => e.isNotEmpty);
       return RedditUrl(subreddit: subreddit, id: id);
@@ -76,13 +76,16 @@ class RedditUrl {
     }
   }
 
-  static Future<String> _extractSubredditUrl(String subredditId) async {
-    http.Response response = await http
-        .get(Uri.https("reddit.com", "/api/info.json", {"id": subredditId}));
-
+  static Future<String> _extractSubredditUrl(
+      String subredditId, http.Client redditClient) async {
+    // Try to use the api to get the url
+    http.Request request = http.Request(
+        'GET', Uri.https("reddit.com", "/api/info.json", {"id": subredditId}));
+    http.StreamedResponse response = await redditClient.send(request);
     if (response.statusCode == 200) {
       try {
-        var json = jsonDecode(utf8.decode(response.bodyBytes));
+        var body = await response.stream.toBytes();
+        var json = jsonDecode(utf8.decode(body));
         return pick(json, "data", "children", 0, "data", "url")
             .asStringOrThrow();
       } on PickException {
