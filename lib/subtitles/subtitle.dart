@@ -47,7 +47,6 @@ class Subtitle {
           ));
           characterCount += words[i]['text'].length;
         }
-        print("final : ${lineData.map((e) => e.text).join(' ')}");
         if (lineData.isNotEmpty) {
           await _karaokeEffect(
               lineData, assFile, prevDuration, config.segments.length);
@@ -58,7 +57,7 @@ class Subtitle {
 
   Subtitle.none()
       : text = '',
-        voice = Voice.brian,
+        voice = Voice.standard(),
         color = SubstationAlphaSubtitleColor("#FFFFFF"),
         config = SubtitleConfig.none();
 
@@ -80,8 +79,6 @@ class Subtitle {
       SubtitleLineData word =
           words.firstWhere((e) => e.text == lineData[i].text);
       addHighlight(word);
-
-      print(words.map((e) => e.toString()).join(' '));
 
       sink.writeln(
           "Dialogue: 0,$start,$end,Default,,0,0,0,,{\\c&$color}{\\an5\\frz0}${words.map((e) => e.toString()).join(' ')}");

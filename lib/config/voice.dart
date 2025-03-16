@@ -30,4 +30,12 @@ class Voice {
   String toString() {
     return id;
   }
+
+  @override
+  bool operator ==(Object other) {
+    return (other is Voice) && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

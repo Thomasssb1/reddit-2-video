@@ -1,5 +1,3 @@
-import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
-
 class SubtitleLineData {
   String text;
   final Duration end;

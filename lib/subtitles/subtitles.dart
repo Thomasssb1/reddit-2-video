@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/command/parsed_command.dart';
-import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/text_color.dart';
+import 'package:reddit_2_video/config/voices.dart';
 import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
@@ -14,7 +14,6 @@ import 'package:reddit_2_video/post/reddit_video_type.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:reddit_2_video/config/voice.dart';
-import 'package:mp3_info/mp3_info.dart';
 
 class Subtitles {
   late File _assFile;
@@ -24,6 +23,7 @@ class Subtitles {
   final bool censor;
   final Duration delay;
   final Alternate alternate;
+  int _position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
 
@@ -40,6 +40,9 @@ class Subtitles {
     _assFile = defaultASS
         .copySync("${command.prePath}/.temp/${video.id}/comments.ass");
   }
+
+  int get position => _position;
+  set position(int newPosition) => _position = newPosition;
 
   String _removeCharacters(String text) {
     RemoveEmoji removeEmoji = RemoveEmoji();
@@ -104,7 +107,6 @@ class Subtitles {
       process.stdin.write(process.stdin);
     }
     int code = await process.exitCode;
-    print(code);
     if (code != 0) {
       throw TTSFailedException(
           message: "TTS failed to generate. Exiting.",
@@ -155,28 +157,34 @@ class Subtitles {
   }
 
   Future<void> parse(ParsedCommand command) async {
-    Voice.set(command.voice);
+    Voices.set(command.voice);
     Subtitle prevSubtitle = Subtitle.none();
     Duration prevDuration = Duration.zero;
     for (RedditPost post in video.posts) {
       String title = _removeCharacters(post.title);
       String body = _removeCharacters(post.body);
-      List<String> comments =
-          post.comments.map((e) => _removeCharacters(e.body)).toList();
+
+      List<String> comments = post.comments
+          .map((e) => _removeCharacters(e.body))
+          .where((e) => e.isNotEmpty)
+          .toList();
 
       if (title.isNotEmpty) {
         (prevSubtitle, prevDuration) =
             await _parse(command, title, prevSubtitle, prevDuration, true);
       }
+
       if (body.isNotEmpty) {
+        prevDuration += delay;
         (prevSubtitle, prevDuration) =
             await _parse(command, body, prevSubtitle, prevDuration, false);
       }
+
       if (comments.isNotEmpty) {
         for (String comment in comments) {
+          prevDuration += delay;
           (prevSubtitle, prevDuration) =
               await _parse(command, comment, prevSubtitle, prevDuration, false);
-          prevDuration += delay;
         }
       }
       if (command.type == RedditVideoType.multi) {
@@ -194,7 +202,7 @@ class Subtitles {
         if (textSegment.isNotEmpty) {
           Directory("${command.prePath}/.temp/${video.id}/tts/")
               .createSync(recursive: true);
-          File tts = await _generateTTS(textSegment, Voice.current, command);
+          File tts = await _generateTTS(textSegment, Voices.current, command);
 
           Directory("${command.prePath}/.temp/${video.id}/config/")
               .createSync(recursive: true);
@@ -218,7 +226,7 @@ class Subtitles {
         }
       }
       if (alternate.tts) {
-        Voice.next();
+        Voices.next();
       }
       if (alternate.color) {
         TextColor.next();
@@ -232,22 +240,18 @@ class Subtitles {
     for (Subtitle subtitle in _subtitles) {
       files.addAll(["-i", subtitle.config.tts.absolute.path]);
     }
-    print(files);
     return files;
   }
 
   List<String> getTTSStream(EmptyNoise? emptyNoise) {
     List<String> stream = [];
     bool hasDelay = emptyNoise?.position != null;
-    print(_subtitles);
     for (int i = 0; i < _subtitles.length; ++i) {
-      print(i);
       stream.addAll([
-        "[${i + 1}:a]",
+        "[${i + position}:a]",
         if (hasDelay && i < _subtitles.length - 1) "[${emptyNoise!.position}:a]"
       ]);
     }
-    print(stream);
     return stream;
   }
 

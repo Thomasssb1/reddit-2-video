@@ -46,11 +46,16 @@ class Voices {
       throw InvalidFileFormatException(
           "File voices.config.json is not in json format", file);
     }
-    if (command.voice.neural && !command.ntts) {
+    if (!command.voice.standard && !command.ntts) {
       throw ArgumentConflictException(
           "Unable to use a neural voice with standard tts engine.",
           command.voice.toString(),
-          command.ntts.toString());
+          "ntts: ${command.ntts}");
+    } else if (!command.voice.neural && command.ntts) {
+      throw ArgumentConflictException(
+          "Unable to use a standard voice with neural tts engine",
+          command.voice.toString(),
+          "ntts: ${command.ntts}");
     }
   }
 
@@ -59,16 +64,21 @@ class Voices {
       Warning.warn(
           "Ensure voice.config.json is loaded otherwise default voice Brian will be used.");
     }
-    return Voices.voices.firstWhere((e) => e.id == id, orElse: () {
-      Warning.warn(
-          "Unable to use conflicting voice, ensure that the correct voice engine is used (-[no]-ntts). Using fallback default voice.");
-      return Voice.standard();
-    });
+    return Voices.voices
+        .firstWhere((e) => e.id == id, orElse: () => Voice.standard());
   }
 
   static int _currentVoice = ++_currentVoice % Voices.voices.length;
   static Voice get current => Voices.voices[_currentVoice];
   static void next() => _currentVoice = ++_currentVoice % Voices.voices.length;
-  static void set(Voice voice) => _currentVoice = Voices.voices.indexOf(voice);
+  static void set(Voice voice) {
+    int index = Voices.voices.indexOf(voice);
+    if (index == -1) {
+      set(Voice.standard());
+    } else {
+      _currentVoice = index;
+    }
+  }
+
   static void reset() => _currentVoice = 0;
 }
