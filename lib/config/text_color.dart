@@ -45,4 +45,6 @@ class TextColor {
       SubstationAlphaSubtitleColor(colors[_currentColour]);
 
   static void next() => _currentColour = ++_currentColour % colors.length;
+
+  static void reset() => _currentColour = 0;
 }

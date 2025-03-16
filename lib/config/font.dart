@@ -14,7 +14,7 @@ class Font extends ConfigItem {
   Font.verdana({required super.prePath})
       : size = 18,
         _fontName = 'verdana',
-        super(path: 'defaults/fonts/verdana.ttf');
+        super(path: '/defaults/fonts/verdana.ttf');
 
   static String _getFontName(String path) {
     try {

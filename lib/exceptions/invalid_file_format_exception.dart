@@ -8,7 +8,7 @@ class InvalidFileFormatException implements Exception {
 
   @override
   String toString() {
-    return '$message';
+    return message;
   }
 
   File get file => _file;

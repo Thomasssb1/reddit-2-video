@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/config/music.dart';
-import 'package:reddit_2_video/exceptions/ffmpeg_command_exception.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:path/path.dart' as p;
@@ -34,9 +30,6 @@ class FFmpegCommand {
       backgroundVideo.path.path,
     ];
     int currentPosition = backgroundVideo.position + 1;
-    print(emptyNoise);
-    print(music);
-    print(endCard);
     if (emptyNoise != null) {
       emptyNoise!.position = currentPosition;
       currentPosition++;
@@ -52,8 +45,8 @@ class FFmpegCommand {
       currentPosition++;
       inputs.addAll(["-i", endCard!.path.path]);
     }
-    print(inputs);
     inputs.addAll(subtitles.getTTSFilesAsInput());
+    subtitles.position = currentPosition;
     return inputs;
   }
 
@@ -67,7 +60,6 @@ class FFmpegCommand {
   List<String> get audioStream => subtitles.getTTSStream(emptyNoise);
 
   String _concat() {
-    print(audioStream);
     return "${audioStream.join(' ')} concat=n=${audioStream.length}:v=0:a=1";
   }
 
@@ -119,7 +111,7 @@ class FFmpegCommand {
       }
       output = p.withoutExtension(output);
     }
-    return "output.${fileType.name}";
+    return "$output.${fileType.name}";
     // need to handle youtube short naming
   }
 
@@ -134,5 +126,13 @@ class FFmpegCommand {
       _getFilter(command),
       _getOutput(command)
     ];
+  }
+
+  @override
+  String toString() {
+    StringBuffer sb = StringBuffer();
+    sb.write("FFmpeg inputs: ");
+    sb.write(inputFiles.join(" "));
+    return sb.toString();
   }
 }

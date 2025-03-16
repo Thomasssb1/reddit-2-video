@@ -4,6 +4,6 @@ class EmptyNoise extends ConfigItem {
   int? position;
   EmptyNoise({required super.prePath})
       : super(
-          path: "defaults/silence.wav",
+          path: "/defaults/silence.wav",
         );
 }
