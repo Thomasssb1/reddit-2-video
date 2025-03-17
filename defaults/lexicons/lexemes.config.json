@@ -1,0 +1,15 @@
+{
+  "lexemes": [
+    {
+      "id": "censor",
+      "file": "censor.xml",
+      "_description": "Censors innapropriate language by replacing."
+    },
+    {
+      "id": "abbreviation",
+      "file": "abbreviations.xml",
+      "_description": "Turns common abbreviations into their full sentences."
+    }
+  ],
+  "_last_updated": "2025-03-17 23:12:38.846339"
+}

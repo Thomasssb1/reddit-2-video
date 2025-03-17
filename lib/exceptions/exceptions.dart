@@ -13,4 +13,5 @@ export 'posts_exhausted_exception.dart';
 export 'reddit_api_exception.dart';
 export 'tts_failed_exception.dart';
 export 'video_download_failed_exception.dart';
+export 'polly_invalid_pls_lexicon.dart';
 export 'warning.dart';
