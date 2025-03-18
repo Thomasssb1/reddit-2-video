@@ -38,14 +38,17 @@ class BackgroundVideo {
       late IOSink? fileStream;
       try {
         StreamManifest manifest = await yt.videos.streams.getManifest(videoID);
-        late var streamInfo;
+        late List<VideoStreamInfo> streamInfo;
         switch (type) {
           case VideoType.muxed:
-            streamInfo = manifest.muxed.sortByVideoQuality().first;
+            streamInfo = manifest.muxed.sortByVideoQuality();
           case VideoType.video:
-            streamInfo = manifest.videoOnly.sortByVideoQuality().first;
+            streamInfo = manifest.videoOnly.sortByVideoQuality();
         }
-        var stream = yt.videos.streamsClient.get(streamInfo);
+
+        VideoStreamInfo chosenStream =
+            streamInfo.where((e) => e.container == StreamContainer.mp4).first;
+        var stream = yt.videos.streamsClient.get(chosenStream);
 
         await path.create().then((File file) async {
           fileStream = file.openWrite();
@@ -55,8 +58,11 @@ class BackgroundVideo {
 
         await fileStream!.flush();
         await fileStream!.close();
+      } on StateError {
+        throw VideoDownloadFailedException(
+            message: "No mp4 streams available. Unable to download video.",
+            url: url);
       } catch (e) {
-        print("Error downloading video: $e");
         throw VideoDownloadFailedException(
             message: "Error downloading video", url: url);
       } finally {
@@ -88,23 +94,6 @@ class BackgroundVideo {
     Duration endCardLength = command.endCard?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
-
-    print([
-      '-ss',
-      '${startTime}ms',
-      '-to',
-      '${endTime}ms',
-      '-y',
-      '-nostdin',
-      '-i',
-      path.path,
-      '-c:v',
-      'copy',
-      '-c:a',
-      'copy',
-      if (!command.verbose) ...['-loglevel', 'quiet'],
-      '.temp/${video.id}/video.mp4'
-    ]);
 
     final process = await Process.start(
         'ffmpeg',
