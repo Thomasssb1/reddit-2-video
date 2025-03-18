@@ -209,7 +209,15 @@ class Lexica extends ConfigItem {
 
   Future<void> upload(ParsedCommand command) async {
     final process = await Process.start(
-        "aws", ["polly", "put-lexicon", "--name", id, "--content", path.path],
+        "aws",
+        [
+          "polly",
+          "put-lexicon",
+          "--name",
+          id,
+          "--content",
+          "file://${path.path}"
+        ],
         workingDirectory: command.prePath);
     if (command.verbose) {
       process.stderr.transform(utf8.decoder).listen((data) {
@@ -224,6 +232,9 @@ class Lexica extends ConfigItem {
           path);
     }
   }
+
+  @override
+  String toString() => id;
 
   @override
   bool operator ==(Object obj) {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
+import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:reddit_2_video/config/text_color.dart';
 import 'package:reddit_2_video/config/voices.dart';
 import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
@@ -24,12 +25,14 @@ class Subtitles {
   final Duration delay;
   final Alternate alternate;
   final SubstationAlphaSubtitleColor titleColor;
+  final List<Lexica> lexicons;
   int _position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
 
   Subtitles({
     required this.video,
+    required this.lexicons,
     required ParsedCommand command,
   })  : ntts = command.ntts,
         censor = command.censor,
@@ -90,6 +93,10 @@ class Subtitles {
         [
           "polly",
           "synthesize-speech",
+          if (censor) ...<String>[
+            "--lexicon-names",
+            ...lexicons.map((e) => e.toString()),
+          ],
           "--output-format",
           "mp3",
           "--voice-id",
@@ -98,7 +105,7 @@ class Subtitles {
           text,
           "--engine",
           ntts ? "neural" : "standard",
-          if (censor) "--lexicon-name=censor",
+          // TODO: add a way to toggle specific lexicons
           ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
         ],
         workingDirectory: command.prePath);

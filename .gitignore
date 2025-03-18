@@ -7,3 +7,4 @@
 .vscode/
 .temp/tts/*
 !defaults/silence.wav
+lexemes.config.json
