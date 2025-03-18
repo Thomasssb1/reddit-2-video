@@ -83,9 +83,7 @@ class ParsedCommand extends Command {
         help:
             'tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)',
         defaultsTo: ['off', 'off']);
-    parser.addOption('title-color',
-        valueHelp: 'the title colour for post in the format RRGGBB',
-        defaultsTo: 'FF0000');
+    parser.addOption('title-color', valueHelp: 'RRGGBB', defaultsTo: 'FF0000');
     parser.addFlag('post-confirmation', defaultsTo: false);
     parser
       ..addFlag('nsfw', defaultsTo: true)
@@ -111,10 +109,6 @@ class ParsedCommand extends Command {
         abbr: 'p',
         valueHelp: 'path-to-video');
     parser.addMultiOption('music', valueHelp: 'path,volume');
-    parser.addFlag('youtube-short',
-        help:
-            'Whether or not to produce the final long form video with several videos split by a minute length as well as the full video.',
-        defaultsTo: false);
     parser.addFlag('horror',
         help: 'Lowers the pitch from TTS for creepy stories.',
         defaultsTo: false);
@@ -175,6 +169,9 @@ class ParsedCommand extends Command {
       } else if (results['alternate'].length != 2) {
         throw ArgumentMissingException(
             'The option --alternate needs 2 options each split by a comma. Check --help to see the syntax.');
+      } else if (results['music'].length > 2) {
+        throw ArgumentMissingException(
+            'The option --music needs at most 2 options each split by a comma. Check --help to see the syntax.');
       } else if (int.tryParse(results['repeat']) == null) {
         throw FormatException(
             'The value provided for --repeat must be an integer.');
@@ -239,7 +236,6 @@ class ParsedCommand extends Command {
           volume: args!['music'].length == 2 ? args!['music'][1] : "1.0",
         )
       : null;
-  bool get youtubeShort => args!['youtube-short'];
   bool get horror => args!['horror'];
   String get output => args!['output'];
   FileType get fileType => FileType.called(args!['file-type'])!;

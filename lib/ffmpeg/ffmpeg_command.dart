@@ -69,7 +69,7 @@ class FFmpegCommand {
 
   String _addMusic() {
     if (music?.position == null) return '';
-    return "[${music!.position!}:a]volume=${music!.volume}[1a];[0a][1a]amerge";
+    return "[0a];[${music!.position!}:a]volume=${music!.volume}[1a];[0a][1a]amerge";
   }
 
   String _addEndCard() {
