@@ -2,6 +2,7 @@ import 'package:deep_pick/deep_pick.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/post/reddit_comment_sort_type.dart';
+import 'package:reddit_2_video/post/reddit_id.dart';
 import 'dart:convert';
 import 'reddit_url.dart';
 import 'reddit_comment.dart';
@@ -9,6 +10,7 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 
 class RedditPost {
   late final RedditUrl _url;
+  late final RedditId _id;
 
   late final String _title;
   late final String _body;
@@ -141,6 +143,7 @@ class RedditPost {
       _stickied = p0['stickied'];
       _commentCount = p0['num_comments'] ?? 0;
       _title = p0['title'];
+      _id = RedditId(p0['id'], p0['subreddit_id']);
       _subredditId = p0['subreddit_id'];
       _body = p0['selftext'];
       _upvotes = p0['ups'] ?? 0;
@@ -178,7 +181,8 @@ class RedditPost {
   bool get hasMedia => _hasMedia;
   int get commentCount => _commentCount;
 
-  String get id => "${_url.id}-$subredditId";
+  String get id => _id.toString();
+  RedditId get redditId => _id;
   RedditCommentSortType get commentSortType => _commentSortType;
 
   @override

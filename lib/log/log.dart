@@ -4,22 +4,21 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
-import 'package:reddit_2_video/exceptions/reddit_api_exception.dart';
-import 'package:reddit_2_video/exceptions/warning.dart';
+import 'package:reddit_2_video/post/reddit_id.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 
 class Log {
   final File _logfile;
-  late final HashSet<RedditPost> _urls;
+  late final HashSet<RedditId> _ids;
   // Files within .temp to not delete
   final Iterable<String> _protectedFiles = <String>["visited_log.txt"];
 
   Log._fromFile({
     required File logfile,
-    required HashSet<RedditPost> urls,
+    required HashSet<RedditId> ids,
   })  : _logfile = logfile,
-        _urls = urls;
+        _ids = ids;
 
   static Future<Log> fromFile(String prePath) async {
     File logfile = File("$prePath/.temp/visited_log.txt");
@@ -29,31 +28,25 @@ class Log {
 
     http.Client client = http.Client();
 
-    List<RedditPost?> stream = await logfile
+    List<RedditId?> stream = await logfile
         .openRead()
         .transform(utf8.decoder)
         .transform(LineSplitter())
         .asyncMap((line) async {
       String subredditId = line.split("-").last;
       String id = line.split("-").first;
-      try {
-        return await RedditPost.fromSubredditId(
-            subredditId: subredditId, id: id, client: client);
-      } on RedditApiException {
-        Warning.warn("Unable to find post id $id in subreddit $subredditId.");
-        return null;
-      }
+      return RedditId(id, subredditId);
     }).toList();
 
-    HashSet<RedditPost> lines = HashSet<RedditPost>();
+    HashSet<RedditId> lines = HashSet<RedditId>();
     stream.where((e) => e != null).forEach((e) => lines.add(e!));
     client.close();
 
-    return Log._fromFile(logfile: logfile, urls: lines);
+    return Log._fromFile(logfile: logfile, ids: lines);
   }
 
   bool contains(RedditPost post) {
-    return _urls.contains(post);
+    return _ids.contains(post);
   }
 
   Function(RedditPost post) _partialAdd(IOSink sink) {
@@ -61,7 +54,7 @@ class Log {
   }
 
   void _add(RedditPost post, IOSink sink) {
-    _urls.add(post);
+    _ids.add(post.redditId);
     sink.writeln(post.id);
   }
 
@@ -75,10 +68,10 @@ class Log {
 
   void remove({RedditPost? post}) async {
     if (post == null) {
-      _urls.clear();
+      _ids.clear();
       _logfile.writeAsStringSync('');
     } else {
-      _urls.remove(post);
+      _ids.remove(post);
       final lines = await _logfile.readAsLines();
       lines.removeWhere((line) => line == post.id);
       await _logfile.writeAsString(lines.join('\n'));
