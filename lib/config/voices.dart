@@ -22,6 +22,7 @@ class Voices {
             bool neural = p0("neural").asBoolOrFalse();
             bool standard = p0("standard").asBoolOrTrue();
             bool newscaster = p0("newscaster").asBoolOrFalse();
+            bool disabled = p0("disabled").asBoolOrFalse();
 
             // if using neural tts and the voice is not neural, skip
             if (command.ntts && !neural) {
@@ -35,10 +36,16 @@ class Voices {
                 id: name,
                 neural: neural,
                 standard: standard,
-                newscaster: newscaster);
+                newscaster: newscaster,
+                disabled: disabled);
           })
           .whereType<Voice>()
+          .where((e) => !e.disabled)
           .toList();
+
+      if (!Voices.voices.contains(command.voice)) {
+        Warning.warn("Unable to use selected --voice, maybe it is disabled?");
+      }
     } on PickException {
       throw InvalidFileFormatException(
           "File voices.config.json has an invalid format", file);

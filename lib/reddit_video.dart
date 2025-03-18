@@ -1,8 +1,5 @@
-import 'dart:ffi';
-
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
-import 'package:reddit_2_video/exceptions/empty_post_selection_exception.dart';
 import 'package:reddit_2_video/ffmpeg/ffmpeg_command.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
 import 'package:reddit_2_video/log/log.dart';
@@ -48,18 +45,19 @@ class RedditVideo {
             command.subreddit,
             command.type.name);
       }
+
       RedditPost post = await RedditPost.fromUrl(url: command.subreddit);
       RedditVideo video = RedditVideo.single(
           post: post, videoType: command.type, prePath: command.prePath);
+
       if (log.contains(video.posts.first)) {
         throw PostAlreadyGeneratedException(
             message:
                 "The link provided in --subreddit has already had a video been generated previously.",
             help:
                 "If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
-      } else {
-        return video;
       }
+      return video;
     }
 
     // create a new link that also contains the sort
@@ -74,8 +72,6 @@ class RedditVideo {
       // get all of the necessary data
       // title, id, body, upvotes, created, spoiler, media, nsfw and comment count
 
-      List<RedditPost> posts = [];
-
       for (final p0
           in pick(json, 'data', 'children').asListOrEmpty((p0) => p0)) {
         try {
@@ -88,7 +84,7 @@ class RedditVideo {
               !post.stickied &&
               post.commentCount >= command.commentCount &&
               !log.contains(post)) {
-            posts.add(post);
+            postData.add(post);
           }
         } on PickException {
           Warning.warn(
@@ -97,8 +93,7 @@ class RedditVideo {
         }
       }
 
-      print(posts.length);
-      if (posts.isEmpty) {
+      if (postData.isEmpty) {
         throw PostsExhaustedException(
             message:
                 "No posts could be found for the subreddit. Try again with another subreddit.");
@@ -108,7 +103,7 @@ class RedditVideo {
       if (command.type != RedditVideoType.multi && !command.postConfirmation) {
         // get the first post
         return RedditVideo.single(
-            post: posts.first,
+            post: postData.first,
             videoType: command.type,
             prePath: command.prePath);
       }
@@ -116,7 +111,7 @@ class RedditVideo {
       // if the user wants to confirm the post and the subreddit arg is not a link
       if (command.postConfirmation) {
         // iterate through each post collected previously
-        for (final post in posts) {
+        for (final post in postData) {
           // output relevant information
           print("\x1b[4m${post.title}\x1b[0m\n");
           print(
@@ -131,7 +126,7 @@ class RedditVideo {
                 "This post is${post.nsfw ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
           }
           print(
-              "\x1b[4mPost ${posts.indexOf(post) + 1}/${posts.length}.\x1b[0m");
+              "\x1b[4mPost ${postData.indexOf(post) + 1}/${postData.length}.\x1b[0m");
           print(
               "Do you want to see the body of the post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
           // read the cli for what the user entered
@@ -168,7 +163,8 @@ class RedditVideo {
           else {
             print("Fetching next post...\n");
             // if the post is the last post / if the user hasn't selected any posts but have multi type
-            if (post == posts.last && command.type != RedditVideoType.multi) {
+            if (post == postData.last &&
+                command.type != RedditVideoType.multi) {
               throw PostsExhaustedException(
                   message:
                       "All posts have been searched for the subreddit ${command.subreddit}, try again later or use a different sort term..");
@@ -181,6 +177,7 @@ class RedditVideo {
         }
       }
       // commentCount is also responsible for the number of posts selected
+      print("post length: ${postData.length}");
       if (postData.length < command.commentCount) {
         Warning.warn(
             "Not enough posts selected as specified by the count option (${command.commentCount}). Generating video with only the posts that you have selected.");

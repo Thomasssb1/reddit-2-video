@@ -5,139 +5,197 @@
       "name": "Olivia",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Nicole",
       "neural": false,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Russell",
       "neural": false,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
-    { "name": "Amy", "neural": true, "standard": true, "newscaster": true },
-    { "name": "Emma", "neural": true, "standard": true, "newscaster": false },
+    {
+      "name": "Amy",
+      "neural": true,
+      "standard": true,
+      "newscaster": true,
+      "disabled": false
+    },
+    {
+      "name": "Emma",
+      "neural": true,
+      "standard": true,
+      "newscaster": false,
+      "disabled": false
+    },
     {
       "name": "Brian",
       "neural": true,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Arthur",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Aditi",
       "neural": false,
       "standard": true,
-      "newscaster": true
+      "newscaster": true,
+      "disabled": false
     },
     {
       "name": "Raveena",
       "neural": false,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Kajal",
       "neural": true,
       "standard": false,
-      "newscaster": true
+      "newscaster": true,
+      "disabled": false
     },
     {
       "name": "Niamh",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
-    { "name": "Aria", "neural": true, "standard": false, "newscaster": false },
+    {
+      "name": "Aria",
+      "neural": true,
+      "standard": false,
+      "newscaster": false,
+      "disabled": false
+    },
     {
       "name": "Jasmine",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Ayanda",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Danielle",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Gregory",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
-    { "name": "Ivy", "neural": true, "standard": true, "newscaster": false },
+    {
+      "name": "Ivy",
+      "neural": true,
+      "standard": true,
+      "newscaster": false,
+      "disabled": false
+    },
     {
       "name": "Joanna",
       "neural": true,
       "standard": true,
-      "newscaster": true
+      "newscaster": true,
+      "disabled": false
     },
     {
       "name": "Kendra",
       "neural": true,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Kimberly",
       "neural": true,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Salli",
       "neural": true,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
-    { "name": "Joey", "neural": true, "standard": true, "newscaster": false },
+    {
+      "name": "Joey",
+      "neural": true,
+      "standard": true,
+      "newscaster": false,
+      "disabled": false
+    },
     {
       "name": "Justin",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Kevin",
       "neural": true,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Matthew",
       "neural": true,
       "standard": false,
-      "newscaster": true
+      "newscaster": true,
+      "disabled": false
     },
-    { "name": "Ruth", "neural": true, "standard": false, "newscaster": false },
+    {
+      "name": "Ruth",
+      "neural": true,
+      "standard": false,
+      "newscaster": false,
+      "disabled": false
+    },
     {
       "name": "Stephen",
       "neural": true,
       "standard": false,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     },
     {
       "name": "Geraint",
       "neural": false,
       "standard": true,
-      "newscaster": false
+      "newscaster": false,
+      "disabled": false
     }
   ]
 }

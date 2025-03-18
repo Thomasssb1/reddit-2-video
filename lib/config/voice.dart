@@ -7,6 +7,7 @@ class Voice {
   late final bool _neural;
   late final bool _standard;
   late final bool _newscaster;
+  bool disabled;
   final TTSType _type = TTSType.polly;
 
   Voice({
@@ -14,6 +15,7 @@ class Voice {
     bool neural = false,
     bool standard = true,
     bool newscaster = false,
+    this.disabled = false,
   })  : _neural = neural,
         _standard = standard,
         _newscaster = newscaster;
