@@ -58,20 +58,18 @@ class Subtitles {
     RegExp punctuationMatch = RegExp(r"(\.|\?|!|\u2026)");
     int maxLength = 3000;
 
-    List<String> newText = List.empty(growable: true);
+    List<String> newText = <String>[];
     List<int> endPoints =
         punctuationMatch.allMatches(text).expand<int>((e) => [e.end]).toList();
     endPoints.insert(0, 0);
+    endPoints.add(text.length);
     int prevIndex = 0;
     for (int i = 0; i < endPoints.length; ++i) {
-      if (endPoints[i] - endPoints[prevIndex] >= maxLength) {
+      if (endPoints[i] - endPoints[prevIndex] > maxLength) {
         newText.add(text.substring(endPoints[prevIndex], endPoints[i - 1]));
         prevIndex = i - 1;
       } else if (i == endPoints.length - 1) {
-        if (i != 0) {
-          newText.add(text.substring(endPoints[prevIndex], endPoints[i]));
-        }
-        newText.add(text.substring(endPoints[i], text.length));
+        newText.add(text.substring(endPoints[prevIndex], text.length));
       }
     }
     List<String> tempText = [];
@@ -226,9 +224,6 @@ class Subtitles {
           if (isTitle) {
             subtitle.updateTitleColours(titleColor);
           }
-
-          print(
-              "title: $isTitle, color: ${subtitle.color}, title: $titleColor");
 
           await subtitle.generate(_assFile, prevDuration);
 
