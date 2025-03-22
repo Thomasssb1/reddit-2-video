@@ -79,11 +79,12 @@ class ParsedCommand extends Command {
     });
     // TODO: Look into getting info from text such as female/male when assigning voices in future
     parser.addMultiOption('alternate',
-        valueHelp: 'alternate-tts(on/off),alternate-colour(on/off)',
+        valueHelp: '<alternate-tts(on/off),alternate-colour(on/off)>',
         help:
             'tts - alternate TTS voice for each comment/post (defaults to off)\ncolour - alternate text colour for each comment/post (defaults to off)',
         defaultsTo: ['off', 'off']);
-    parser.addOption('title-color', valueHelp: 'RRGGBB', defaultsTo: 'FF0000');
+    parser.addOption('title-color',
+        valueHelp: '<RRGGBB>', defaultsTo: 'FF0000');
     parser.addFlag('post-confirmation', defaultsTo: false);
     parser
       ..addFlag('nsfw', defaultsTo: true)
@@ -104,10 +105,7 @@ class ParsedCommand extends Command {
             'How many times the program should repeat - does not work for links but works for subreddits.',
         valueHelp: 'integer',
         defaultsTo: '1');
-    parser.addOption('video',
-        defaultsTo: 'defaults/video1.mp4',
-        abbr: 'p',
-        valueHelp: 'path-to-video');
+    parser.addOption('video', abbr: 'p', valueHelp: '<path-to-video>');
     parser.addMultiOption('music', valueHelp: 'path,volume');
     parser.addFlag('horror',
         help: 'Lowers the pitch from TTS for creepy stories.',
@@ -129,7 +127,7 @@ class ParsedCommand extends Command {
             'Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.');
     parser.addOption('end-card',
         help: 'Path to a gif & audio that will play at the end of the video.',
-        valueHelp: 'path-to-gif');
+        valueHelp: '<path-to-gif>');
     parser
       ..addFlag('verbose', abbr: 'v', defaultsTo: false)
       ..addFlag('override', abbr: 'y', defaultsTo: false)
@@ -228,7 +226,7 @@ class ParsedCommand extends Command {
   Voice get voice => Voices.called(args!['voice']);
   int get repeat => subredditIsLink ? 1 : int.parse(args!['repeat']);
   // need to figure out what to do with video
-  String get videoPath => args!['video'];
+  String? get video => args!['video'];
   Music? get music => args!['music'].length > 0
       ? Music(
           path: args!['music'][0],

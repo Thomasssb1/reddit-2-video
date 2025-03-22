@@ -10,26 +10,71 @@ import 'package:reddit_2_video/reddit_video.dart';
 enum VideoType { muxed, video }
 
 class BackgroundVideo {
-  final Uri url;
-  final VideoType type;
   File path;
+  Uri? url;
   int position = 0;
 
-  BackgroundVideo({
-    required this.url,
-    required String prePath,
-    this.type = VideoType.video,
-    String path = "/defaults/video1.mp4",
-  }) : path = File("$prePath$path");
+  BackgroundVideo({required this.path, this.url});
 
-  bool _videoExists() {
-    // store the last downloaded url and compare
-    return path.existsSync();
+  BackgroundVideo.fromPath({
+    required String path,
+    Uri? url,
+  }) : this(path: File(path), url: url);
+
+  static File _getFileFromUrl(Uri url, String prePath) {
+    String vId = url.queryParameters["v"]!;
+    return File("$prePath/defaults/$vId.mp4");
   }
 
-  Future<File> downloadVideo() async {
-    bool exists = _videoExists();
-    if (!exists) {
+  static bool _videoExists(Uri url, String prePath) {
+    File file = _getFileFromUrl(url, prePath);
+    return file.existsSync();
+  }
+
+  static Uri _standardiseUri(Uri url) {
+    if (!_validYoutubeUrl(url)) {
+      throw InvalidVideoUrl("Invalid youtube url", url);
+    }
+
+    // Normalise to default url
+    if (_validDefaultUrl(url)) {
+      return url;
+      // else if share url
+    } else {
+      String vId = url.pathSegments.first;
+      return Uri.https("wwww.youtube.com", "watch", {"v": vId});
+    }
+  }
+
+  static bool _validShareUrl(Uri url) {
+    Uri shareValid = Uri.https("youtu.be", "0");
+    return (url.authority == shareValid.authority &&
+        VideoId.validateVideoId(url.pathSegments.first));
+  }
+
+  static bool _validDefaultUrl(Uri url) {
+    Uri defaultValid = Uri.https("www.youtube.com", "watch", {"v": "0"});
+    return (url.authority == defaultValid.authority &&
+        url.path == defaultValid.path &&
+        url.queryParameters.containsKey("v") &&
+        VideoId.validateVideoId(url.queryParameters["v"]!));
+  }
+
+  static bool _validYoutubeUrl(Uri url) {
+    // First check default uri validity, then share validity
+    return _validDefaultUrl(url) || _validShareUrl(url);
+  }
+
+  static Future<BackgroundVideo> downloadVideo(Uri url, String prePath,
+      {VideoType videoType = VideoType.video}) async {
+    if (!_validYoutubeUrl(url)) {
+      throw InvalidVideoUrl("Invalid youtube url", url);
+    }
+
+    url = _standardiseUri(url);
+    File path = _getFileFromUrl(url, prePath);
+
+    if (!_videoExists(url, prePath)) {
       String? videoID = url.queryParameters['v'];
       if (videoID == null) {
         throw InvalidVideoUrl("Invalid video url", url);
@@ -39,7 +84,7 @@ class BackgroundVideo {
       try {
         StreamManifest manifest = await yt.videos.streams.getManifest(videoID);
         late List<VideoStreamInfo> streamInfo;
-        switch (type) {
+        switch (videoType) {
           case VideoType.muxed:
             streamInfo = manifest.muxed.sortByVideoQuality();
           case VideoType.video:
@@ -68,9 +113,9 @@ class BackgroundVideo {
       } finally {
         yt.close();
       }
-      return path;
+      return BackgroundVideo(path: path, url: url);
     } else {
-      return path;
+      return BackgroundVideo(path: path, url: url);
     }
   }
 
@@ -119,10 +164,13 @@ class BackgroundVideo {
       throw BackgroundVideoCuttingException(
           message:
               "Something went wrong when trying to cut the background video.",
-          url: url,
+          url: url?.toString() ?? "None",
           duration: duration);
     } else {
       path = File(".temp/${video.id}/video.mp4");
     }
   }
+
+  static Uri getDefaultVideoUrl() =>
+      Uri.parse("https://www.youtube.com/watch?v=n_Dv4JMiwK8");
 }

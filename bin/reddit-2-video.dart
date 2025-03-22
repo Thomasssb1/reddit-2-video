@@ -8,6 +8,8 @@ import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 
+import 'dart:io';
+
 void main(
   List<String> args,
 ) async {
@@ -20,12 +22,15 @@ void main(
 
     switch (command.name) {
       case CommandType.defaultCommand:
-        BackgroundVideo backgroundVideo = BackgroundVideo(
-          url: Uri.parse("https://www.youtube.com/watch?v=n_Dv4JMiwK8"),
-          prePath: command.prePath,
-        );
-
-        await backgroundVideo.downloadVideo();
+        late BackgroundVideo backgroundVideo;
+        if (command.video == null) {
+          backgroundVideo = await BackgroundVideo.downloadVideo(
+            BackgroundVideo.getDefaultVideoUrl(),
+            command.prePath,
+          );
+        } else {
+          backgroundVideo = BackgroundVideo(path: File(command.video!));
+        }
 
         // Setup config files
         Log log = await Log.fromFile(command.prePath);

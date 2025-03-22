@@ -1,6 +1,6 @@
 class BackgroundVideoCuttingException implements Exception {
   final String message;
-  final Uri url;
+  final String url;
   final Duration duration;
 
   BackgroundVideoCuttingException(
