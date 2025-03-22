@@ -10,7 +10,7 @@ class RedditId {
 
   @override
   String toString() {
-    return "$_id-$_subredditId";
+    return id;
   }
 
   @override
@@ -20,4 +20,7 @@ class RedditId {
     }
     return other.id == id;
   }
+
+  @override
+  int get hashCode => Object.hashAll([_id, _subredditId]);
 }

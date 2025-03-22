@@ -46,7 +46,7 @@ class Log {
   }
 
   bool contains(RedditPost post) {
-    return _ids.contains(post);
+    return _ids.contains(post.redditId);
   }
 
   Function(RedditPost post) _partialAdd(IOSink sink) {
@@ -71,7 +71,7 @@ class Log {
       _ids.clear();
       _logfile.writeAsStringSync('');
     } else {
-      _ids.remove(post);
+      _ids.remove(post.redditId);
       final lines = await _logfile.readAsLines();
       lines.removeWhere((line) => line == post.id);
       await _logfile.writeAsString(lines.join('\n'));
