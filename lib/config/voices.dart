@@ -8,15 +8,41 @@ import 'package:reddit_2_video/config/voice.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 
 class Voices {
-  static List<Voice> voices = List.empty();
+  List<Voice> _voices = List.empty();
+  int _currentVoice = 0;
 
-  static void fromFile(
+  Voices(
+    List<Voice> voices,
+    Voice currentVoice,
+    ParsedCommand command,
+  ) {
+    if (!currentVoice.standard && !command.ntts) {
+      throw ArgumentConflictException(
+          "Unable to use a neural voice with standard tts engine.",
+          command.voice.toString(),
+          "ntts: ${command.ntts}");
+    } else if (!currentVoice.neural && command.ntts) {
+      throw ArgumentConflictException(
+          "Unable to use a standard voice with neural tts engine",
+          command.voice.toString(),
+          "ntts: ${command.ntts}");
+    }
+
+    if (!voices.contains(currentVoice)) {
+      Warning.warn("Unable to use selected --voice, maybe it is disabled?");
+    }
+    int index = voices.indexOf(currentVoice);
+    _currentVoice = index == -1 ? 0 : index;
+    _voices = voices;
+  }
+
+  static List<Voice> fromFile(
     ParsedCommand command,
   ) {
     File file = File("${command.prePath}/defaults/voice.config.json");
     try {
       var json = jsonDecode(file.readAsStringSync());
-      Voices.voices = pick(json, "voices")
+      return pick(json, "voices")
           .asListOrThrow<Voice?>((p0) {
             String name = p0("name").asStringOrThrow();
             bool neural = p0("neural").asBoolOrFalse();
@@ -42,10 +68,6 @@ class Voices {
           .whereType<Voice>()
           .where((e) => !e.disabled)
           .toList();
-
-      if (!Voices.voices.contains(command.voice)) {
-        Warning.warn("Unable to use selected --voice, maybe it is disabled?");
-      }
     } on PickException {
       throw InvalidFileFormatException(
           "File voices.config.json has an invalid format", file);
@@ -53,33 +75,22 @@ class Voices {
       throw InvalidFileFormatException(
           "File voices.config.json is not in json format", file);
     }
-    if (!command.voice.standard && !command.ntts) {
-      throw ArgumentConflictException(
-          "Unable to use a neural voice with standard tts engine.",
-          command.voice.toString(),
-          "ntts: ${command.ntts}");
-    } else if (!command.voice.neural && command.ntts) {
-      throw ArgumentConflictException(
-          "Unable to use a standard voice with neural tts engine",
-          command.voice.toString(),
-          "ntts: ${command.ntts}");
-    }
   }
 
-  static Voice called(String id) {
-    if (Voices.voices.isEmpty) {
+  Voice called(String id) => Voices.find(_voices, id);
+
+  static Voice find(List<Voice> voices, String id) {
+    if (voices.isEmpty) {
       Warning.warn(
           "Ensure voice.config.json is loaded otherwise default voice Brian will be used.");
     }
-    return Voices.voices
-        .firstWhere((e) => e.id == id, orElse: () => Voice.standard());
+    return voices.firstWhere((e) => e.id == id, orElse: () => Voice.standard());
   }
 
-  static int _currentVoice = ++_currentVoice % Voices.voices.length;
-  static Voice get current => Voices.voices[_currentVoice];
-  static void next() => _currentVoice = ++_currentVoice % Voices.voices.length;
-  static void set(Voice voice) {
-    int index = Voices.voices.indexOf(voice);
+  Voice get current => _voices[_currentVoice];
+  void next() => _currentVoice = ++_currentVoice % _voices.length;
+  void set(Voice voice) {
+    int index = _voices.indexOf(voice);
     if (index == -1) {
       set(Voice.standard());
     } else {
@@ -87,5 +98,5 @@ class Voices {
     }
   }
 
-  static void reset() => _currentVoice = 0;
+  void reset() => _currentVoice = 0;
 }
