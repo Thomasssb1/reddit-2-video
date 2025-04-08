@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
-import 'package:reddit_2_video/post/reddit_id.dart';
-import 'package:reddit_2_video/post/reddit_post.dart';
+import 'package:reddit_2_video/reddit/reddit_id.dart';
+import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 
 class Log {

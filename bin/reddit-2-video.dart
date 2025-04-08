@@ -1,10 +1,10 @@
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
-import 'package:reddit_2_video/config/voice.dart';
-import 'package:reddit_2_video/config/voices.dart';
-import 'package:reddit_2_video/post/reddit_post.dart';
-import 'package:reddit_2_video/post/reddit_video_type.dart';
+import 'package:reddit_2_video/config/voices/voice.dart';
+import 'package:reddit_2_video/config/voices/voices.dart';
+import 'package:reddit_2_video/reddit/reddit_post.dart';
+import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';

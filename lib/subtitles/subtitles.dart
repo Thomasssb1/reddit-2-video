@@ -4,17 +4,17 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:reddit_2_video/config/text_color.dart';
-import 'package:reddit_2_video/config/voices.dart';
+import 'package:reddit_2_video/config/voices/voices.dart';
 import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/subtitles/subtitle_config.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:reddit_2_video/subtitles/subtitle.dart';
-import 'package:reddit_2_video/post/reddit_video_type.dart';
-import 'package:reddit_2_video/post/reddit_post.dart';
+import 'package:reddit_2_video/reddit/reddit_video_type.dart';
+import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
-import 'package:reddit_2_video/config/voice.dart';
+import 'package:reddit_2_video/config/voices/voice.dart';
 
 class Subtitles {
   late File _assFile;
