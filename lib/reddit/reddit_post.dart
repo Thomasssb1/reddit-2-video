@@ -1,9 +1,9 @@
 import 'package:deep_pick/deep_pick.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/post/reddit_comment_sort_type.dart';
-import 'package:reddit_2_video/post/reddit_id.dart';
-import 'package:reddit_2_video/post/reddit_http_retry.dart';
+import 'package:reddit_2_video/reddit/reddit_comment_sort_type.dart';
+import 'package:reddit_2_video/reddit/reddit_id.dart';
+import 'package:reddit_2_video/reddit/reddit_http_retry.dart';
 import 'dart:convert';
 import 'reddit_url.dart';
 import 'reddit_comment.dart';
