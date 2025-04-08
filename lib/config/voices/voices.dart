@@ -4,7 +4,7 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:reddit_2_video/config/voice.dart';
+import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 
 class Voices {
