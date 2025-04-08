@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
@@ -24,10 +26,10 @@ class FFmpegCommand {
     this.endCard,
   });
 
-  List<String> get inputFiles {
+  List<String> inputFiles(File cutVideo) {
     List<String> inputs = [
       "-i",
-      backgroundVideo.path.path,
+      cutVideo.path,
     ];
     int currentPosition = backgroundVideo.position + 1;
     if (emptyNoise != null) {
@@ -95,7 +97,7 @@ class FFmpegCommand {
     return """${_concat()}${_horrorMode(command.horror)}${_addMusic()}[final_a];${_addEndCard()}${_cropVideo()},${_addSubtitles()}${_addFps(command.framerate)}""";
   }
 
-  String _getOutput(ParsedCommand command) {
+  String _getOutput(ParsedCommand command, int index) {
     String output = command.output;
     FileType fileType = command.fileType;
 
@@ -111,28 +113,21 @@ class FFmpegCommand {
       }
       output = p.withoutExtension(output);
     }
-    return "$output.${fileType.name}";
+    String count = command.repeat == 1 ? "" : "-$index";
+    return "$output$count.${fileType.name}";
     // need to handle youtube short naming
   }
 
-  List<String> generate(ParsedCommand command) {
+  List<String> generate(ParsedCommand command, File cutVideo, int index) {
     /// Generate the command to be executed
     return [
-      ...inputFiles,
+      ...inputFiles(cutVideo),
       ..._getFlags(command),
       "-map",
       "[final_a]",
       "-filter_complex",
       _getFilter(command),
-      _getOutput(command)
+      _getOutput(command, index)
     ];
-  }
-
-  @override
-  String toString() {
-    StringBuffer sb = StringBuffer();
-    sb.write("FFmpeg inputs: ");
-    sb.write(inputFiles.join(" "));
-    return sb.toString();
   }
 }

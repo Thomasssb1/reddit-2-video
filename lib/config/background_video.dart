@@ -10,16 +10,16 @@ import 'package:reddit_2_video/reddit_video.dart';
 enum VideoType { muxed, video }
 
 class BackgroundVideo {
-  File path;
+  File source;
   Uri? url;
   int position = 0;
 
-  BackgroundVideo({required this.path, this.url});
+  BackgroundVideo({required this.source, this.url});
 
   BackgroundVideo.fromPath({
     required String path,
     Uri? url,
-  }) : this(path: File(path), url: url);
+  }) : this(source: File(path), url: url);
 
   static File _getFileFromUrl(Uri url, String prePath) {
     String vId = url.queryParameters["v"]!;
@@ -113,9 +113,9 @@ class BackgroundVideo {
       } finally {
         yt.close();
       }
-      return BackgroundVideo(path: path, url: url);
+      return BackgroundVideo(source: path, url: url);
     } else {
-      return BackgroundVideo(path: path, url: url);
+      return BackgroundVideo(source: path, url: url);
     }
   }
 
@@ -133,12 +133,15 @@ class BackgroundVideo {
     return (start, start + duration.inMilliseconds);
   }
 
-  Future<void> cutVideo(
+  Future<File> cutVideo(
       Duration duration, RedditVideo video, ParsedCommand command) async {
-    stdout.write("Cutting the background video to a random point.");
+    stdout.writeln("Cutting the background video to a random point.");
     Duration endCardLength = command.endCard?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
+
+    print(startTime);
+    print(endTime);
 
     final process = await Process.start(
         'ffmpeg',
@@ -150,16 +153,16 @@ class BackgroundVideo {
           '-y',
           '-nostdin',
           '-i',
-          path.path,
+          source.path,
           '-c:v',
           'copy',
-          '-c:a',
-          'copy',
+          '-an',
           if (!command.verbose) ...['-loglevel', 'quiet'],
           '.temp/${video.id}/video.mp4'
         ],
         workingDirectory: command.prePath);
     int code = await process.exitCode;
+
     if (code != 0) {
       throw BackgroundVideoCuttingException(
           message:
@@ -167,7 +170,7 @@ class BackgroundVideo {
           url: url?.toString() ?? "None",
           duration: duration);
     } else {
-      path = File(".temp/${video.id}/video.mp4");
+      return File(".temp/${video.id}/video.mp4");
     }
   }
 

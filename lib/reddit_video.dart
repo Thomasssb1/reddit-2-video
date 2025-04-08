@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/ffmpeg/ffmpeg_command.dart';
+import 'package:reddit_2_video/post/reddit_http_retry.dart';
 import 'package:reddit_2_video/post/reddit_post.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +20,7 @@ import 'dart:io';
 class RedditVideo {
   final List<RedditPost> posts;
   final RedditVideoType videoType;
+  Subtitles? subtitles;
   List<String> inputStreams = [];
 
   RedditVideo({
@@ -57,6 +61,7 @@ class RedditVideo {
             help:
                 "If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
       }
+      log.temporaryAdd(video);
       return video;
     }
 
@@ -64,7 +69,7 @@ class RedditVideo {
     Uri subredditLink = Uri.https(
         "reddit.com", "/r/${command.subreddit}/${command.sort.name}.json");
 
-    http.Response response = await http.get(subredditLink);
+    http.Response response = await RedditHttpRetry.retryHttp(subredditLink);
 
     if (response.statusCode == 200) {
       // generate json data
@@ -78,7 +83,7 @@ class RedditVideo {
           String id = p0('data', 'id').required().asString();
           String subreddit = p0('data', 'subreddit').required().asString();
           RedditPost post =
-              await RedditPost.fromId(subreddit: subreddit, id: id);
+              RedditPost.fromId(subreddit: subreddit, id: id, json: p0('data'));
 
           if (!(!command.nsfw && post.nsfw) &&
               !post.stickied &&
@@ -102,10 +107,12 @@ class RedditVideo {
       // if the type is not multi and the user does not need to select a post
       if (command.type != RedditVideoType.multi && !command.postConfirmation) {
         // get the first post
-        return RedditVideo.single(
+        RedditVideo video = RedditVideo.single(
             post: postData.first,
             videoType: command.type,
             prePath: command.prePath);
+        log.temporaryAdd(video);
+        return video;
       }
 
       // if the user wants to confirm the post and the subreddit arg is not a link
@@ -184,8 +191,10 @@ class RedditVideo {
       } else {
         postData = postData.sublist(0, command.commentCount);
       }
-      return RedditVideo(
+      RedditVideo video = RedditVideo(
           posts: postData, videoType: command.type, prePath: command.prePath);
+      log.temporaryAdd(video);
+      return video;
     } else {
       throw RedditApiException(
           message:
@@ -194,37 +203,42 @@ class RedditVideo {
     }
   }
 
-  Future<void> generate(ParsedCommand command, Subtitles subtitles,
-      BackgroundVideo backgroundVideo) async {
+  Future<void> generate(ParsedCommand command, BackgroundVideo backgroundVideo,
+      File cutVideo, int index) async {
+    if (subtitles == null) {
+      throw ArgumentMissingException(
+          "Subtitles not added to RedditVideo object. Subtitles are required in order to continue generation of the video.");
+    }
+
     EmptyNoise? emptyNoise;
     if (command.type != RedditVideoType.post) {
       emptyNoise = EmptyNoise(prePath: command.prePath);
     }
 
     FFmpegCommand ffmpegCommand = FFmpegCommand(
-      subtitles: subtitles,
+      subtitles: subtitles!,
       backgroundVideo: backgroundVideo,
       emptyNoise: emptyNoise,
       music: command.music,
       endCard: command.endCard,
     );
 
-    List<String> input = ffmpegCommand.generate(command);
+    List<String> input = ffmpegCommand.generate(command, cutVideo, index);
     print(input);
 
-    final process = await Process.start("ffmpeg", input);
-    if (command.verbose) {
-      process.stderr.transform(utf8.decoder).listen((data) {
-        stdout.write(data);
-      });
-    }
-    stdin.pipe(process.stdin);
+    final process = await Process.start("ffmpeg", input,
+        mode: ProcessStartMode.inheritStdio);
+
     int code = await process.exitCode;
+
+    print(code);
+
     if (code != 0) {
       throw FFmpegCommandException(
           message: "Something went wrong when generating the video. Exiting.",
           command: input);
     }
+    print("Video generated");
   }
 
   Future<void> _generateFolderStructure(String path) async {

@@ -26,6 +26,7 @@ class Subtitles {
   final Alternate alternate;
   final SubstationAlphaSubtitleColor titleColor;
   final List<Lexica> lexicons;
+  final Voices voices;
   int _position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
@@ -33,6 +34,7 @@ class Subtitles {
   Subtitles({
     required this.video,
     required this.lexicons,
+    required this.voices,
     required ParsedCommand command,
   })  : ntts = command.ntts,
         censor = command.censor,
@@ -86,6 +88,7 @@ class Subtitles {
 
   Future<File> _generateTTS(
       String text, Voice voice, ParsedCommand command) async {
+    print("voice: ${voice.id}, ${command.ntts}");
     final process = await Process.start(
         "aws",
         [
@@ -111,8 +114,8 @@ class Subtitles {
       process.stderr.transform(utf8.decoder).listen((data) {
         stdout.write(data);
       });
-      process.stdin.write(process.stdin);
     }
+
     int code = await process.exitCode;
     if (code != 0) {
       throw TTSFailedException(
@@ -148,8 +151,8 @@ class Subtitles {
       process.stderr.transform(utf8.decoder).listen((data) {
         stdout.write(data);
       });
-      process.stdin.write(process.stdin);
     }
+
     int code = await process.exitCode;
     if (code != 0) {
       throw TTSFailedException(
@@ -164,7 +167,6 @@ class Subtitles {
   }
 
   Future<void> parse(ParsedCommand command) async {
-    Voices.set(command.voice);
     Subtitle prevSubtitle = Subtitle.none();
     Duration prevDuration = Duration.zero;
     for (RedditPost post in video.posts) {
@@ -209,7 +211,7 @@ class Subtitles {
         if (textSegment.isNotEmpty) {
           Directory("${command.prePath}/.temp/${video.id}/tts/")
               .createSync(recursive: true);
-          File tts = await _generateTTS(textSegment, Voices.current, command);
+          File tts = await _generateTTS(textSegment, voices.current, command);
 
           Directory("${command.prePath}/.temp/${video.id}/config/")
               .createSync(recursive: true);
@@ -218,8 +220,8 @@ class Subtitles {
 
           SubstationAlphaSubtitleColor color = TextColor.current;
 
-          Subtitle subtitle = Subtitle(
-              text: text, voice: command.voice, color: color, config: config);
+          Subtitle subtitle =
+              Subtitle(text: text, color: color, config: config);
 
           if (isTitle) {
             subtitle.updateTitleColours(titleColor);
@@ -233,7 +235,7 @@ class Subtitles {
         }
       }
       if (alternate.tts) {
-        Voices.next();
+        voices.next();
       }
       if (alternate.color) {
         TextColor.next();

@@ -3,13 +3,11 @@ import 'package:mp3_info/mp3_info.dart';
 import 'package:reddit_2_video/subtitles/subtitle_config.dart';
 import 'package:reddit_2_video/subtitles/subtitle_line_data.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
-import 'package:reddit_2_video/config/voice.dart';
 
 class Subtitle {
   final int maxCharacterCount = 30;
 
   final String text;
-  final Voice voice;
   SubstationAlphaSubtitleColor color;
   SubstationAlphaSubtitleColor highlightColour =
       SubstationAlphaSubtitleColor("#FFFF00");
@@ -17,7 +15,6 @@ class Subtitle {
 
   Subtitle({
     required this.text,
-    required this.voice,
     required this.color,
     required this.config,
   });
@@ -57,7 +54,6 @@ class Subtitle {
 
   Subtitle.none()
       : text = '',
-        voice = Voice.standard(),
         color = SubstationAlphaSubtitleColor("#FFFFFF"),
         config = SubtitleConfig.none();
 

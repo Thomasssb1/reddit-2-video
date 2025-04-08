@@ -13,6 +13,8 @@ class Log {
   late final HashSet<RedditId> _ids;
   // Files within .temp to not delete
   final Iterable<String> _protectedFiles = <String>["visited_log.txt"];
+  // Temporary posts to ignore
+  HashSet<RedditId> _tempIds = HashSet();
 
   Log._fromFile({
     required File logfile,
@@ -46,14 +48,21 @@ class Log {
   }
 
   bool contains(RedditPost post) {
-    return _ids.contains(post.redditId);
+    return _ids.contains(post.redditId) || _tempIds.contains(post.redditId);
   }
 
   Function(RedditPost post) _partialAdd(IOSink sink) {
     return (RedditPost post) => _add(post, sink);
   }
 
+  void temporaryAdd(RedditVideo video) {
+    _tempIds.addAll(video.posts.map((e) => e.redditId));
+  }
+
   void _add(RedditPost post, IOSink sink) {
+    if (_tempIds.contains(post.redditId)) {
+      _tempIds.remove(post.redditId);
+    }
     _ids.add(post.redditId);
     sink.writeln(post.id);
   }

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/post/reddit_comment_sort_type.dart';
 import 'package:reddit_2_video/post/reddit_id.dart';
+import 'package:reddit_2_video/post/reddit_http_retry.dart';
 import 'dart:convert';
 import 'reddit_url.dart';
 import 'reddit_comment.dart';
@@ -51,13 +52,14 @@ class RedditPost {
     return post;
   }
 
-  static Future<RedditPost> fromId({
+  static RedditPost fromId({
     required String subreddit,
     required String id,
-  }) async {
+    required Pick json,
+  }) {
     RedditPost post = RedditPost(subreddit: subreddit, id: id);
     try {
-      await post._fillAttributes();
+      post._setJsonAttributes(json);
     } catch (e) {
       rethrow;
     }
@@ -79,7 +81,7 @@ class RedditPost {
   }
 
   Future<void> addComments(ParsedCommand command) async {
-    http.Response response = await http.get(Uri.https(
+    http.Response response = await RedditHttpRetry.retryHttp(Uri.https(
         url.authority, "${url.path}.json", {"sort": command.commentSort.name}));
 
     if (response.statusCode == 200) {
@@ -119,14 +121,36 @@ class RedditPost {
     }
   }
 
-  static DateTime _createdAt(created) {
+  static DateTime _createdAt(DateTime? created) {
     return (created != null)
-        ? DateTime.fromMillisecondsSinceEpoch((created * 1000).round())
+        ? DateTime.fromMillisecondsSinceEpoch((created.millisecond).round())
         : DateTime.now();
   }
 
+  void _setJsonAttributes(Pick pick) {
+    try {
+      _subreddit = pick('subreddit').asStringOrNull() ?? "Unknown";
+      _stickied = pick('sticked').asBoolOrFalse();
+      _commentCount = pick('num_comments').asIntOrNull() ?? 0;
+      _title = pick('title').asStringOrNull() ?? "Unknown";
+      _subredditId = pick('subreddit_id').asStringOrThrow();
+      _id = RedditId(pick('id').asStringOrThrow(), _subredditId);
+      _body = pick('selftext').asStringOrNull() ?? "";
+      _upvotes = pick('ups').asIntOrNull() ?? 0;
+      _created = _createdAt(pick('created').asDateTimeOrNull());
+      _spoiler = pick('spoiler').asBoolOrFalse();
+      _hasMedia = pick('media').asBoolOrFalse();
+      _nsfw = pick('over_18').asBoolOrFalse();
+    } on PickException {
+      String reason = pick(json, "reason").asStringOrNull() ?? "unknown";
+      throw RedditApiException(
+          message: "Unable to get information for post $_url - reason: $reason",
+          statusCode: 200);
+    }
+  }
+
   Future<void> _fillAttributes() async {
-    http.Response response = await http.get(_url.getJsonUri);
+    http.Response response = await RedditHttpRetry.retryHttp(_url.getJsonUri);
     // check if 200 OK
     if (response.body.isEmpty) {
       throw throw RedditApiException(
@@ -135,28 +159,8 @@ class RedditPost {
           statusCode: response.statusCode);
     }
     var json = jsonDecode(response.body);
-    try {
-      Map<String, dynamic> p0 = pick(json[0], 'data', 'children', 0, 'data')
-          .asMapOrThrow<String, dynamic>();
-
-      _subreddit ??= p0['subreddit'];
-      _stickied = p0['stickied'];
-      _commentCount = p0['num_comments'] ?? 0;
-      _title = p0['title'];
-      _id = RedditId(p0['id'], p0['subreddit_id']);
-      _subredditId = p0['subreddit_id'];
-      _body = p0['selftext'];
-      _upvotes = p0['ups'] ?? 0;
-      _created = _createdAt(p0['created']);
-      _spoiler = p0['spoiler'] ?? false;
-      _hasMedia = p0['media'] ?? false;
-      _nsfw = p0['over_18'] ?? false;
-    } on PickException {
-      String reason = pick(json, "reason").asStringOrNull() ?? "unknown";
-      throw RedditApiException(
-          message: "Unable to get information for post $_url - reason: $reason",
-          statusCode: response.statusCode);
-    }
+    Pick p0 = pick(json[0], 'data', 'children', 0, 'data');
+    _setJsonAttributes(p0);
   }
 
   String wrapBody({int limit = 30}) {

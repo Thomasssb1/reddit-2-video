@@ -223,7 +223,7 @@ class ParsedCommand extends Command {
   bool get nsfw => args!['nsfw'];
   bool get spoiler => args!['spoiler'];
   bool get ntts => args!['ntts'];
-  Voice get voice => Voices.called(args!['voice']);
+  String get voice => args!['voice'];
   int get repeat => subredditIsLink ? 1 : int.parse(args!['repeat']);
   // need to figure out what to do with video
   String? get video => args!['video'];

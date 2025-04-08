@@ -223,8 +223,9 @@ class Lexica extends ConfigItem {
       process.stderr.transform(utf8.decoder).listen((data) {
         stdout.write(data);
       });
-      process.stdin.write(process.stdin);
     }
+    await stdin.pipe(process.stdin);
+
     int code = await process.exitCode;
     if (code != 0) {
       throw PollyInvalidPlsLexicon(
