@@ -1,10 +1,18 @@
 .dart_tool/
+.vscode/
+.DS_Store
+
+# Ignore generated files
 *.mp4
 *.wav
-.temp/*
-!.temp/visited_log.txt
+*.mp3
 *.srt
-.vscode/
-.temp/tts/*
-!defaults/silence.wav
-lexemes.config.json
+*.gif
+
+.temp/*
+coverage/*
+
+!defaults/silence.mp3
+.temp/visited_log.txt
+
+defaults/voice.config.json

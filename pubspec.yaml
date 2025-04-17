@@ -22,3 +22,4 @@ dependencies:
   mp3_info: ^0.2.1
   xml: ^6.5.0
   color: ^3.0.0
+  mocktail: ^1.0.4
