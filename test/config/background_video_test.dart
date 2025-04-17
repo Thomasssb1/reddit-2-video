@@ -50,4 +50,13 @@ void main() {
       expect(result.path, file.path);
     });
   });
+  test("Downloading background video from source url", () async {
+    BackgroundVideo downloadedVideo = await BackgroundVideo.downloadVideo(
+        Uri.https("www.youtube.com", "watch", {"v": "tCDvOQI3pco"}),
+        Directory.current.path);
+    expect(downloadedVideo.source.existsSync(), true);
+    if (downloadedVideo.source.existsSync()) {
+      await downloadedVideo.source.delete();
+    }
+  });
 }
