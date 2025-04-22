@@ -140,9 +140,6 @@ class BackgroundVideo {
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
 
-    print(startTime);
-    print(endTime);
-
     final process = await Process.start(
         'ffmpeg',
         [

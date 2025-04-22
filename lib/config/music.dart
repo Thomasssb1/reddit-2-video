@@ -9,6 +9,7 @@ class Music extends ConfigItem {
     required String path,
     required super.prePath,
     String? volume = "1.0",
+    super.fileFactory,
   }) : super(path: path) {
     try {
       this.volume = double.parse(volume ?? "1.0");

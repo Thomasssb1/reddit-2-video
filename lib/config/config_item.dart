@@ -3,8 +3,11 @@ import 'dart:io';
 abstract class ConfigItem {
   File _path;
 
-  ConfigItem({required String path, required String prePath})
-      : _path = _getPath(path.replaceFirst("/", ""), prePath);
+  ConfigItem(
+      {required String path,
+      required String prePath,
+      File Function(String, String)? fileFactory})
+      : _path = (fileFactory ?? _getPath)(path.replaceFirst("/", ""), prePath);
 
   File get path => _path;
 

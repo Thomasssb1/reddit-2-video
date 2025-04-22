@@ -3,7 +3,6 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/config/lexicons/lexicon.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/exceptions/polly_invalid_pls_lexicon.dart';
 import 'package:xml/xml.dart';
 import 'dart:io';
 import 'dart:convert';

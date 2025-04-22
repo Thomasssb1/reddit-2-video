@@ -13,6 +13,8 @@ void main() {
   late RedditVideo video;
   late ParsedCommand command;
   late File file;
+  Uri testVideoUrl =
+      Uri.https("www.youtube.com", "watch", {"v": "tCDvOQI3pco"});
 
   setUp(() {
     backgroundVideo = MockBackgroundVideo();
@@ -52,11 +54,15 @@ void main() {
   });
   test("Downloading background video from source url", () async {
     BackgroundVideo downloadedVideo = await BackgroundVideo.downloadVideo(
-        Uri.https("www.youtube.com", "watch", {"v": "tCDvOQI3pco"}),
-        Directory.current.path);
+        testVideoUrl, Directory.current.path);
     expect(downloadedVideo.source.existsSync(), true);
-    if (downloadedVideo.source.existsSync()) {
-      await downloadedVideo.source.delete();
+  });
+
+  tearDown(() async {
+    File file = File(
+        "${Directory.current.path}/defaults/${testVideoUrl.queryParameters['v']}.mp4");
+    if (file.existsSync()) {
+      await file.delete();
     }
   });
 }
