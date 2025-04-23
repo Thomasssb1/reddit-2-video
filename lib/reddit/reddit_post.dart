@@ -121,10 +121,9 @@ class RedditPost {
     }
   }
 
-  static DateTime _createdAt(DateTime? created) {
-    return (created != null)
-        ? DateTime.fromMillisecondsSinceEpoch((created.millisecond).round())
-        : DateTime.now();
+  static DateTime _createdAt(Duration created) {
+    return DateTime.fromMillisecondsSinceEpoch(
+        (created.inMilliseconds).round());
   }
 
   void _setJsonAttributes(Pick pick) {
@@ -137,7 +136,8 @@ class RedditPost {
       _id = RedditId(pick('id').asStringOrThrow(), _subredditId);
       _body = pick('selftext').asStringOrNull() ?? "";
       _upvotes = pick('ups').asIntOrNull() ?? 0;
-      _created = _createdAt(pick('created').asDateTimeOrNull());
+      _created = _createdAt(Duration(
+          seconds: pick('created_utc').asDoubleOrNull()?.floor() ?? 0));
       _spoiler = pick('spoiler').asBoolOrFalse();
       _hasMedia = pick('media').asBoolOrFalse();
       _nsfw = pick('over_18').asBoolOrFalse();
