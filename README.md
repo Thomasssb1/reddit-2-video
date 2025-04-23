@@ -1,6 +1,9 @@
 # reddit-2-video
 
 A highly customisable command line script for generating a tiktok-style video offering granular controls over output settings. <br>
+
+> This is currently being [rewritten](https://github.com/Thomasssb1/reddit-2-video/pull/3), certain functionality may change
+
 View the wiki [here](https://github.com/Thomasssb1/reddit-2-video/wiki) for information on how to use reddit-2-video.
 
 ## Setup
@@ -120,7 +123,7 @@ Click to expand each of the examples.
 > $ reddit-2-video --subreddit https://www.reddit.com/r/TrueOffMyChest/comments/1850nn6/my_husband_is_cheating_on_me_with_our_best_friend/ --end-card <path-to-gif> -v
 > ```
 >
-> This command also adds an end card to the end of the video by using the gif passed to it (in this case it is the placeholder _<path-to-gif>_). It also sets verbosity to true in order to see extra debugging information whilst generating the video.
+> This command also adds an end card to the end of the video by using the gif passed to it (in this case it is the placeholder _\<path-to-gif\>_). It also sets verbosity to true in order to see extra debugging information whilst generating the video.
 
 </details>
 
