@@ -69,7 +69,7 @@ class Lexica extends ConfigItem {
     List<Lexica> lexicas = <Lexica>[];
     for (var (id, file) in _getMetadata("$prePath$configPath")) {
       lexicas.add(Lexica.fromXML(
-          path: file.path.replaceFirst(prePath, ''), prePath: prePath, id: id));
+          path: File(file.path.replaceFirst(prePath, '')), prePath: prePath, id: id));
     }
 
     if (lexicas.length > 5) {

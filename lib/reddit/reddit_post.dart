@@ -153,7 +153,7 @@ class RedditPost {
     http.Response response = await RedditHttpRetry.retryHttp(_url.getJsonUri);
     // check if 200 OK
     if (response.body.isEmpty) {
-      throw throw RedditApiException(
+      throw RedditApiException(
           message:
               "An error occurred whilst trying to fetch the subreddit data. Returned empty response body.",
           statusCode: response.statusCode);
