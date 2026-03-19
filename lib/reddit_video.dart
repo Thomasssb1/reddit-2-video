@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:path/path.dart' as p;
 
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
@@ -9,6 +10,7 @@ import 'package:reddit_2_video/log/log.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'reddit/reddit_video_type.dart';
 import 'exceptions/exceptions.dart';
 import 'command/parsed_command.dart';
@@ -238,7 +240,19 @@ class RedditVideo {
           message: "Something went wrong when generating the video. Exiting.",
           command: input);
     }
-    print("Video generated");
+    
+    printSuccess(
+        "Video successfully generated: [${p.basename(input.last)}](file://${File(input.last).absolute.path})!");
+
+    if (command.youtubeShort) {
+      List<File> segments =
+          await splitVideo(input.last, command.fileType.name, index);
+      printSuccess(
+          "Video successfully split into ${segments.length} YouTube shorts:");
+      for (var segment in segments) {
+        print("  - [${p.basename(segment.path)}](file://${segment.absolute.path})");
+      }
+    }
   }
 
   Future<void> _generateFolderStructure(String path) async {

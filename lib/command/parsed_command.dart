@@ -131,6 +131,10 @@ class ParsedCommand extends Command {
     parser
       ..addFlag('verbose', abbr: 'v', defaultsTo: false)
       ..addFlag('override', abbr: 'y', defaultsTo: false)
+      ..addFlag('youtube-short',
+          defaultsTo: false,
+          help:
+              'Whether to split the final generated video into ~1 minute shorts.')
       ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
     parser.addFlag('help', abbr: 'h', hide: true);
 
@@ -247,6 +251,7 @@ class ParsedCommand extends Command {
       : null;
   bool get verbose => args!['verbose'];
   bool get override => args!['override'];
+  bool get youtubeShort => args!['youtube-short'];
 
   String? get post => args!['post'];
 
