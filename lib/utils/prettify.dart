@@ -24,5 +24,5 @@ void printSuccess(String message) {
 }
 
 void printUnderline(String message) {
-  print(Prettify.colorText(message, Prettify.underline))
+  print(Prettify.colorText(message, Prettify.underline));
 }
