@@ -1,0 +1,24 @@
+# AI Coding Guidelines for reddit-2-video
+
+When working in this codebase, all AI coding assistants must adhere to the following strict guidelines based on existing project conventions:
+
+## 1. Testing is Mandatory
+- **1-to-1 Class Testing:** Every class must have an equivalent unit test.
+- **Test Placement:** Tests must be placed in the `test/` directory. The structure should mirror the `lib/` directory (e.g., a class defined in `lib/config/background_video.dart` is tested in `test/config/background_video_test.dart`).
+- **Additional Implementations:** Any new feature, behavior change, or method implementation must include a corresponding test.
+- **Run the Tests:** After making changes, always run the tests (e.g., using `dart test`) to verify the new implementation and ensure no regressions are introduced.
+- **Mocking:** Use the `mocktail` package for mocking dependencies (see `test/mocks.dart` for examples of mock implementations).
+- Tests must be grouped logically using `group()` and clearly described using `test()`.
+
+## 2. Formatting and Styling
+- **Formatter:** Always use the Prettier formatter before finalizing changes. The following rules from `.prettierrc` must be maintained:
+  - Tab Width: 2
+  - Use Tabs: false (Spaces only)
+- **Dart Styling Conventions:** Follow standard, idiomatic Dart styling conventions. The project uses `package:lints/recommended.yaml` as defined in `analysis_options.yaml`. Ensure that generated code does not introduce new lint errors or warnings.
+
+## 3. General Workflow
+- **Custom Exceptions:** Utilize the project's highly structured custom exception system in `lib/exceptions/` (e.g., `ArgumentMissingException`, `FFmpegCommandException`) for all error states. Create new specific exception classes rather than throwing generic errors.
+- **Command Handling:** Isolate all CLI parsing, validation, and user input strictly within `lib/command/` (e.g., `parsed_command.dart`). Do not mix UI/CLI logic with core business logic.
+- **Strongly-Typed Models:** Represent all Reddit data using the established models in `lib/reddit/` (such as `RedditPost`, `RedditComment`, or `RedditUrl`). Avoid passing unstructured JSON maps or raw strings between functions.
+- **Domain Separation:** Maintain the strict separation of concerns across existing domains: media generation logic in `lib/ffmpeg/`, subtitle generation in `lib/subtitles/`, configuration in `lib/config/`, and generic utilities in `lib/utils/`.
+- Write tests first or side-by-side with new implementations.
