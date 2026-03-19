@@ -8,14 +8,15 @@ import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
+import 'package:reddit_2_video/cmd/install.dart';
 
 import 'dart:io';
 
 void main(
   List<String> args,
 ) async {
-  // TODO: check if everything is installed
   try {
+    await checkDependencies();
     ParsedCommand command = ParsedCommand.parse(args);
 
     // Check that the dev flag is set whilst under development
@@ -99,8 +100,8 @@ void main(
         log.remove(post: post);
 
         await log.clearTemporaryFiles();
-      case CommandType.install:
-      // TODO: implement
+    case CommandType.install:
+        await runInstallCommand();
       case CommandType.help:
         command.printHelp();
       case null:

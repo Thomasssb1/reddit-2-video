@@ -8,6 +8,7 @@ import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/subtitles/subtitles.dart';
+import 'package:reddit_2_video/utils/prettify.dart';
 import 'reddit/reddit_video_type.dart';
 import 'exceptions/exceptions.dart';
 import 'command/parsed_command.dart';
@@ -120,22 +121,21 @@ class RedditVideo {
         // iterate through each post collected previously
         for (final post in postData) {
           // output relevant information
-          print("\x1b[4m${post.title}\x1b[0m\n");
+          printUnderline(post.title);
           print(
-              "\x1b[32mUpvotes: ${post.upvotes}     \x1b[33mComments: ${post.commentCount} \x1b[0m\n");
+              "${Prettify.green}Upvotes: ${post.upvotes}     ${Prettify.yellow}Comments: ${post.commentCount} ${Prettify.reset}\n");
           print(
-              "Created: ${post.created}, ${post.spoiler ? 'This post \x1b[31mis\x1b[0m marked as a spoiler' : ''}\n");
+              "Created: ${post.created}, ${post.spoiler ? 'This post ${Prettify.red}is${Prettify.reset} marked as a spoiler' : ''}\n");
           if (post.hasMedia) {
             print("Media: ${post.hasMedia}\n");
           }
           if (command.nsfw) {
             print(
-                "This post is${post.nsfw ? '' : ' \x1b[31mnot\x1b[0m'} marked as NSFW.");
+                "This post is${post.nsfw ? '' : ' ${Prettify.red}not${Prettify.reset}'} marked as NSFW.");
           }
+          printUnderline("Post ${postData.indexOf(post) + 1}/${postData.length}.");
           print(
-              "\x1b[4mPost ${postData.indexOf(post) + 1}/${postData.length}.\x1b[0m");
-          print(
-              "Do you want to see the body of the post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+              "Do you want to see the body of the post? [${Prettify.green}y${Prettify.reset}/${Prettify.red}N${Prettify.reset}] ");
           // read the cli for what the user entered
           String showBody = stdin.readLineSync() ?? 'n';
           // if the user entered yes
@@ -143,7 +143,7 @@ class RedditVideo {
             print(post.body);
           }
           print(
-              "Do you want to generate a video for this post? [\x1b[32my\x1b[0m/\x1b[31mN\x1b[0m] ");
+              "Do you want to generate a video for this post? [${Prettify.green}y${Prettify.reset}/${Prettify.red}N${Prettify.reset}] ");
           if (command.type == RedditVideoType.multi) {
             print("You can also enter 'skip' to skip all remaining posts. ");
           }
