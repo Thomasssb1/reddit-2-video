@@ -217,12 +217,14 @@ class RedditVideo {
       emptyNoise = EmptyNoise(prePath: command.prePath);
     }
 
+    final resolvedEndCard = await command.endCard;
+
     FFmpegCommand ffmpegCommand = FFmpegCommand(
       subtitles: subtitles!,
       backgroundVideo: backgroundVideo,
       emptyNoise: emptyNoise,
       music: command.music,
-      endCard: command.endCard,
+      endCard: resolvedEndCard,
     );
 
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
