@@ -27,7 +27,7 @@ void main() {
     test("with no end card", () async {
       Duration duration = Duration(seconds: 10);
 
-      when(() => command.endCard).thenReturn(null);
+      when(() => command.endCard).thenAnswer((_) async => null);
       when(() => video.id).thenReturn("video_id");
       when(() => file.path).thenReturn(".temp/${video.id}/video.mp4");
       when(() => backgroundVideo.cutVideo(duration, video, command)).thenAnswer(
@@ -42,7 +42,7 @@ void main() {
       EndCard endCard = MockEndCard();
       when(() => endCard.duration).thenReturn(Duration(seconds: 1));
       Duration duration = Duration(seconds: 10);
-      when(() => command.endCard).thenReturn(endCard);
+      when(() => command.endCard).thenAnswer((_) async => endCard);
       when(() => video.id).thenReturn("video_id");
       when(() => file.path).thenReturn(".temp/${video.id}/video.mp4");
       when(() => backgroundVideo.cutVideo(duration, video, command))

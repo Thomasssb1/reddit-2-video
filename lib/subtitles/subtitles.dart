@@ -5,7 +5,7 @@ import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:reddit_2_video/config/text_color.dart';
 import 'package:reddit_2_video/config/voices/voices.dart';
-import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
+import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/subtitles/subtitle_config.dart';
@@ -40,7 +40,7 @@ class Subtitles {
         censor = command.censor,
         delay = command.type == RedditVideoType.post
             ? Duration.zero
-            : Duration(seconds: 1),
+            : command.delay,
         alternate = command.alternate,
         titleColor = command.titleColor {
     File defaultASS = File("${command.prePath}/defaults/default.ass");
@@ -169,7 +169,19 @@ class Subtitles {
   Future<void> parse(ParsedCommand command) async {
     Subtitle prevSubtitle = Subtitle.none();
     Duration prevDuration = Duration.zero;
+    final maxLength = command.maxLength;
+
     for (RedditPost post in video.posts) {
+      // --- multi type: check before starting a new post ---
+      if (command.type == RedditVideoType.multi && maxLength != null) {
+        if (prevDuration.inSeconds >= maxLength && _subtitles.isNotEmpty) {
+          Warning.warn('Max length of ${maxLength}s reached '
+              '(${prevDuration.inSeconds}s accumulated). '
+              'Stopping before next post.');
+          break;
+        }
+      }
+
       String title = _removeCharacters(post.title);
       String body = _removeCharacters(post.body);
 
@@ -178,9 +190,26 @@ class Subtitles {
           .where((e) => e.isNotEmpty)
           .toList();
 
+      // --- comments type: abort if title alone would exceed max length ---
+      // We cannot know if the title will exceed without generating TTS first,
+      // so we pre-check the post list approach: throw only for comments type.
+      // The actual duration is determined after TTS generation; we perform the
+      // hard-abort guard after we have parsed the title.
       if (title.isNotEmpty) {
         (prevSubtitle, prevDuration) =
             await _parse(command, title, prevSubtitle, prevDuration, true);
+
+        // After generating the title, check if we're already over for comments type.
+        if (command.type == RedditVideoType.comments &&
+            maxLength != null &&
+            prevDuration.inSeconds >= maxLength) {
+          throw MaxLengthExceededException(
+              message:
+                  'Max length of ${maxLength}s exceeded by the post title alone '
+                  '(${prevDuration.inSeconds}s). Generation aborted.',
+              maxLength: Duration(seconds: maxLength),
+              actualLength: prevDuration);
+        }
       }
 
       if (body.isNotEmpty) {
@@ -191,6 +220,15 @@ class Subtitles {
 
       if (comments.isNotEmpty) {
         for (String comment in comments) {
+          // Stop adding comments once max length reached.
+          if (!isPost &&
+              maxLength != null &&
+              prevDuration.inSeconds >= maxLength) {
+            Warning.warn('Max length of ${maxLength}s reached '
+                '(${prevDuration.inSeconds}s accumulated). '
+                'Stopping before next comment.');
+            break;
+          }
           prevDuration += delay;
           (prevSubtitle, prevDuration) =
               await _parse(command, comment, prevSubtitle, prevDuration, false);

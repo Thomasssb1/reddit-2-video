@@ -1,7 +1,6 @@
 import 'package:reddit_2_video/command/command_type.dart';
 import 'package:args/args.dart';
 import 'package:reddit_2_video/config/end_card.dart';
-import 'package:reddit_2_video/config/voices/voices.dart';
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
@@ -11,7 +10,6 @@ import 'package:reddit_2_video/reddit/reddit_url.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
-import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/config/music.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
 export 'package:reddit_2_video/command/command_type.dart';
@@ -137,6 +135,16 @@ class ParsedCommand extends Command {
               'Whether to split the final generated video into ~1 minute shorts.')
       ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
     parser.addFlag('help', abbr: 'h', hide: true);
+    parser.addOption('delay',
+        defaultsTo: '1',
+        help:
+            'The pause in seconds between TTS audio clips. Only applies to comments and multi types.');
+    parser.addOption('end-card-length',
+        help:
+            'Override the end-card duration in seconds. If omitted, duration is inferred from the gif/video file. Required when the end-card is a static image.');
+    parser.addOption('max-length',
+        help:
+            'Maximum video length in seconds. Generation stops at a logical boundary once this limit is reached. Ignored for post type.');
 
     // create a new command
     var flush = parser.addCommand('flush');
@@ -243,15 +251,29 @@ class ParsedCommand extends Command {
   FileType get fileType => FileType.called(args!['file-type'])!;
   FPS get framerate => FPS.fpsValue(int.parse(args!['framerate']));
   bool get censor => args!['censor'];
-  EndCard? get endCard => args!['end-card'] != null
-      ? EndCard(
+  Future<EndCard?> get endCard async => args!['end-card'] != null
+      ? await EndCard.create(
           path: args!['end-card'],
           prePath: prePath,
+          durationOverride: endCardLength,
         )
       : null;
   bool get verbose => args!['verbose'];
   bool get override => args!['override'];
   bool get youtubeShort => args!['youtube-short'];
+
+  /// Pause between TTS clips; only meaningful for `comments` and `multi` types.
+  Duration get delay => Duration(seconds: int.parse(args!['delay']));
+
+  /// End-card duration override. `null` means "infer from the file".
+  Duration? get endCardLength => args!['end-card-length'] != null
+      ? Duration(seconds: int.parse(args!['end-card-length']))
+      : null;
+
+  /// Maximum video length. `null` means unlimited. Ignored for `post` type.
+  int? get maxLength => args!['max-length'] != null
+      ? int.parse(args!['max-length'])
+      : null;
 
   String? get post => args!['post'];
 

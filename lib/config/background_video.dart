@@ -136,7 +136,7 @@ class BackgroundVideo {
   Future<File> cutVideo(
       Duration duration, RedditVideo video, ParsedCommand command) async {
     stdout.writeln("Cutting the background video to a random point.");
-    Duration endCardLength = command.endCard?.duration ?? Duration.zero;
+    Duration endCardLength = (await command.endCard)?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
 

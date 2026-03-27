@@ -21,4 +21,8 @@ abstract class ConfigItem {
       throw FileSystemException('File $path does not exist', "$prePath/$path");
     }
   }
+
+  /// Public alias for path resolution used by subclasses and factories.
+  static File getPathStatic(String path, String prePath) =>
+      _getPath(path, prePath);
 }
