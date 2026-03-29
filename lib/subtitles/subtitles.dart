@@ -221,7 +221,7 @@ class Subtitles {
       if (comments.isNotEmpty) {
         for (String comment in comments) {
           // Stop adding comments once max length reached.
-          if (!isPost &&
+          if (command.type != RedditVideoType.post &&
               maxLength != null &&
               prevDuration.inSeconds >= maxLength) {
             Warning.warn('Max length of ${maxLength}s reached '
