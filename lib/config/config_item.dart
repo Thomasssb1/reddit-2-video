@@ -9,6 +9,13 @@ abstract class ConfigItem {
       File Function(String, String)? fileFactory})
       : _path = (fileFactory ?? _getPath)(path.replaceFirst("/", ""), prePath);
 
+  /// Initializes a ConfigItem with an already resolved File.
+  ConfigItem.fromFile(File path) : _path = path {
+    if (!path.existsSync()) {
+      throw FileSystemException('File does not exist', path.path);
+    }
+  }
+
   File get path => _path;
 
   set path(newPath) => _path = path;

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:reddit_2_video/config/end_card.dart';
+import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:test/test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -20,6 +21,7 @@ void main() {
 
   test("Check end card file path is correct", () async {
     File mockfile = MockFile();
+    when(() => mockfile.existsSync()).thenReturn(true);
     when(() => mockfile.path).thenReturn("/path/to/end-card/endcard.gif");
 
     EndCard result = await EndCard.create(
@@ -32,6 +34,7 @@ void main() {
 
   test("Check end card uses override duration for image", () async {
     File mockfile = MockFile();
+    when(() => mockfile.existsSync()).thenReturn(true);
     when(() => mockfile.path).thenReturn("/path/to/image.png");
 
     EndCard result = await EndCard.create(
@@ -43,16 +46,17 @@ void main() {
     expect(result.duration, Duration(seconds: 8));
   });
 
-  test("Check end card falls back to 5s default for image with no override",
+  test("Check end card throws ArgumentMissingException for image with no override",
       () async {
     File mockfile = MockFile();
+    when(() => mockfile.existsSync()).thenReturn(true);
     when(() => mockfile.path).thenReturn("/path/to/image.jpg");
 
-    EndCard result = await EndCard.create(
-        path: "image.jpg",
-        prePath: "/path/to/",
-        fileFactory: (_, __) => mockfile);
-
-    expect(result.duration, Duration(seconds: 5));
+    expect(
+        () => EndCard.create(
+            path: "image.jpg",
+            prePath: "/path/to/",
+            fileFactory: (_, __) => mockfile),
+        throwsA(isA<ArgumentMissingException>()));
   });
 }
