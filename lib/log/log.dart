@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/reddit/reddit_id.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
@@ -22,8 +23,8 @@ class Log {
   })  : _logfile = logfile,
         _ids = ids;
 
-  static Future<Log> fromFile(String prePath) async {
-    File logfile = File("$prePath/.temp/visited_log.txt");
+  static Future<Log> fromFile() async {
+    File logfile = AppPaths.resolve('.temp/visited_log.txt');
     if (!logfile.existsSync()) {
       logfile.createSync();
     }

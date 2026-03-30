@@ -85,6 +85,5 @@ void _stubCommand(ParsedCommand command, {required RedditVideoType type}) {
   when(() => command.alternate).thenReturn(Alternate(tts: false, color: false));
   when(() => command.titleColor)
       .thenReturn(SubstationAlphaSubtitleColor('#FF0000'));
-  when(() => command.prePath).thenReturn(Directory.current.path);
   when(() => command.maxLength).thenReturn(null);
 }

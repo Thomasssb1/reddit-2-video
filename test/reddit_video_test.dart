@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/reddit_video.dart';
-import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:test/test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -9,20 +9,19 @@ import 'package:mocktail/mocktail.dart';
 import 'mocks.dart';
 
 void main() {
-  final tempPath = '${Directory.current.path}/.temp_test';
-
+  late Directory tempDir;
   late MockRedditPost post;
 
   setUp(() {
+    tempDir = Directory.systemTemp.createTempSync('reddit_video_test_');
+    AppPaths.initForTest(tempDir);
     post = MockRedditPost();
     when(() => post.id).thenReturn('abc123');
     when(() => post.comments).thenReturn([]);
   });
 
   tearDown(() {
-    // Clean up temp directories created by the tests
-    final dir = Directory('$tempPath/.temp');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    tempDir.deleteSync(recursive: true);
   });
 
   group('RedditVideo', () {
@@ -31,7 +30,6 @@ void main() {
         final video = RedditVideo(
           posts: [post],
           videoType: RedditVideoType.post,
-          prePath: tempPath,
         );
         expect(video.id, 'abc123');
       });
@@ -47,7 +45,6 @@ void main() {
         final video = RedditVideo(
           posts: [post1, post2],
           videoType: RedditVideoType.multi,
-          prePath: tempPath,
         );
         expect(video.id, 'aaa-bbb');
       });
@@ -58,7 +55,6 @@ void main() {
         final video = RedditVideo.single(
           post: post,
           videoType: RedditVideoType.post,
-          prePath: tempPath,
         );
         expect(video.posts.length, 1);
         expect(video.id, 'abc123');

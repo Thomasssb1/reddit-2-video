@@ -1,20 +1,23 @@
 import 'dart:io';
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:test/test.dart';
 
 void main() {
+  setUp(() {
+    AppPaths.initForTest(Directory.current);
+  });
+
   group("Test reading file", () {
     test("Check default lexicon file exists", () {
-      File file = File(
-          "${Directory.current.path}/defaults/lexicons/lexemes.config.json");
+      File file = AppPaths.resolve('defaults/lexicons/lexemes.config.json');
 
       expect(file.existsSync(), true);
     });
     test("Check default lexicon file loads", () {
       final lexica = Lexica.fromConfig(
-          configPath: "/defaults/lexicons/lexemes.config.json",
-          prePath: Directory.current.path);
+          configPath: "/defaults/lexicons/lexemes.config.json");
 
       expect(lexica.isNotEmpty, true);
     });
@@ -22,8 +25,7 @@ void main() {
     test("Check lexicon file doesn't load with invalid path", () {
       expect(
           () => Lexica.fromConfig(
-              configPath: "/defaults/lexicons/invalid.config.json",
-              prePath: Directory.current.path),
+              configPath: "/defaults/lexicons/invalid.config.json"),
           throwsA(isA<FileSystemException>()));
     });
   });

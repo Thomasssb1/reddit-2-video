@@ -1,62 +1,53 @@
 import 'dart:io';
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:test/test.dart';
-import 'package:mocktail/mocktail.dart';
-
-import '../mocks.dart';
 
 void main() {
-  late EndCard endCard;
+  late Directory tempDir;
 
   setUp(() {
-    endCard = MockEndCard();
+    tempDir = Directory.systemTemp.createTempSync('endcard_test_');
+    AppPaths.initForTest(tempDir);
   });
 
-  test("Check end card duration is returned", () {
-    when(() => endCard.duration).thenReturn(Duration(seconds: 2));
-    expect(endCard.duration, Duration(seconds: 2));
+  tearDown(() {
+    tempDir.deleteSync(recursive: true);
   });
 
   test("Check end card file path is correct", () async {
-    File mockfile = MockFile();
-    when(() => mockfile.existsSync()).thenReturn(true);
-    when(() => mockfile.path).thenReturn("/path/to/end-card/endcard.gif");
+    File testFile = File('${tempDir.path}/endcard.gif');
+    testFile.createSync();
 
     EndCard result = await EndCard.create(
         path: "endcard.gif",
-        prePath: "/path/to/end-card/",
-        fileFactory: (_, __) => mockfile);
+    );
 
-    expect(result.path.path, "/path/to/end-card/endcard.gif");
+    expect(result.path.path, testFile.path);
   });
 
   test("Check end card uses override duration for image", () async {
-    File mockfile = MockFile();
-    when(() => mockfile.existsSync()).thenReturn(true);
-    when(() => mockfile.path).thenReturn("/path/to/image.png");
+    File testFile = File('${tempDir.path}/image.png');
+    testFile.createSync();
 
     EndCard result = await EndCard.create(
         path: "image.png",
-        prePath: "/path/to/",
         durationOverride: Duration(seconds: 8),
-        fileFactory: (_, __) => mockfile);
+    );
 
     expect(result.duration, Duration(seconds: 8));
   });
 
   test("Check end card throws ArgumentMissingException for image with no override",
       () async {
-    File mockfile = MockFile();
-    when(() => mockfile.existsSync()).thenReturn(true);
-    when(() => mockfile.path).thenReturn("/path/to/image.jpg");
+    File testFile = File('${tempDir.path}/image.jpg');
+    testFile.createSync();
 
     expect(
         () => EndCard.create(
-            path: "image.jpg",
-            prePath: "/path/to/",
-            fileFactory: (_, __) => mockfile),
+            path: "image.jpg"),
         throwsA(isA<ArgumentMissingException>()));
   });
 }

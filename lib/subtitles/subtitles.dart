@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
@@ -43,9 +44,9 @@ class Subtitles {
             : command.delay,
         alternate = command.alternate,
         titleColor = command.titleColor {
-    File defaultASS = File("${command.prePath}/defaults/default.ass");
-    _assFile = defaultASS
-        .copySync("${command.prePath}/.temp/${video.id}/comments.ass");
+    File defaultASS = AppPaths.resolve('defaults/default.ass');
+    File assDestination = AppPaths.resolve('.temp/${video.id}/comments.ass');
+    _assFile = defaultASS.copySync(assDestination.path);
   }
 
   int get position => _position;
@@ -109,7 +110,7 @@ class Subtitles {
           // TODO: add a way to toggle specific lexicons
           ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
         ],
-        workingDirectory: command.prePath);
+        workingDirectory: AppPaths.rootPath);
     if (command.verbose) {
       process.stderr.transform(utf8.decoder).listen((data) {
         stdout.write(data);
@@ -145,7 +146,7 @@ class Subtitles {
         "--output_dir",
         ".temp/${video.id}/config/",
       ],
-      workingDirectory: command.prePath,
+      workingDirectory: AppPaths.rootPath,
     );
     if (command.verbose) {
       process.stderr.transform(utf8.decoder).listen((data) {
@@ -162,8 +163,7 @@ class Subtitles {
     }
     return SubtitleConfig.fromFile(
         tts: tts,
-        configFile: File(
-            "${command.prePath}/.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json"));
+        configFile: AppPaths.resolve('.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json'));
   }
 
   Future<void> parse(ParsedCommand command) async {
@@ -247,11 +247,11 @@ class Subtitles {
       List<String> segments = _splitText(text);
       for (String textSegment in segments) {
         if (textSegment.isNotEmpty) {
-          Directory("${command.prePath}/.temp/${video.id}/tts/")
+          AppPaths.resolveDir('.temp/${video.id}/tts')
               .createSync(recursive: true);
           File tts = await _generateTTS(textSegment, voices.current, command);
 
-          Directory("${command.prePath}/.temp/${video.id}/config/")
+          AppPaths.resolveDir('.temp/${video.id}/config')
               .createSync(recursive: true);
           SubtitleConfig config =
               await _alignSubtitles(prevSubtitle, command, tts);

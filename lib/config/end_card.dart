@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 
@@ -71,15 +72,12 @@ class EndCard extends ConfigItem {
   /// If the file is a gif/video, duration is probed from the file via ffprobe.
   /// If an explicit [durationOverride] is supplied AND the file duration could
   /// be inferred, a warning is logged (the override is still respected).
-  /// For static images the [durationOverride] is required
+  /// For static images the [durationOverride] is required.
   static Future<EndCard> create({
     required String path,
-    required String prePath,
     Duration? durationOverride,
-    File Function(String, String)? fileFactory,
   }) async {
-    final file =
-        (fileFactory ?? ConfigItem.getPathStatic)(path.replaceFirst('/', ''), prePath);
+    final file = AppPaths.resolve(path);
 
     final ext = p.extension(file.path).toLowerCase();
     final isImage = _imageExtensions.contains(ext) && ext != '.gif';

@@ -3,7 +3,7 @@ import 'package:mp3_info/mp3_info.dart';
 
 class EmptyNoise extends ConfigItem {
   int? position;
-  EmptyNoise({required super.prePath})
+  EmptyNoise()
       : super(
           path: "/defaults/silence.mp3",
         );

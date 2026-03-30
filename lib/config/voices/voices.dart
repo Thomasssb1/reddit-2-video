@@ -1,4 +1,5 @@
 import 'package:deep_pick/deep_pick.dart';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 
 import 'dart:convert';
@@ -39,7 +40,7 @@ class Voices {
   static List<Voice> fromFile(
     ParsedCommand command,
   ) {
-    File file = File("${command.prePath}/defaults/voice.config.json");
+    File file = AppPaths.resolve('defaults/voice.config.json');
     try {
       var json = jsonDecode(file.readAsStringSync());
       return pick(json, "voices")

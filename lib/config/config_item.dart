@@ -1,13 +1,11 @@
 import 'dart:io';
+import 'package:reddit_2_video/app_paths.dart';
 
 abstract class ConfigItem {
   File _path;
 
-  ConfigItem(
-      {required String path,
-      required String prePath,
-      File Function(String, String)? fileFactory})
-      : _path = (fileFactory ?? _getPath)(path.replaceFirst("/", ""), prePath);
+  ConfigItem({required String path})
+      : _path = _getPath(path);
 
   /// Initializes a ConfigItem with an already resolved File.
   ConfigItem.fromFile(File path) : _path = path {
@@ -20,16 +18,13 @@ abstract class ConfigItem {
 
   set path(newPath) => _path = path;
 
-  static File _getPath(String path, String prePath) {
-    File newFile = File('$prePath/$path');
+  static File _getPath(String path) {
+    File newFile = AppPaths.resolve(path);
     if (newFile.existsSync()) {
       return newFile;
     } else {
-      throw FileSystemException('File $path does not exist', "$prePath/$path");
+      throw FileSystemException(
+          'File $path does not exist', newFile.path);
     }
   }
-
-  /// Public alias for path resolution used by subclasses and factories.
-  static File getPathStatic(String path, String prePath) =>
-      _getPath(path, prePath);
 }
