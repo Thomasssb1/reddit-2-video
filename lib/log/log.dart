@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'package:reddit_2_video/app_paths.dart';
+import 'package:reddit_2_video/exceptions/warning.dart';
 import 'package:reddit_2_video/reddit/reddit_id.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
@@ -13,9 +13,9 @@ class Log {
   final File _logfile;
   late final HashSet<RedditId> _ids;
   // Files within .temp to not delete
-  final Iterable<String> _protectedFiles = <String>["visited_log.txt"];
+  final Iterable<String> _protectedFiles = <String>["visited_log.json"];
   // Temporary posts to ignore
-  HashSet<RedditId> _tempIds = HashSet();
+  final HashSet<RedditId> _tempIds = HashSet();
 
   Log._fromFile({
     required File logfile,
@@ -24,68 +24,76 @@ class Log {
         _ids = ids;
 
   static Future<Log> fromFile() async {
-    File logfile = AppPaths.resolve('.temp/visited_log.txt');
+    File logfile = AppPaths.resolve('.temp/visited_log.json');
     if (!logfile.existsSync()) {
-      logfile.createSync();
+      logfile.createSync(recursive: true);
+      logfile.writeAsStringSync(_emptyJson());
     }
 
-    http.Client client = http.Client();
+    final raw = logfile.readAsStringSync();
+    final HashSet<RedditId> ids = HashSet();
+    final http.Client client = http.Client();
 
-    List<RedditId?> stream = await logfile
-        .openRead()
-        .transform(utf8.decoder)
-        .transform(LineSplitter())
-        .asyncMap((line) async {
-      String subredditId = line.split("-").last;
-      String id = line.split("-").first;
-      return RedditId(id, subredditId);
-    }).toList();
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final visited = (json['visited'] as List<dynamic>?) ?? [];
+      for (final entry in visited) {
+        final map = entry as Map<String, dynamic>;
+        final postId = map['post_id'] as String?;
+        final subredditId = map['subreddit_id'] as String?;
+        if (postId != null && subredditId != null) {
+          ids.add(RedditId(postId, subredditId));
+        }
+      }
+    } on FormatException {
+      Warning.warn(
+          'visited_log.json is corrupt or empty — starting with a fresh log.');
+    } finally {
+      client.close();
+    }
 
-    HashSet<RedditId> lines = HashSet<RedditId>();
-    stream.where((e) => e != null).forEach((e) => lines.add(e!));
-    client.close();
-
-    return Log._fromFile(logfile: logfile, ids: lines);
+    return Log._fromFile(logfile: logfile, ids: ids);
   }
 
   bool contains(RedditPost post) {
     return _ids.contains(post.redditId) || _tempIds.contains(post.redditId);
   }
 
-  Function(RedditPost post) _partialAdd(IOSink sink) {
-    return (RedditPost post) => _add(post, sink);
-  }
-
   void temporaryAdd(RedditVideo video) {
     _tempIds.addAll(video.posts.map((e) => e.redditId));
   }
 
-  void _add(RedditPost post, IOSink sink) {
-    if (_tempIds.contains(post.redditId)) {
+  void add(RedditVideo video) {
+    for (final post in video.posts) {
       _tempIds.remove(post.redditId);
+      _ids.add(post.redditId);
     }
-    _ids.add(post.redditId);
-    sink.writeln(post.id);
+    _flush();
   }
 
-  void add(RedditVideo video) async {
-    IOSink sink = _logfile.openWrite(mode: FileMode.append);
-    var partial = _partialAdd(sink);
-    video.posts.forEach(partial);
-    await sink.flush();
-    await sink.close();
-  }
-
-  void remove({RedditPost? post}) async {
+  void remove({RedditPost? post}) {
     if (post == null) {
       _ids.clear();
-      _logfile.writeAsStringSync('');
     } else {
       _ids.remove(post.redditId);
-      final lines = await _logfile.readAsLines();
-      lines.removeWhere((line) => line == post.id);
-      await _logfile.writeAsString(lines.join('\n'));
     }
+    _flush();
+  }
+
+  void _flush() {
+    _logfile.writeAsStringSync(_encode(_ids));
+  }
+
+  static String _emptyJson() => _encode(HashSet());
+
+  static String _encode(HashSet<RedditId> ids) {
+    const encoder = JsonEncoder.withIndent('  ');
+    return encoder.convert({
+      '_last_updated': DateTime.now().toUtc().toString(),
+      'visited': ids
+          .map((e) => {'post_id': e.postId, 'subreddit_id': e.subredditId})
+          .toList(),
+    });
   }
 
   Future<void> clearTemporaryFiles() async {
