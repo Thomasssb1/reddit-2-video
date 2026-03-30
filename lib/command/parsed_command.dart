@@ -257,14 +257,13 @@ class ParsedCommand extends Command {
   Duration get delay => Duration(seconds: int.parse(args!['delay']));
 
   /// End-card duration override. `null` means "infer from the file".
-  Duration? get endCardLength => args!['end-card-length'] != null
-      ? Duration(seconds: int.parse(args!['end-card-length']))
-      : null;
+  Duration? get endCardLength {
+    final length = int.tryParse(args!['end-card-length'] ?? '');
+    return length != null ? Duration(seconds: length) : null;
+  }
 
   /// Maximum video length. `null` means unlimited. Ignored for `post` type.
-  int? get maxLength => args!['max-length'] != null
-      ? int.parse(args!['max-length'])
-      : null;
+  int? get maxLength => int.tryParse(args!['max-length'] ?? '');
 
   String? get post => args!['post'];
 

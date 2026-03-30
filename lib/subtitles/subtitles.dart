@@ -190,11 +190,8 @@ class Subtitles {
           .where((e) => e.isNotEmpty)
           .toList();
 
-      // --- comments type: abort if title alone would exceed max length ---
-      // We cannot know if the title will exceed without generating TTS first,
-      // so we pre-check the post list approach: throw only for comments type.
-      // The actual duration is determined after TTS generation; we perform the
-      // hard-abort guard after we have parsed the title.
+      // The comments type will abort if title alone would exceed max length
+      // We cannot know if the title will exceed without generating TTS first
       if (title.isNotEmpty) {
         (prevSubtitle, prevDuration) =
             await _parse(command, title, prevSubtitle, prevDuration, true);
