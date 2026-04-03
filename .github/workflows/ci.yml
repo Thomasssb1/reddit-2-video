@@ -17,6 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
 
       - name: Setup FFmpeg
@@ -29,8 +33,11 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
-      - name: Verify formatting
+      - name: Verify Dart formatting
         run: dart format --output=none --set-exit-if-changed .
+
+      - name: Verify Prettier formatting
+        run: npx --yes prettier --check . --ignore-unknown
 
       - name: Analyze project source
         run: dart analyze
