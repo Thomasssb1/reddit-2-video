@@ -133,7 +133,11 @@ class ParsedCommand extends Command {
           defaultsTo: false,
           help:
               'Whether to split the final generated video into ~1 minute shorts.')
-      ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
+      ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false)
+      ..addFlag('keep-temp',
+          defaultsTo: false,
+          help:
+              'When set, do not delete the .temp directory on exit.');
     parser.addFlag('help', abbr: 'h', hide: true);
 
     // create a new command
@@ -250,6 +254,7 @@ class ParsedCommand extends Command {
   bool get verbose => args!['verbose'];
   bool get override => args!['override'];
   bool get youtubeShort => args!['youtube-short'];
+  bool get keepTemp => args!['keep-temp'];
 
   String? get post => args!['post'];
 

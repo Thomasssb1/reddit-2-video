@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.4.1"
+  ansi_styles:
+    dependency: transitive
+    description:
+      name: ansi_styles
+      sha256: "9c656cc12b3c27b17dd982b2cc5c0cfdfbdabd7bc8f3ae5e8542d9867b47ce8a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.2+1"
   archive:
     dependency: transitive
     description:
@@ -85,10 +93,10 @@ packages:
     dependency: transitive
     description:
       name: crypto
-      sha256: ff625774173754681d66daaf4a448684fb04b78f902da9cb3d308c19cc5e8bab
+      sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.3"
+    version: "3.0.7"
   csslib:
     dependency: transitive
     description:
@@ -265,6 +273,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  overseer:
+    dependency: "direct dev"
+    description:
+      name: overseer
+      sha256: e721d74f6b78750fca031120f0138961beb5f4f1e98ad9a418341793cf567005
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   package_config:
     dependency: transitive
     description:
@@ -277,10 +293,10 @@ packages:
     dependency: "direct main"
     description:
       name: path
-      sha256: "087ce49c3f0dc39180befefc60fdb4acd8f8620e5682fe2476afd0b3688bb4af"
+      sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.0"
+    version: "1.9.1"
   petitparser:
     dependency: transitive
     description:
@@ -517,9 +533,9 @@ packages:
     dependency: "direct main"
     description:
       name: youtube_explode_dart
-      sha256: f226459955b3de3e4cdd88bb4098dd7fed0261ac3f41485e2b8bbfb2f7c9ddc5
+      sha256: "3d731d71df9901b1915bae806781df519cff32517e36db279f844ae619669e45"
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.10"
+    version: "3.0.5"
 sdks:
-  dart: ">=3.2.3 <4.0.0"
+  dart: ">=3.4.0 <4.0.0"

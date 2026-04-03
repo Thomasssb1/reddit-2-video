@@ -11,6 +11,7 @@
 
 .temp/*
 coverage/*
+test/hitl/.overseer.lock
 
 !defaults/silence.mp3
 .temp/visited_log.txt

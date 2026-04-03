@@ -234,8 +234,6 @@ class RedditVideo {
 
     int code = await process.exitCode;
 
-    print(code);
-
     if (code != 0) {
       throw FFmpegCommandException(
           message: "Something went wrong when generating the video. Exiting.",

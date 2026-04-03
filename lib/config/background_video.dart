@@ -31,19 +31,17 @@ class BackgroundVideo {
     return file.existsSync();
   }
 
-  static Uri _standardiseUri(Uri url) {
+  static Uri normalizeYoutubeUri(Uri url) {
     if (!_validYoutubeUrl(url)) {
       throw InvalidVideoUrl("Invalid youtube url", url);
     }
 
-    // Normalise to default url
     if (_validDefaultUrl(url)) {
       return url;
-      // else if share url
-    } else {
-      String vId = url.pathSegments.first;
-      return Uri.https("wwww.youtube.com", "watch", {"v": vId});
     }
+
+    String vId = url.pathSegments.first;
+    return Uri.https("www.youtube.com", "watch", {"v": vId});
   }
 
   static bool _validShareUrl(Uri url) {
@@ -71,7 +69,7 @@ class BackgroundVideo {
       throw InvalidVideoUrl("Invalid youtube url", url);
     }
 
-    url = _standardiseUri(url);
+    url = normalizeYoutubeUri(url);
     File path = _getFileFromUrl(url, prePath);
 
     if (!_videoExists(url, prePath)) {
@@ -83,16 +81,8 @@ class BackgroundVideo {
       late IOSink? fileStream;
       try {
         StreamManifest manifest = await yt.videos.streams.getManifest(videoID);
-        late List<VideoStreamInfo> streamInfo;
-        switch (videoType) {
-          case VideoType.muxed:
-            streamInfo = manifest.muxed.sortByVideoQuality();
-          case VideoType.video:
-            streamInfo = manifest.videoOnly.sortByVideoQuality();
-        }
-
-        VideoStreamInfo chosenStream =
-            streamInfo.where((e) => e.container == StreamContainer.mp4).first;
+        final VideoStreamInfo chosenStream =
+            _selectMp4Stream(manifest, preferredType: videoType);
         var stream = yt.videos.streamsClient.get(chosenStream);
 
         await path.create().then((File file) async {
@@ -103,13 +93,11 @@ class BackgroundVideo {
 
         await fileStream!.flush();
         await fileStream!.close();
-      } on StateError {
-        throw VideoDownloadFailedException(
-            message: "No mp4 streams available. Unable to download video.",
-            url: url);
+      } on StateError catch (e) {
+        throw VideoDownloadFailedException(message: e.message, url: url);
       } catch (e) {
         throw VideoDownloadFailedException(
-            message: "Error downloading video", url: url);
+            message: "Error downloading video: $e", url: url);
       } finally {
         yt.close();
       }
@@ -117,6 +105,30 @@ class BackgroundVideo {
     } else {
       return BackgroundVideo(source: path, url: url);
     }
+  }
+
+  static VideoStreamInfo _selectMp4Stream(StreamManifest manifest,
+      {required VideoType preferredType}) {
+    final preferred = preferredType == VideoType.video
+        ? manifest.videoOnly.sortByVideoQuality()
+        : manifest.muxed.sortByVideoQuality();
+    final secondary = preferredType == VideoType.video
+        ? manifest.muxed.sortByVideoQuality()
+        : manifest.videoOnly.sortByVideoQuality();
+
+    for (final stream in preferred) {
+      if (stream.container == StreamContainer.mp4) {
+        return stream;
+      }
+    }
+
+    for (final stream in secondary) {
+      if (stream.container == StreamContainer.mp4) {
+        return stream;
+      }
+    }
+
+    throw StateError("No mp4 streams available. Unable to download video.");
   }
 
   (int, int) _getRandomTime(Duration duration) {

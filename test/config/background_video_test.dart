@@ -4,6 +4,7 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/reddit_video.dart';
+import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
 import 'package:test/test.dart';
 import 'package:mocktail/mocktail.dart';
 import '../mocks.dart';
@@ -21,6 +22,36 @@ void main() {
     video = MockRedditVideo();
     command = MockParsedCommand();
     file = MockFile();
+  });
+
+  group("URI normalization", () {
+    test("normalizes youtu.be url to www.youtube.com/watch?v=", () {
+      final input = Uri.parse("https://youtu.be/tCDvOQI3pco");
+
+      final normalized = BackgroundVideo.normalizeYoutubeUri(input);
+
+      expect(normalized.authority, "www.youtube.com");
+      expect(normalized.path, "/watch");
+      expect(normalized.queryParameters["v"], "tCDvOQI3pco");
+    });
+
+    test("keeps default youtube watch url unchanged", () {
+      final input =
+          Uri.parse("https://www.youtube.com/watch?v=tCDvOQI3pco");
+
+      final normalized = BackgroundVideo.normalizeYoutubeUri(input);
+
+      expect(normalized.toString(), input.toString());
+    });
+
+    test("throws for invalid youtube urls", () {
+      final input = Uri.parse("https://example.com/watch?v=tCDvOQI3pco");
+
+      expect(
+        () => BackgroundVideo.normalizeYoutubeUri(input),
+        throwsA(isA<InvalidVideoUrl>()),
+      );
+    });
   });
 
   group("Cutting video to length", () {

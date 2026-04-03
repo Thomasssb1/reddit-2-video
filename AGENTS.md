@@ -30,3 +30,9 @@ When working in this codebase, all AI coding assistants must adhere to the follo
 ## 4. Continuous Learning (Self-Updating)
 
 - **Update AGENT.md:** When the user tells you something valuable that will be useful in the future (such as a styling preference, architectural rule, or workflow optimization), you must update this `AGENT.md` file to preserve that knowledge.
+
+## 5. End-to-End / HITL Testing
+
+- **HITL Framework:** Use `overseer` for full human-in-the-loop end-to-end testing flows.
+- **Matrix-Driven Runs:** Define scenario permutations in matrix YAML files under `test/hitl/`.
+- **Executable HITL Entrypoint:** Keep overseer runners as standalone Dart entrypoints under `test/hitl/` so they can be launched with `dart run`.

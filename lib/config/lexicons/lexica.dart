@@ -223,7 +223,6 @@ class Lexica extends ConfigItem {
         stdout.write(data);
       });
     }
-    await stdin.pipe(process.stdin);
 
     int code = await process.exitCode;
     if (code != 0) {

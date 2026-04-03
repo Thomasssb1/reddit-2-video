@@ -16,6 +16,21 @@ import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:reddit_2_video/config/voices/voice.dart';
 
+String formatTtsFailureMessage(
+    {required int exitCode,
+    required String stderrOutput,
+    required String stdoutOutput}) {
+  final details = <String>[];
+  if (stderrOutput.trim().isNotEmpty) {
+    details.add("stderr: ${stderrOutput.trim()}");
+  }
+  if (stdoutOutput.trim().isNotEmpty) {
+    details.add("stdout: ${stdoutOutput.trim()}");
+  }
+  final detailsText = details.isEmpty ? "No additional AWS output." : details.join(" | ");
+  return "TTS failed to generate. Exit code: $exitCode. $detailsText";
+}
+
 class Subtitles {
   late File _assFile;
   late Duration duration;
@@ -110,16 +125,27 @@ class Subtitles {
           ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
         ],
         workingDirectory: command.prePath);
-    if (command.verbose) {
-      process.stderr.transform(utf8.decoder).listen((data) {
-        stdout.write(data);
-      });
-    }
+
+    final stdoutFuture = process.stdout.transform(utf8.decoder).join();
+    final stderrFuture = process.stderr.transform(utf8.decoder).join();
 
     int code = await process.exitCode;
+    final processStdout = (await stdoutFuture).trim();
+    final processStderr = (await stderrFuture).trim();
+
+    if (command.verbose) {
+      if (processStdout.isNotEmpty) {
+        stdout.writeln(processStdout);
+      }
+      if (processStderr.isNotEmpty) {
+        stderr.writeln(processStderr);
+      }
+    }
+
     if (code != 0) {
       throw TTSFailedException(
-          message: "TTS failed to generate. Exiting.",
+          message: formatTtsFailureMessage(
+              exitCode: code, stderrOutput: processStderr, stdoutOutput: processStdout),
           id: video.id,
           text: text);
     }
