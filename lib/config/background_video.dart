@@ -1,6 +1,7 @@
 import 'package:reddit_2_video/exceptions/background_video_cutting_exception.dart';
 import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
 import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
+import 'package:reddit_2_video/app_paths.dart';
 import 'dart:io';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'dart:math';
@@ -21,13 +22,13 @@ class BackgroundVideo {
     Uri? url,
   }) : this(source: File(path), url: url);
 
-  static File _getFileFromUrl(Uri url, String prePath) {
+  static File _getFileFromUrl(Uri url) {
     String vId = url.queryParameters["v"]!;
-    return File("$prePath/defaults/$vId.mp4");
+    return AppPaths.resolve('defaults/$vId.mp4');
   }
 
-  static bool _videoExists(Uri url, String prePath) {
-    File file = _getFileFromUrl(url, prePath);
+  static bool _videoExists(Uri url) {
+    File file = _getFileFromUrl(url);
     return file.existsSync();
   }
 
@@ -65,16 +66,16 @@ class BackgroundVideo {
     return _validDefaultUrl(url) || _validShareUrl(url);
   }
 
-  static Future<BackgroundVideo> downloadVideo(Uri url, String prePath,
+  static Future<BackgroundVideo> downloadVideo(Uri url,
       {VideoType videoType = VideoType.video}) async {
     if (!_validYoutubeUrl(url)) {
       throw InvalidVideoUrl("Invalid youtube url", url);
     }
 
     url = _standardiseUri(url);
-    File path = _getFileFromUrl(url, prePath);
+    File path = _getFileFromUrl(url);
 
-    if (!_videoExists(url, prePath)) {
+    if (!_videoExists(url)) {
       String? videoID = url.queryParameters['v'];
       if (videoID == null) {
         throw InvalidVideoUrl("Invalid video url", url);
@@ -136,7 +137,7 @@ class BackgroundVideo {
   Future<File> cutVideo(
       Duration duration, RedditVideo video, ParsedCommand command) async {
     stdout.writeln("Cutting the background video to a random point.");
-    Duration endCardLength = command.endCard?.duration ?? Duration.zero;
+    Duration endCardLength = (await command.endCard)?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
 
@@ -157,7 +158,7 @@ class BackgroundVideo {
           if (!command.verbose) ...['-loglevel', 'quiet'],
           '.temp/${video.id}/video.mp4'
         ],
-        workingDirectory: command.prePath);
+        workingDirectory: AppPaths.rootPath);
     int code = await process.exitCode;
 
     if (code != 0) {

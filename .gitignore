@@ -9,13 +9,10 @@
 *.srt
 *.gif
 
-.temp/*
-coverage/*
+.temp/**
+coverage/**
 
 !defaults/silence.mp3
-.temp/visited_log.txt
-
-defaults/voice.config.json
 
 # Ignore implementation plans
 implementation_plan*.md

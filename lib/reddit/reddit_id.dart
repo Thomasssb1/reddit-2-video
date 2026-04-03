@@ -6,6 +6,8 @@ class RedditId {
       : _id = id,
         _subredditId = subredditId;
 
+  String get postId => _id;
+  String get subredditId => _subredditId;
   String get id => "$_id-$_subredditId";
 
   @override

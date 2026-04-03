@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:reddit_2_video/config/text_color.dart';
 import 'package:reddit_2_video/config/voices/voices.dart';
-import 'package:reddit_2_video/exceptions/tts_failed_exception.dart';
+import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/subtitles/subtitle_config.dart';
@@ -27,7 +28,7 @@ class Subtitles {
   final SubstationAlphaSubtitleColor titleColor;
   final List<Lexica> lexicons;
   final Voices voices;
-  int _position = 0;
+  int position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
 
@@ -40,16 +41,13 @@ class Subtitles {
         censor = command.censor,
         delay = command.type == RedditVideoType.post
             ? Duration.zero
-            : Duration(seconds: 1),
+            : command.delay,
         alternate = command.alternate,
         titleColor = command.titleColor {
-    File defaultASS = File("${command.prePath}/defaults/default.ass");
-    _assFile = defaultASS
-        .copySync("${command.prePath}/.temp/${video.id}/comments.ass");
+    File defaultASS = AppPaths.resolve('defaults/default.ass');
+    File assDestination = AppPaths.resolve('.temp/${video.id}/comments.ass');
+    _assFile = defaultASS.copySync(assDestination.path);
   }
-
-  int get position => _position;
-  set position(int newPosition) => _position = newPosition;
 
   String _removeCharacters(String text) {
     RemoveEmoji removeEmoji = RemoveEmoji();
@@ -109,7 +107,7 @@ class Subtitles {
           // TODO: add a way to toggle specific lexicons
           ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
         ],
-        workingDirectory: command.prePath);
+        workingDirectory: AppPaths.rootPath);
     if (command.verbose) {
       process.stderr.transform(utf8.decoder).listen((data) {
         stdout.write(data);
@@ -145,7 +143,7 @@ class Subtitles {
         "--output_dir",
         ".temp/${video.id}/config/",
       ],
-      workingDirectory: command.prePath,
+      workingDirectory: AppPaths.rootPath,
     );
     if (command.verbose) {
       process.stderr.transform(utf8.decoder).listen((data) {
@@ -162,14 +160,26 @@ class Subtitles {
     }
     return SubtitleConfig.fromFile(
         tts: tts,
-        configFile: File(
-            "${command.prePath}/.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json"));
+        configFile: AppPaths.resolve(
+            '.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json'));
   }
 
   Future<void> parse(ParsedCommand command) async {
     Subtitle prevSubtitle = Subtitle.none();
     Duration prevDuration = Duration.zero;
+    final maxLength = command.maxLength;
+
     for (RedditPost post in video.posts) {
+      // --- multi type: check before starting a new post ---
+      if (command.type == RedditVideoType.multi && maxLength != null) {
+        if (prevDuration >= maxLength && _subtitles.isNotEmpty) {
+          Warning.warn('Max length of ${maxLength}s reached '
+              '(${prevDuration.inSeconds}s accumulated). '
+              'Stopping before next post.');
+          break;
+        }
+      }
+
       String title = _removeCharacters(post.title);
       String body = _removeCharacters(post.body);
 
@@ -178,9 +188,23 @@ class Subtitles {
           .where((e) => e.isNotEmpty)
           .toList();
 
+      // The comments type will abort if title alone would exceed max length
+      // We cannot know if the title will exceed without generating TTS first
       if (title.isNotEmpty) {
         (prevSubtitle, prevDuration) =
             await _parse(command, title, prevSubtitle, prevDuration, true);
+
+        // After generating the title, check if we're already over for comments type.
+        if (command.type == RedditVideoType.comments &&
+            maxLength != null &&
+            prevDuration >= maxLength) {
+          throw MaxLengthExceededException(
+              message:
+                  'Max length of ${maxLength}s exceeded by the post title alone '
+                  '(${prevDuration.inSeconds}s). Generation aborted.',
+              maxLength: maxLength,
+              actualLength: prevDuration);
+        }
       }
 
       if (body.isNotEmpty) {
@@ -191,6 +215,15 @@ class Subtitles {
 
       if (comments.isNotEmpty) {
         for (String comment in comments) {
+          // Stop adding comments once max length reached.
+          if (command.type != RedditVideoType.post &&
+              maxLength != null &&
+              prevDuration >= maxLength) {
+            Warning.warn('Max length of ${maxLength}s reached '
+                '(${prevDuration.inSeconds}s accumulated). '
+                'Stopping before next comment.');
+            break;
+          }
           prevDuration += delay;
           (prevSubtitle, prevDuration) =
               await _parse(command, comment, prevSubtitle, prevDuration, false);
@@ -209,11 +242,11 @@ class Subtitles {
       List<String> segments = _splitText(text);
       for (String textSegment in segments) {
         if (textSegment.isNotEmpty) {
-          Directory("${command.prePath}/.temp/${video.id}/tts/")
+          AppPaths.resolveDir('.temp/${video.id}/tts')
               .createSync(recursive: true);
           File tts = await _generateTTS(textSegment, voices.current, command);
 
-          Directory("${command.prePath}/.temp/${video.id}/config/")
+          AppPaths.resolveDir('.temp/${video.id}/config')
               .createSync(recursive: true);
           SubtitleConfig config =
               await _alignSubtitles(prevSubtitle, command, tts);

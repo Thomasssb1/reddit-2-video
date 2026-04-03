@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/exceptions/argument_conflict_exception.dart';
 import 'package:test/test.dart';
@@ -11,8 +12,8 @@ import '../mocks.dart';
 void main() {
   late ParsedCommand command;
   setUp(() {
+    AppPaths.initForTest(Directory.current);
     command = MockParsedCommand();
-    when(() => command.prePath).thenReturn(Directory.current.path);
   });
   group("Test Voices class", () {
     test("Check loading voices from voice.config.json with neural enabled", () {

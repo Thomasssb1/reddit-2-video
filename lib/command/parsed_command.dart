@@ -1,8 +1,6 @@
 import 'package:reddit_2_video/command/command_type.dart';
 import 'package:args/args.dart';
 import 'package:reddit_2_video/config/end_card.dart';
-import 'package:reddit_2_video/config/voices/voices.dart';
-import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/reddit/reddit_comment_sort_type.dart';
@@ -11,7 +9,6 @@ import 'package:reddit_2_video/reddit/reddit_url.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
-import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/config/music.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
 export 'package:reddit_2_video/command/command_type.dart';
@@ -21,7 +18,6 @@ import 'package:reddit_2_video/utils/boolean_conversion.dart';
 class ParsedCommand extends Command {
   final CommandType? _command;
   final ArgResults? _args;
-  final Directory _prePath;
 
   ParsedCommand({
     required CommandType? command,
@@ -29,7 +25,6 @@ class ParsedCommand extends Command {
     ArgParser? parser,
   })  : _command = command,
         _args = args,
-        _prePath = _determinePath(args),
         super(parser);
 
   ParsedCommand.defaultCommand({
@@ -37,7 +32,6 @@ class ParsedCommand extends Command {
     ArgParser? parser,
   })  : _command = CommandType.defaultCommand,
         _args = args,
-        _prePath = _determinePath(args),
         super(parser);
 
   ParsedCommand.noArgs({
@@ -45,13 +39,11 @@ class ParsedCommand extends Command {
     required ArgParser parser,
   })  : _command = command,
         _args = null,
-        _prePath = Directory.current,
         super(parser);
 
   ParsedCommand.none()
       : _command = null,
         _args = null,
-        _prePath = Directory.current,
         super(null);
 
   static ArgParser getParser() {
@@ -137,6 +129,16 @@ class ParsedCommand extends Command {
               'Whether to split the final generated video into ~1 minute shorts.')
       ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
     parser.addFlag('help', abbr: 'h', hide: true);
+    parser.addOption('delay',
+        defaultsTo: '1',
+        help:
+            'The pause in seconds between TTS audio clips. Only applies to comments and multi types.');
+    parser.addOption('end-card-length',
+        help:
+            'Override the end-card duration in seconds. If omitted, duration is inferred from the gif/video file. Required when the end-card is a static image.');
+    parser.addOption('max-length',
+        help:
+            'Maximum video length in seconds. Generation stops at a logical boundary once this limit is reached. Ignored for post type.');
 
     // create a new command
     var flush = parser.addCommand('flush');
@@ -208,7 +210,6 @@ class ParsedCommand extends Command {
 
   CommandType? get name => _command;
   ArgResults? get args => _args;
-  String get prePath => _prePath.path;
 
   // individual argument getters and setters
   String get subreddit => _args!['subreddit'];
@@ -234,7 +235,6 @@ class ParsedCommand extends Command {
   Music? get music => args!['music'].length > 0
       ? Music(
           path: args!['music'][0],
-          prePath: prePath,
           volume: args!['music'].length == 2 ? args!['music'][1] : "1.0",
         )
       : null;
@@ -243,15 +243,32 @@ class ParsedCommand extends Command {
   FileType get fileType => FileType.called(args!['file-type'])!;
   FPS get framerate => FPS.fpsValue(int.parse(args!['framerate']));
   bool get censor => args!['censor'];
-  EndCard? get endCard => args!['end-card'] != null
-      ? EndCard(
+  Future<EndCard?> get endCard async => args!['end-card'] != null
+      ? await EndCard.create(
           path: args!['end-card'],
-          prePath: prePath,
+          durationOverride: endCardLength,
         )
       : null;
   bool get verbose => args!['verbose'];
   bool get override => args!['override'];
   bool get youtubeShort => args!['youtube-short'];
+
+  /// Pause between TTS clips; only meaningful for `comments` and `multi` types.
+  Duration get delay => Duration(seconds: int.parse(args!['delay']));
+
+  /// End-card duration override. `null` means "infer from the file".
+  Duration? get endCardLength {
+    final length = int.tryParse(args!['end-card-length'] ?? '');
+    return length != null ? Duration(seconds: length) : null;
+  }
+
+  /// Maximum video length. `null` means unlimited. Ignored for `post` type.
+  Duration? get maxLength {
+    final raw = args!['max-length']?.toString().trim();
+
+    final seconds = int.tryParse(raw ?? '');
+    return seconds != null ? Duration(seconds: seconds) : null;
+  }
 
   String? get post => args!['post'];
 
@@ -262,10 +279,4 @@ class ParsedCommand extends Command {
   bool get isHelp => _args?['help'] ?? false;
   bool get subredditIsLink =>
       Uri.tryParse(_args!['subreddit'])?.hasAbsolutePath ?? false;
-
-  static Directory _determinePath(ArgResults args) {
-    return args['dev']
-        ? Directory.current
-        : File(Platform.resolvedExecutable).parent.parent;
-  }
 }
