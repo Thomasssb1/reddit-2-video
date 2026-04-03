@@ -14,7 +14,7 @@ coverage/*
 test/hitl/.overseer.lock
 
 !defaults/silence.mp3
-.temp/visited_log.txt
+.temp/visited_log.json
 
 defaults/voice.config.json
 

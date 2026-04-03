@@ -12,7 +12,7 @@ class Log {
   final File _logfile;
   late final HashSet<RedditId> _ids;
   // Files within .temp to not delete
-  final Iterable<String> _protectedFiles = <String>["visited_log.txt"];
+  final Iterable<String> _protectedFiles = <String>["visited_log.json"];
   // Temporary posts to ignore
   final HashSet<RedditId> _tempIds = HashSet();
 
@@ -23,7 +23,7 @@ class Log {
         _ids = ids;
 
   static Future<Log> fromFile(String prePath) async {
-    File logfile = File("$prePath/.temp/visited_log.txt");
+    File logfile = File("$prePath/.temp/visited_log.json");
     if (!logfile.existsSync()) {
       logfile.createSync();
     }
