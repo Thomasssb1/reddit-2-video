@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 /// Centralised path resolution for the application.
 ///
@@ -23,7 +24,9 @@ class AppPaths {
   }
 
   static void _assertInitialised() {
-    assert(_initialised, 'AppPaths.init() must be called before accessing paths');
+    if (!_initialised) {
+      throw StateError('AppPaths.init() must be called before accessing paths');
+    }
   }
 
   /// The root path as a string. Use this for `workingDirectory` in
@@ -36,18 +39,18 @@ class AppPaths {
   /// Resolve a relative path to a [File] under the root directory.
   static File resolve(String relativePath) {
     _assertInitialised();
-    String cleanPath = relativePath.startsWith('/')
-        ? relativePath.substring(1)
-        : relativePath;
-    return File('${_root.path}/$cleanPath');
+    if (p.isAbsolute(relativePath)) {
+      return File(relativePath);
+    }
+    return File(p.join(_root.path, relativePath));
   }
 
   /// Resolve a relative path to a [Directory] under the root directory.
   static Directory resolveDir(String relativePath) {
     _assertInitialised();
-    String cleanPath = relativePath.startsWith('/')
-        ? relativePath.substring(1)
-        : relativePath;
-    return Directory('${_root.path}/$cleanPath');
+    if (p.isAbsolute(relativePath)) {
+      return Directory(relativePath);
+    }
+    return Directory(p.join(_root.path, relativePath));
   }
 }

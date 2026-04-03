@@ -17,7 +17,7 @@ void main() {
     });
     test("Check default lexicon file loads", () {
       final lexica = Lexica.fromConfig(
-          configPath: "/defaults/lexicons/lexemes.config.json");
+          configPath: 'defaults/lexicons/lexemes.config.json');
 
       expect(lexica.isNotEmpty, true);
     });
@@ -25,13 +25,13 @@ void main() {
     test("Check lexicon file doesn't load with invalid path", () {
       expect(
           () => Lexica.fromConfig(
-              configPath: "/defaults/lexicons/invalid.config.json"),
+              configPath: 'defaults/lexicons/invalid.config.json'),
           throwsA(isA<FileSystemException>()));
     });
   });
 
   tearDown(() async {
-    File tempFile = File("/defaults/lexicons/temp.config.json");
+    File tempFile = AppPaths.resolve('defaults/lexicons/temp.config.json');
     if (tempFile.existsSync()) {
       await tempFile.delete();
     }

@@ -50,26 +50,21 @@ void main() {
       late ParsedCommand cmd;
       setUp(() => cmd = _build([]));
 
-      test('sort defaults to top', () =>
-          expect(cmd.sort.name, 'top'));
-      test('commentCount defaults to 8', () =>
-          expect(cmd.commentCount, 8));
-      test('override defaults to false', () =>
-          expect(cmd.override, false));
-      test('horror defaults to false', () =>
-          expect(cmd.horror, false));
-      test('youtubeShort defaults to false', () =>
-          expect(cmd.youtubeShort, false));
-      test('fileType defaults to mp4', () =>
-          expect(cmd.fileType, FileType.mp4));
-      test('output defaults to final', () =>
-          expect(cmd.output, 'final'));
-      test('delay defaults to 1 second', () =>
-          expect(cmd.delay, Duration(seconds: 1)));
-      test('endCardLength is null when not supplied', () =>
-          expect(cmd.endCardLength, isNull));
-      test('maxLength is null when not supplied', () =>
-          expect(cmd.maxLength, isNull));
+      test('sort defaults to top', () => expect(cmd.sort.name, 'top'));
+      test('commentCount defaults to 8', () => expect(cmd.commentCount, 8));
+      test('override defaults to false', () => expect(cmd.override, false));
+      test('horror defaults to false', () => expect(cmd.horror, false));
+      test('youtubeShort defaults to false',
+          () => expect(cmd.youtubeShort, false));
+      test(
+          'fileType defaults to mp4', () => expect(cmd.fileType, FileType.mp4));
+      test('output defaults to final', () => expect(cmd.output, 'final'));
+      test('delay defaults to 1 second',
+          () => expect(cmd.delay, Duration(seconds: 1)));
+      test('endCardLength is null when not supplied',
+          () => expect(cmd.endCardLength, isNull));
+      test('maxLength is null when not supplied',
+          () => expect(cmd.maxLength, isNull));
     });
 
     group('new parameter getters', () {
@@ -83,9 +78,14 @@ void main() {
         expect(cmd.endCardLength, Duration(seconds: 7));
       });
 
-      test('maxLength returns correct int', () {
+      test('maxLength returns correct Duration', () {
         final cmd = _build(['--max-length', '120']);
-        expect(cmd.maxLength, 120);
+        expect(cmd.maxLength, Duration(seconds: 120));
+      });
+
+      test('maxLength returns null when set to false', () {
+        final cmd = _build(['--max-length', 'false']);
+        expect(cmd.maxLength, isNull);
       });
     });
 

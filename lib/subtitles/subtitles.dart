@@ -28,7 +28,7 @@ class Subtitles {
   final SubstationAlphaSubtitleColor titleColor;
   final List<Lexica> lexicons;
   final Voices voices;
-  int _position = 0;
+  int position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
 
@@ -48,9 +48,6 @@ class Subtitles {
     File assDestination = AppPaths.resolve('.temp/${video.id}/comments.ass');
     _assFile = defaultASS.copySync(assDestination.path);
   }
-
-  int get position => _position;
-  set position(int newPosition) => _position = newPosition;
 
   String _removeCharacters(String text) {
     RemoveEmoji removeEmoji = RemoveEmoji();
@@ -163,7 +160,8 @@ class Subtitles {
     }
     return SubtitleConfig.fromFile(
         tts: tts,
-        configFile: AppPaths.resolve('.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json'));
+        configFile: AppPaths.resolve(
+            '.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json'));
   }
 
   Future<void> parse(ParsedCommand command) async {
@@ -174,7 +172,7 @@ class Subtitles {
     for (RedditPost post in video.posts) {
       // --- multi type: check before starting a new post ---
       if (command.type == RedditVideoType.multi && maxLength != null) {
-        if (prevDuration.inSeconds >= maxLength && _subtitles.isNotEmpty) {
+        if (prevDuration >= maxLength && _subtitles.isNotEmpty) {
           Warning.warn('Max length of ${maxLength}s reached '
               '(${prevDuration.inSeconds}s accumulated). '
               'Stopping before next post.');
@@ -199,12 +197,12 @@ class Subtitles {
         // After generating the title, check if we're already over for comments type.
         if (command.type == RedditVideoType.comments &&
             maxLength != null &&
-            prevDuration.inSeconds >= maxLength) {
+            prevDuration >= maxLength) {
           throw MaxLengthExceededException(
               message:
                   'Max length of ${maxLength}s exceeded by the post title alone '
                   '(${prevDuration.inSeconds}s). Generation aborted.',
-              maxLength: Duration(seconds: maxLength),
+              maxLength: maxLength,
               actualLength: prevDuration);
         }
       }
@@ -220,7 +218,7 @@ class Subtitles {
           // Stop adding comments once max length reached.
           if (command.type != RedditVideoType.post &&
               maxLength != null &&
-              prevDuration.inSeconds >= maxLength) {
+              prevDuration >= maxLength) {
             Warning.warn('Max length of ${maxLength}s reached '
                 '(${prevDuration.inSeconds}s accumulated). '
                 'Stopping before next comment.');

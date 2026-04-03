@@ -45,10 +45,9 @@ void main() {
     when(() => cutVideo.path).thenReturn('input.mp4');
     when(() => subtitles.getTTSFilesAsInput()).thenReturn([]);
     when(() => subtitles.getTTSStream(any())).thenReturn([]);
-    when(() => subtitles.assFile)
-        .thenReturn(File('subtitles.ass'));
+    when(() => subtitles.assFile).thenReturn(File('subtitles.ass'));
     when(() => subtitles.duration).thenReturn(Duration(seconds: 5));
-    when(() => subtitles.position = any()).thenReturn(null);
+    when(() => subtitles.position = any<int>()).thenReturn(0);
     when(() => subtitles.position).thenReturn(1);
   });
 
@@ -70,7 +69,7 @@ void main() {
         when(() => noiseFile.path).thenReturn('noise.wav');
         when(() => mockNoise.path).thenReturn(noiseFile);
         when(() => mockNoise.position).thenReturn(null);
-        when(() => mockNoise.position = any()).thenReturn(null);
+        when(() => mockNoise.position = any<int>()).thenReturn(0);
 
         final ffCmd = FFmpegCommand(
           subtitles: subtitles,
@@ -84,14 +83,16 @@ void main() {
     });
 
     group('generate', () {
-      test('output filename uses .mp4 extension when repeat is 1', () {
+      test(
+          'output filename defaults to "final" suffix with .mp4 when no extension and repeat is 1',
+          () {
         final ffCmd = FFmpegCommand(
           subtitles: subtitles,
           backgroundVideo: backgroundVideo,
         );
 
         final result = ffCmd.generate(command, cutVideo, 1);
-        expect(result.last, 'output1.mp4');
+        expect(result.last, 'outputfinal.mp4');
       });
 
       test('includes -y flag when override is true', () {
