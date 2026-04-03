@@ -1,4 +1,5 @@
 import 'package:deep_pick/deep_pick.dart';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/config/lexicons/lexicon.dart';
@@ -19,22 +20,16 @@ class Lexica extends ConfigItem {
     required this.languageCode,
     required this.id,
     required this.lexicons,
-    required super.prePath,
     required super.path,
   });
 
   Lexica.fromXML({
-    required super.path,
-    required super.prePath,
+    required File file,
     required this.id,
     this.xmlVersion = 1.0,
     this.languageCode = "en-US",
     this.lexicons = const [],
-  }) {
-    if (!path.existsSync()) {
-      throw FileSystemException('File $path does not exist', path.path);
-    }
-
+  }) : super.fromFile(file) {
     XmlDocument document = XmlDocument.parse(path.readAsStringSync());
 
     String xmlVersion =
@@ -64,12 +59,11 @@ class Lexica extends ConfigItem {
     this.lexicons = lexicons;
   }
 
-  static List<Lexica> fromConfig(
-      {required String configPath, required String prePath}) {
+  static List<Lexica> fromConfig({required String configPath}) {
     List<Lexica> lexicas = <Lexica>[];
-    for (var (id, file) in _getMetadata("$prePath$configPath")) {
-      lexicas.add(Lexica.fromXML(
-          path: file.path.replaceFirst(prePath, ''), prePath: prePath, id: id));
+    final configFile = AppPaths.resolve(configPath);
+    for (var (id, file) in _getMetadata(configFile.path)) {
+      lexicas.add(Lexica.fromXML(file: file, id: id));
     }
 
     if (lexicas.length > 5) {
@@ -89,8 +83,8 @@ class Lexica extends ConfigItem {
 
   static Future<void> update(
       String configPath, List<Lexica> lexicas, ParsedCommand command) async {
-    await _update("${command.prePath}/defaults/lexicons/lexemes.config.json",
-        lexicas, command);
+    final configFile = AppPaths.resolve('defaults/lexicons/lexemes.config.json');
+    await _update(configFile.path, lexicas, command);
   }
 
   static Future<DateTime> _getLastUpdatedFile(File config) async {
@@ -217,7 +211,7 @@ class Lexica extends ConfigItem {
           "--content",
           "file://${path.path}"
         ],
-        workingDirectory: command.prePath);
+        workingDirectory: AppPaths.rootPath);
     if (command.verbose) {
       process.stderr.transform(utf8.decoder).listen((data) {
         stdout.write(data);

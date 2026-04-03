@@ -9,14 +9,11 @@
 *.srt
 *.gif
 
-.temp/*
-coverage/*
+.temp/**
+coverage/**
 test/hitl/.overseer.lock
 
 !defaults/silence.mp3
 .temp/visited_log.json
-
-defaults/voice.config.json
-
 # Ignore implementation plans
 implementation_plan*.md

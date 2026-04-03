@@ -1,4 +1,5 @@
 import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:reddit_2_video/config/voices/voice.dart';
@@ -73,6 +74,8 @@ void main(
 
   try {
     await checkDependencies();
+    ParsedCommand command = ParsedCommand.parse(args);
+    AppPaths.init(isDev: command.isDev);
 
     // Check that the dev flag is set whilst under development
     assert(command.isDev, true);
@@ -83,17 +86,15 @@ void main(
         if (command.video == null) {
           backgroundVideo = await BackgroundVideo.downloadVideo(
             BackgroundVideo.getDefaultVideoUrl(),
-            command.prePath,
           );
         } else {
           backgroundVideo = BackgroundVideo(source: File(command.video!));
         }
 
         // Setup config files
-        Log log = await Log.fromFile(command.prePath);
+        Log log = await Log.fromFile();
         List<Lexica> lexicons = Lexica.fromConfig(
-            configPath: "/defaults/lexicons/lexemes.config.json",
-            prePath: command.prePath);
+            configPath: '/defaults/lexicons/lexemes.config.json');
         Lexica.update(
             "/defaults/lexicons/lexemes.config.json", lexicons, command);
         List<Voice> voices = Voices.fromFile(command);
@@ -120,13 +121,13 @@ void main(
           return video;
         }
 
-    List<RedditVideo> videos = [];
-    for (int i = 0; i < command.repeat; i++) {
-      RedditVideo video = await RedditVideo.parse(command, log);
-      videos.add(video);
-      _createdTempIds.add(video.id);
-      print("$i - ${video.id}");
-    }
+        List<RedditVideo> videos = [];
+        for (int i = 0; i < command.repeat; i++) {
+          RedditVideo video = await RedditVideo.parse(command, log);
+          videos.add(video);
+          _createdTempIds.add(video.id);
+          print("$i - ${video.id}");
+        }
 
         List<Future<RedditVideo>> generatedVideos =
             List.generate(command.repeat, (i) {
@@ -144,7 +145,7 @@ void main(
         }
         break;
       case CommandType.flush:
-        Log log = await Log.fromFile(command.prePath);
+        Log log = await Log.fromFile();
 
         RedditPost? post;
         if (command.post != null) {

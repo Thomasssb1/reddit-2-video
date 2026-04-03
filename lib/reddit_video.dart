@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:path/path.dart' as p;
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
 import 'package:reddit_2_video/ffmpeg/ffmpeg_command.dart';
@@ -29,16 +30,14 @@ class RedditVideo {
   RedditVideo({
     required this.posts,
     required this.videoType,
-    required String prePath,
   }) {
-    _generateFolderStructure("$prePath/.temp/$id/");
+    _generateFolderStructure(AppPaths.resolveDir('.temp/$id'));
   }
 
   RedditVideo.single({
     required RedditPost post,
     required RedditVideoType videoType,
-    required String prePath,
-  }) : this(posts: [post], videoType: videoType, prePath: prePath);
+  }) : this(posts: [post], videoType: videoType);
 
   static Future<RedditVideo> parse(ParsedCommand command, Log log) async {
     // make client so that multiple https requests can be made easily
@@ -55,7 +54,7 @@ class RedditVideo {
 
       RedditPost post = await RedditPost.fromUrl(url: command.subreddit);
       RedditVideo video = RedditVideo.single(
-          post: post, videoType: command.type, prePath: command.prePath);
+          post: post, videoType: command.type);
 
       if (log.contains(video.posts.first)) {
         throw PostAlreadyGeneratedException(
@@ -112,8 +111,7 @@ class RedditVideo {
         // get the first post
         RedditVideo video = RedditVideo.single(
             post: postData.first,
-            videoType: command.type,
-            prePath: command.prePath);
+            videoType: command.type);
         log.temporaryAdd(video);
         return video;
       }
@@ -195,7 +193,7 @@ class RedditVideo {
         postData = postData.sublist(0, command.commentCount);
       }
       RedditVideo video = RedditVideo(
-          posts: postData, videoType: command.type, prePath: command.prePath);
+          posts: postData, videoType: command.type);
       log.temporaryAdd(video);
       return video;
     } else {
@@ -215,15 +213,17 @@ class RedditVideo {
 
     EmptyNoise? emptyNoise;
     if (command.type != RedditVideoType.post) {
-      emptyNoise = EmptyNoise(prePath: command.prePath);
+      emptyNoise = EmptyNoise();
     }
+
+    final resolvedEndCard = await command.endCard;
 
     FFmpegCommand ffmpegCommand = FFmpegCommand(
       subtitles: subtitles!,
       backgroundVideo: backgroundVideo,
       emptyNoise: emptyNoise,
       music: command.music,
-      endCard: command.endCard,
+      endCard: resolvedEndCard,
     );
 
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
@@ -255,8 +255,8 @@ class RedditVideo {
     }
   }
 
-  Future<void> _generateFolderStructure(String path) async {
-    Directory(path).createSync(recursive: true);
+  Future<void> _generateFolderStructure(Directory dir) async {
+    dir.createSync(recursive: true);
   }
 
   String get id => posts.map((e) => e.id).join("-");
