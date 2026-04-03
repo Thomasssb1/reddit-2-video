@@ -16,62 +16,6 @@ import 'dart:io';
 void main(
   List<String> args,
 ) async {
-  ParsedCommand command = ParsedCommand.parse(args);
-  final Set<String> _createdTempIds = <String>{};
-
-  Future<void> _cleanup() async {
-    if (command.keepTemp) {
-      return;
-    }
-    final tempDir = Directory('${command.prePath}/.temp');
-    if (!tempDir.existsSync()) {
-      return;
-    }
-
-    // Read visited_log.txt to build a set of ids to match against folder names.
-    final logFile = File('${command.prePath}/.temp/visited_log.txt');
-    final Set<String> ids = <String>{};
-    // include ids recorded in visited_log.txt
-    if (logFile.existsSync()) {
-      try {
-        for (final line in logFile.readAsLinesSync()) {
-          final trimmed = line.trim();
-          if (trimmed.isEmpty) continue;
-          final parts = trimmed.split(RegExp(r'\s+|-'));
-          ids.add(parts.first);
-        }
-      } catch (e) {
-        stderr.writeln('Failed to read visited_log.txt: $e');
-      }
-    }
-    // also include folders created during this run
-    ids.addAll(_createdTempIds);
-
-    try {
-      // Only remove subdirectories inside .temp that match visited ids.
-      for (final entry in tempDir.listSync(followLinks: false)) {
-        if (entry is Directory) {
-          final name = entry.uri.pathSegments.last;
-          final matches = ids.any((id) => name.startsWith(id));
-          if (!matches) {
-            // do not delete unrelated directories
-            continue;
-          }
-          try {
-            await entry.delete(recursive: true);
-            stderr.writeln('Deleted ${entry.path}');
-          } catch (e) {
-            stderr.writeln('Failed to delete ${entry.path}: $e');
-          }
-        }
-      }
-    } catch (e) {
-      stderr.writeln('Failed to clean ${tempDir.path}: $e');
-    }
-  }
-
-  _installCleanupOnTermination(_cleanup);
-
   try {
     await checkDependencies();
     ParsedCommand command = ParsedCommand.parse(args);
@@ -125,7 +69,6 @@ void main(
         for (int i = 0; i < command.repeat; i++) {
           RedditVideo video = await RedditVideo.parse(command, log);
           videos.add(video);
-          _createdTempIds.add(video.id);
           print("$i - ${video.id}");
         }
 
@@ -167,19 +110,5 @@ void main(
   } on Exception catch (e) {
     stderr.writeln(e);
     exitCode = 1;
-  } finally {
-    await _cleanup();
   }
-}
-
-void _installCleanupOnTermination(Future<void> Function() cleanup) {
-  ProcessSignal.sigint.watch().listen((_) async {
-    await cleanup();
-    exit(130);
-  });
-
-  ProcessSignal.sigterm.watch().listen((_) async {
-    await cleanup();
-    exit(143);
-  });
 }
