@@ -38,6 +38,38 @@ void main() {
       );
     });
 
+    test('resolves relative file paths under root', () {
+      final root = Directory.systemTemp.createTempSync('app_paths_test_');
+      addTearDown(() {
+        root.deleteSync(recursive: true);
+      });
+
+      AppPaths.initForTest(root);
+
+      final relativeFile = 'relative/path/file.txt';
+
+      expect(
+        p.normalize(AppPaths.resolve(relativeFile).path),
+        p.normalize(p.join(root.path, relativeFile)),
+      );
+    });
+
+    test('resolves relative directory paths under root', () {
+      final root = Directory.systemTemp.createTempSync('app_paths_test_');
+      addTearDown(() {
+        root.deleteSync(recursive: true);
+      });
+
+      AppPaths.initForTest(root);
+
+      final relativeDir = 'relative/path';
+
+      expect(
+        p.normalize(AppPaths.resolveDir(relativeDir).path),
+        p.normalize(p.join(root.path, relativeDir)),
+      );
+    });
+
     test('keeps absolute file paths unchanged', () {
       final root = Directory.systemTemp.createTempSync('app_paths_test_');
       addTearDown(() {

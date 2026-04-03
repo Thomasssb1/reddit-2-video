@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:reddit_2_video/app_paths.dart';
@@ -76,25 +75,16 @@ void main() {
     final videoFile = File('${tempDir.path}/clip.mp4');
     await _createVideo(path: videoFile.path, seconds: 2);
 
-    final printed = <String>[];
-    late EndCard result;
-
-    await runZoned(() async {
-      result = await EndCard.create(
-        path: "clip.mp4",
-        durationOverride: Duration(seconds: 8),
-      );
-    }, zoneSpecification: ZoneSpecification(
-      print: (self, parent, zone, line) {
-        printed.add(line);
+    await expectLater(
+      () async {
+        final result = await EndCard.create(
+          path: "clip.mp4",
+          durationOverride: Duration(seconds: 8),
+        );
+        expect(result.duration, Duration(seconds: 8));
       },
-    ));
-
-    expect(result.duration, Duration(seconds: 8));
-    expect(
-      printed.any((line) => line.contains(
+      prints(contains(
           '--end-card-length is overriding the inferred end-card duration')),
-      isTrue,
     );
   });
 

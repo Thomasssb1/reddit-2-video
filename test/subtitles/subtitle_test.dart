@@ -54,7 +54,7 @@ void main() {
     });
 
     group('addHighlight / removeHighlight', () {
-      test('addHighlight wraps subtitle line text with colour tag', () {
+      test('addHighlight prepends exact highlight colour tag to line text', () {
         final subtitle = Subtitle(
           text: 'hello world',
           color: color,
@@ -67,9 +67,10 @@ void main() {
           finalWord: false,
           segmentID: 1,
         );
+
         subtitle.addHighlight(line);
-        expect(line.text, contains(r'{\c&'));
-        expect(line.text, contains('word'));
+
+        expect(line.text, '{\\c&${subtitle.highlightColour}}word');
       });
 
       test('removeHighlight strips the colour tag, leaving original text', () {
@@ -86,6 +87,7 @@ void main() {
           segmentID: 1,
         );
         subtitle.addHighlight(line);
+        expect(line.text, '{\\c&${subtitle.highlightColour}}word');
         subtitle.removeHighlight(line);
         expect(line.text, 'word');
       });

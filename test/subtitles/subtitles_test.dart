@@ -1,19 +1,40 @@
 import 'dart:io';
 
+import 'package:mocktail/mocktail.dart';
 import 'package:reddit_2_video/app_paths.dart';
-import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
-import 'package:reddit_2_video/config/voices/voices.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
+import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:test/test.dart';
-import 'package:mocktail/mocktail.dart';
 
 import '../mocks.dart';
 
 void main() {
   late ParsedCommand command;
+
+  Directory _initSubtitlesTestRoot() {
+    final tempDir = Directory.systemTemp.createTempSync('subtitles_test_');
+    final defaultAss = File('${tempDir.path}/defaults/default.ass');
+    defaultAss.createSync(recursive: true);
+    defaultAss.writeAsStringSync('[Script Info]\n');
+    Directory('${tempDir.path}/.temp/test').createSync(recursive: true);
+    AppPaths.initForTest(tempDir);
+    return tempDir;
+  }
+
+  void _stubCommand(ParsedCommand command, {required RedditVideoType type}) {
+    when(() => command.type).thenReturn(type);
+    when(() => command.ntts).thenReturn(true);
+    when(() => command.censor).thenReturn(false);
+    when(() => command.delay).thenReturn(Duration(seconds: 1));
+    when(() => command.alternate)
+        .thenReturn(Alternate(tts: false, color: false));
+    when(() => command.titleColor)
+        .thenReturn(SubstationAlphaSubtitleColor('#FF0000'));
+    when(() => command.maxLength).thenReturn(null);
+  }
 
   setUp(() {
     command = MockParsedCommand();
@@ -21,41 +42,121 @@ void main() {
   });
 
   group('Subtitles', () {
-    group('delay resolution', () {
+    group('constructor', () {
       test('delay is Duration.zero for post type', () {
         _stubCommand(command, type: RedditVideoType.post);
-
-        final tempDir = Directory.systemTemp.createTempSync('subtitles_test_');
-        addTearDown(() {
-          tempDir.deleteSync(recursive: true);
-        });
-
-        final defaultAss = File('${tempDir.path}/defaults/default.ass');
-        defaultAss.createSync(recursive: true);
-        defaultAss.writeAsStringSync('[Script Info]\n');
-        Directory('${tempDir.path}/.temp/test').createSync(recursive: true);
-
-        AppPaths.initForTest(tempDir);
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
 
         final video = MockRedditVideo();
         when(() => video.posts).thenReturn([]);
         when(() => video.id).thenReturn('test');
 
-        final voices = MockVoices();
-
         final subtitles = Subtitles(
           video: video,
           lexicons: const [],
-          voices: voices,
+          voices: MockVoices(),
           command: command,
         );
 
         expect(subtitles.delay, Duration.zero);
       });
 
-      test('command.delay returns configured duration', () {
+      test('copies command flags and uses command delay for non-post type', () {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+
+        when(() => command.ntts).thenReturn(false);
+        when(() => command.censor).thenReturn(true);
         when(() => command.delay).thenReturn(Duration(seconds: 3));
-        expect(command.delay, Duration(seconds: 3));
+        when(() => command.alternate)
+            .thenReturn(Alternate(tts: true, color: true));
+        when(() => command.titleColor)
+            .thenReturn(SubstationAlphaSubtitleColor('#00FF00'));
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: MockVoices(),
+          command: command,
+        );
+
+        expect(subtitles.ntts, isFalse);
+        expect(subtitles.censor, isTrue);
+        expect(subtitles.delay, Duration(seconds: 3));
+        expect(subtitles.alternate.tts, isTrue);
+        expect(subtitles.alternate.color, isTrue);
+        expect(
+          subtitles.titleColor.toString(),
+          SubstationAlphaSubtitleColor('#00FF00').toString(),
+        );
+      });
+    });
+
+    group('parse without external processes', () {
+      test(
+          'keeps duration zero when title/body/comments are empty after cleanup',
+          () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('😀😀');
+        when(() => post.body).thenReturn('');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: MockVoices(),
+          command: command,
+        );
+
+        await subtitles.parse(command);
+
+        expect(subtitles.duration, Duration.zero);
+      });
+
+      test('adds per-post delay in multi mode even when no text is parsed',
+          () async {
+        _stubCommand(command, type: RedditVideoType.multi);
+        when(() => command.delay).thenReturn(Duration(seconds: 2));
+
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+
+        final post1 = MockRedditPost();
+        when(() => post1.title).thenReturn('');
+        when(() => post1.body).thenReturn('');
+        when(() => post1.comments).thenReturn([]);
+
+        final post2 = MockRedditPost();
+        when(() => post2.title).thenReturn('');
+        when(() => post2.body).thenReturn('');
+        when(() => post2.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post1, post2]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: MockVoices(),
+          command: command,
+        );
+
+        await subtitles.parse(command);
+
+        expect(subtitles.duration, Duration(seconds: 4));
       });
     });
 
@@ -73,10 +174,6 @@ void main() {
 
     group('getTTSFilesAsInput', () {
       test('returns empty list when no subtitles parsed', () {
-        // We cannot easily construct a real Subtitles without filesystem.
-        // The getTTSFilesAsInput / getTTSStream logic is tested via mock
-        // in ffmpeg_command_test.dart; here we verify the method signatures
-        // match the expected interface.
         final mockSubtitles = MockSubtitles();
         when(() => mockSubtitles.getTTSFilesAsInput()).thenReturn([]);
         expect(mockSubtitles.getTTSFilesAsInput(), isEmpty);
@@ -91,19 +188,4 @@ void main() {
       });
     });
   });
-}
-
-class MockSubtitles extends Mock implements Subtitles {}
-
-class MockVoices extends Mock implements Voices {}
-
-void _stubCommand(ParsedCommand command, {required RedditVideoType type}) {
-  when(() => command.type).thenReturn(type);
-  when(() => command.ntts).thenReturn(true);
-  when(() => command.censor).thenReturn(false);
-  when(() => command.delay).thenReturn(Duration(seconds: 1));
-  when(() => command.alternate).thenReturn(Alternate(tts: false, color: false));
-  when(() => command.titleColor)
-      .thenReturn(SubstationAlphaSubtitleColor('#FF0000'));
-  when(() => command.maxLength).thenReturn(null);
 }

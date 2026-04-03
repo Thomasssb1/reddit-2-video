@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:reddit_2_video/reddit/reddit_url.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:test/test.dart';
@@ -46,8 +44,7 @@ void main() {
       test('throws InvalidPostUrlException for URL without comments segment',
           () {
         expect(
-          () => RedditUrl.fromUrl(
-              url: 'https://www.reddit.com/r/AskReddit/'),
+          () => RedditUrl.fromUrl(url: 'https://www.reddit.com/r/AskReddit/'),
           throwsA(isA<InvalidPostUrlException>()),
         );
       });
