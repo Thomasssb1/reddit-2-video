@@ -16,7 +16,7 @@ abstract class ConfigItem {
 
   File get path => _path;
 
-  set path(newPath) => _path = path;
+  set path(String newPath) => _path = _getPath(newPath);
 
   static File _getPath(String path) {
     File newFile = AppPaths.resolve(path);
