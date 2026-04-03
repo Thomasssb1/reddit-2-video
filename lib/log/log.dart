@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/exceptions/warning.dart';
@@ -32,7 +31,6 @@ class Log {
 
     final raw = logfile.readAsStringSync();
     final HashSet<RedditId> ids = HashSet();
-    final http.Client client = http.Client();
 
     try {
       final json = jsonDecode(raw) as Map<String, dynamic>;
@@ -48,8 +46,6 @@ class Log {
     } on FormatException {
       Warning.warn(
           'visited_log.json is corrupt or empty — starting with a fresh log.');
-    } finally {
-      client.close();
     }
 
     return Log._fromFile(logfile: logfile, ids: ids);

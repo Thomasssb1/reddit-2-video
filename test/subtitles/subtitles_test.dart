@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/config/voices/voices.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
@@ -22,17 +24,33 @@ void main() {
     group('delay resolution', () {
       test('delay is Duration.zero for post type', () {
         _stubCommand(command, type: RedditVideoType.post);
+
+        final tempDir = Directory.systemTemp.createTempSync('subtitles_test_');
+        addTearDown(() {
+          tempDir.deleteSync(recursive: true);
+        });
+
+        final defaultAss = File('${tempDir.path}/defaults/default.ass');
+        defaultAss.createSync(recursive: true);
+        defaultAss.writeAsStringSync('[Script Info]\n');
+        Directory('${tempDir.path}/.temp/test').createSync(recursive: true);
+
+        AppPaths.initForTest(tempDir);
+
         final video = MockRedditVideo();
         when(() => video.posts).thenReturn([]);
         when(() => video.id).thenReturn('test');
 
-        // Subtitles constructor copies the ass file on init — we can't call
-        // the real constructor here without a filesystem; test delay logic
-        // by inspecting command.delay and type interaction instead.
-        expect(command.type, RedditVideoType.post);
-        // For post type the Subtitles constructor sets delay = Duration.zero.
-        // This is verified in the integration path; here we verify the
-        // command returns the right delay for non-post types.
+        final voices = MockVoices();
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+
+        expect(subtitles.delay, Duration.zero);
       });
 
       test('command.delay returns configured duration', () {
@@ -47,9 +65,9 @@ void main() {
         expect(command.maxLength, isNull);
       });
 
-      test('maxLength returns int when set', () {
-        when(() => command.maxLength).thenReturn(60);
-        expect(command.maxLength, 60);
+      test('maxLength returns Duration when set', () {
+        when(() => command.maxLength).thenReturn(Duration(seconds: 60));
+        expect(command.maxLength, Duration(seconds: 60));
       });
     });
 
@@ -76,6 +94,8 @@ void main() {
 }
 
 class MockSubtitles extends Mock implements Subtitles {}
+
+class MockVoices extends Mock implements Voices {}
 
 void _stubCommand(ParsedCommand command, {required RedditVideoType type}) {
   when(() => command.type).thenReturn(type);

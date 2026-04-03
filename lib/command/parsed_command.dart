@@ -263,7 +263,12 @@ class ParsedCommand extends Command {
   }
 
   /// Maximum video length. `null` means unlimited. Ignored for `post` type.
-  int? get maxLength => int.tryParse(args!['max-length'] ?? '');
+  Duration? get maxLength {
+    final raw = args!['max-length']?.toString().trim();
+
+    final seconds = int.tryParse(raw ?? '');
+    return seconds != null ? Duration(seconds: seconds) : null;
+  }
 
   String? get post => args!['post'];
 
