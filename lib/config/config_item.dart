@@ -4,8 +4,7 @@ import 'package:reddit_2_video/app_paths.dart';
 abstract class ConfigItem {
   File _path;
 
-  ConfigItem({required String path})
-      : _path = _getPath(path);
+  ConfigItem({required String path}) : _path = _getPath(path);
 
   /// Initializes a ConfigItem with an already resolved File.
   ConfigItem.fromFile(File path) : _path = path {
@@ -16,15 +15,19 @@ abstract class ConfigItem {
 
   File get path => _path;
 
-  set path(String newPath) => _path = _getPath(newPath);
+  set path(File newPath) {
+    if (!newPath.existsSync()) {
+      throw FileSystemException('File does not exist', newPath.path);
+    }
+    _path = newPath;
+  }
 
   static File _getPath(String path) {
     File newFile = AppPaths.resolve(path);
     if (newFile.existsSync()) {
       return newFile;
     } else {
-      throw FileSystemException(
-          'File $path does not exist', newFile.path);
+      throw FileSystemException('File $path does not exist', newFile.path);
     }
   }
 }
