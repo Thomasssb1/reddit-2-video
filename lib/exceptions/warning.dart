@@ -5,6 +5,6 @@ class Warning {
   final String message;
 
   Warning.warn(this.message) {
-    printWarning(this.message);
+    printWarning(message);
   }
 }

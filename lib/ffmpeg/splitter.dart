@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
 import 'package:path/path.dart' as p;
 
 Future<List<File>> splitVideo(
@@ -34,8 +33,11 @@ Future<List<File>> splitVideo(
   }
 
   // Find the generated segments
-  final segmentPattern =
-      RegExp('^' + RegExp.escape(baseName) + r'\d+\.' + RegExp.escape(fileExtension) + r'$');
+  final segmentPattern = RegExp('^' +
+      RegExp.escape(baseName) +
+      r'\d+\.' +
+      RegExp.escape(fileExtension) +
+      r'$');
   return Directory(dir)
       .listSync()
       .whereType<File>()

@@ -30,7 +30,8 @@ Future<void> installWhisper() async {
       printSuccess("Successfully installed whisper-timestamped.");
     }
   } catch (e) {
-    Warning.warn("Failed to execute pip install for whisper-timestamped. Exception: $e");
+    Warning.warn(
+        "Failed to execute pip install for whisper-timestamped. Exception: $e");
   }
 }
 
@@ -74,8 +75,7 @@ Future<void> runInstallCommand() async {
 
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
-    Warning.warn(
-        "You need to install AWS CLI in order to use AWS-Polly TTS. \n" +
+    Warning.warn("You need to install AWS CLI in order to use AWS-Polly TTS. \n"
         "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
   }
 

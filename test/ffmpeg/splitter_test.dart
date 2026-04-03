@@ -28,20 +28,22 @@ void main() {
       }
     });
 
-    test('Throws FFmpegCommandException when splitting an invalid video', () async {
+    test('Throws FFmpegCommandException when splitting an invalid video',
+        () async {
       // Overwrite with invalid content to force failure
       mockVideo.writeAsStringSync("not a video");
-      
+
       expect(
         () async => await splitVideo(mockVideo.path, 'mp4', 0),
-        throwsA(isA<FFmpegCommandException>().having((e) => e.command, 'command', isNotEmpty)),
+        throwsA(isA<FFmpegCommandException>()
+            .having((e) => e.command, 'command', isNotEmpty)),
       );
     });
 
     test('Successfully splits a valid video (Happy Path)', () async {
       // Since our dummy is 1s and segment_time is 55s, it will produce 1 segment
       final segments = await splitVideo(mockVideo.path, 'mp4', 0);
-      
+
       expect(segments, isNotEmpty);
       expect(segments.first.existsSync(), isTrue);
       expect(segments.first.path, contains('test_output'));

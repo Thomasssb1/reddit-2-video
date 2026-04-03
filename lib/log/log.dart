@@ -14,7 +14,7 @@ class Log {
   // Files within .temp to not delete
   final Iterable<String> _protectedFiles = <String>["visited_log.txt"];
   // Temporary posts to ignore
-  HashSet<RedditId> _tempIds = HashSet();
+  final HashSet<RedditId> _tempIds = HashSet();
 
   Log._fromFile({
     required File logfile,

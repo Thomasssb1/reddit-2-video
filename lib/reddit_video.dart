@@ -135,7 +135,8 @@ class RedditVideo {
             print(
                 "This post is${post.nsfw ? '' : ' ${Prettify.red}not${Prettify.reset}'} marked as NSFW.");
           }
-          printUnderline("Post ${postData.indexOf(post) + 1}/${postData.length}.");
+          printUnderline(
+              "Post ${postData.indexOf(post) + 1}/${postData.length}.");
           print(
               "Do you want to see the body of the post? [${Prettify.green}y${Prettify.reset}/${Prettify.red}N${Prettify.reset}] ");
           // read the cli for what the user entered
@@ -240,7 +241,7 @@ class RedditVideo {
           message: "Something went wrong when generating the video. Exiting.",
           command: input);
     }
-    
+
     printSuccess(
         "Video successfully generated: [${p.basename(input.last)}](file://${File(input.last).absolute.path})!");
 
@@ -250,7 +251,8 @@ class RedditVideo {
       printSuccess(
           "Video successfully split into ${segments.length} YouTube shorts:");
       for (var segment in segments) {
-        print("  - [${p.basename(segment.path)}](file://${segment.absolute.path})");
+        print(
+            "  - [${p.basename(segment.path)}](file://${segment.absolute.path})");
       }
     }
   }

@@ -100,7 +100,7 @@ void main(
         log.remove(post: post);
 
         await log.clearTemporaryFiles();
-    case CommandType.install:
+      case CommandType.install:
         await runInstallCommand();
       case CommandType.help:
         command.printHelp();

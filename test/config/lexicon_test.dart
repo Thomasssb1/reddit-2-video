@@ -1,10 +1,7 @@
 import 'dart:io';
 
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
-import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:test/test.dart';
-import 'package:mocktail/mocktail.dart';
-import '../mocks.dart';
 
 void main() {
   group("Test reading file", () {
