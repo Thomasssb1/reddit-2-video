@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
@@ -28,7 +29,7 @@ void main() {
       path: "endcard.gif",
     );
 
-    expect(result.path.path, testFile.path);
+    expect(p.normalize(result.path.path), p.normalize(testFile.path));
   });
 
   test("Check end card uses override duration for image", () async {

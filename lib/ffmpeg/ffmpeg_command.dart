@@ -85,8 +85,15 @@ class FFmpegCommand {
     return "crop=585:1080";
   }
 
+  String _escapeFilterPath(String path) {
+    return path
+        .replaceAll(r'\', '/')
+        .replaceAll(':', r'\:')
+        .replaceAll("'", r"\'");
+  }
+
   String _addSubtitles() {
-    return "subtitles='${subtitles.assFile.path}'";
+    return "subtitles='${_escapeFilterPath(subtitles.assFile.path)}'";
   }
 
   String _addFps(FPS fps) {

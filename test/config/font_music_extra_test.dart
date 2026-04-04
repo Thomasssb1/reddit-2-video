@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/font.dart';
 import 'package:reddit_2_video/config/music.dart';
@@ -26,7 +27,7 @@ void main() {
 
       expect(font.name, 'custom');
       expect(font.toString(), 'custom,22');
-      expect(font.path.path, file.path);
+      expect(p.normalize(font.path.path), p.normalize(file.path));
     });
   });
 
@@ -37,7 +38,7 @@ void main() {
 
       final music = Music(path: 'defaults/music.mp3', volume: 0.25);
 
-      expect(music.path.path, file.path);
+      expect(p.normalize(music.path.path), p.normalize(file.path));
       expect(music.volume, 0.25);
     });
 

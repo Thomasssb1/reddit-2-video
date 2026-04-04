@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:test/test.dart';
@@ -28,7 +29,7 @@ void main() {
 
       final item = _TestConfigItem(path: 'defaults/test.txt');
 
-      expect(item.path.path, file.path);
+      expect(p.normalize(item.path.path), p.normalize(file.path));
     });
 
     test('fromFile stores the given file path', () {
@@ -37,7 +38,7 @@ void main() {
 
       final item = _TestConfigItem.fromFile(file);
 
-      expect(item.path.path, file.path);
+      expect(p.normalize(item.path.path), p.normalize(file.path));
     });
 
     test('path setter accepts an existing file', () {
@@ -49,7 +50,7 @@ void main() {
       final item = _TestConfigItem(path: 'defaults/one.txt');
       item.path = second;
 
-      expect(item.path.path, second.path);
+      expect(p.normalize(item.path.path), p.normalize(second.path));
     });
   });
 }

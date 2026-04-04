@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/music.dart';
@@ -25,6 +26,9 @@ void main() {
 
   test("Check music path is correct", () {
     Music music = Music(path: "test.mp3");
-    expect(music.path.path, '${tempDir.path}/test.mp3');
+    expect(
+      p.normalize(music.path.path),
+      p.normalize(p.join(tempDir.path, 'test.mp3')),
+    );
   });
 }
