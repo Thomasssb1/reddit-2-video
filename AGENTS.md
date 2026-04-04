@@ -6,6 +6,7 @@ When working in this codebase, all AI coding assistants must adhere to the follo
 
 - **1-to-1 Class Testing:** Every class must have an equivalent unit test.
 - **Test Placement:** Tests must be placed in the `test/` directory. The structure should mirror the `lib/` directory (e.g., a class defined in `lib/config/background_video.dart` is tested in `test/config/background_video_test.dart`).
+- **Integration Test Placement:** Real subprocess integration tests (such as FFmpeg smoke tests) must live under `test/integration/` so they are clearly separated from mocked unit tests.
 - **Additional Implementations:** Any new feature, behavior change, or method implementation must include a corresponding test.
 - **Run the Tests:** After making changes, always run the tests (e.g., using `dart test`) to verify the new implementation and ensure no regressions are introduced.
 - **Mocking:** Use the `mocktail` package for mocking dependencies (see `test/mocks.dart` for examples of mock implementations).

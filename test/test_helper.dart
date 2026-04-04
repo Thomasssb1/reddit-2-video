@@ -1,12 +1,34 @@
 import 'dart:io';
 
-Future<void> createDummyVideo(String path, {int seconds = 1}) async {
+import 'package:reddit_2_video/utils/subprocess.dart';
+
+void useRealSubprocesses() {
+  Subprocess.setStartForTest((executable, arguments,
+      {workingDirectory,
+      environment,
+      includeParentEnvironment = true,
+      runInShell = false,
+      mode = ProcessStartMode.normal}) {
+    return Process.start(
+      executable,
+      arguments,
+      workingDirectory: workingDirectory,
+      environment: environment,
+      includeParentEnvironment: includeParentEnvironment,
+      runInShell: runInShell,
+      mode: mode,
+    );
+  });
+}
+
+Future<void> createDummyVideo(String path,
+    {int seconds = 1, String size = '128x128'}) async {
   // Generate a blank video using ffmpeg for media-based tests.
   final process = await Process.run('ffmpeg', [
     '-f',
     'lavfi',
     '-i',
-    'color=c=black:s=128x128:d=$seconds',
+    'color=c=black:s=$size:d=$seconds',
     '-c:v',
     'libx264',
     '-pix_fmt',
@@ -17,5 +39,24 @@ Future<void> createDummyVideo(String path, {int seconds = 1}) async {
 
   if (process.exitCode != 0) {
     throw Exception('Failed to create test video: ${process.stderr}');
+  }
+}
+
+Future<void> createDummyAudio(String path, {int seconds = 1}) async {
+  final process = await Process.run('ffmpeg', [
+    '-f',
+    'lavfi',
+    '-i',
+    'sine=frequency=880:duration=$seconds',
+    '-q:a',
+    '9',
+    '-acodec',
+    'libmp3lame',
+    '-y',
+    path,
+  ]);
+
+  if (process.exitCode != 0) {
+    throw Exception('Failed to create test audio: ${process.stderr}');
   }
 }
