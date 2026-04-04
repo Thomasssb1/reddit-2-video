@@ -48,5 +48,29 @@ void main() {
       expect(segments.first.existsSync(), isTrue);
       expect(segments.first.path, contains('test_output'));
     });
+
+    test('Returns only matching segments in a deterministic order', () async {
+      File('test_output001.mp4').writeAsStringSync('');
+      File('test_output010.mp4').writeAsStringSync('');
+      File('test_output002.mp4').writeAsStringSync('');
+      File('test_output_notes.mp4').writeAsStringSync('');
+      File('other_output001.mp4').writeAsStringSync('');
+
+      final segments = await splitVideo(mockVideo.path, 'mp4', 0);
+      final fileNames =
+          segments.map((file) => file.uri.pathSegments.last).toList();
+
+      expect(
+        fileNames,
+        containsAll(<String>[
+          'test_output001.mp4',
+          'test_output002.mp4',
+          'test_output010.mp4',
+        ]),
+      );
+      expect(fileNames, isNot(contains('test_output_notes.mp4')));
+      expect(fileNames, isNot(contains('other_output001.mp4')));
+      expect(fileNames, orderedEquals([...fileNames]..sort()));
+    });
   });
 }

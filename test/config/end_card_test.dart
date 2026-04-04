@@ -4,29 +4,10 @@ import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:test/test.dart';
+import '../test_helper.dart';
 
 void main() {
   late Directory tempDir;
-
-  Future<void> _createVideo(
-      {required String path, required int seconds}) async {
-    final result = await Process.run('ffmpeg', [
-      '-f',
-      'lavfi',
-      '-i',
-      'color=c=black:s=128x128:d=$seconds',
-      '-c:v',
-      'libx264',
-      '-pix_fmt',
-      'yuv420p',
-      '-y',
-      path,
-    ]);
-
-    if (result.exitCode != 0) {
-      throw Exception('Failed to create test video: ${result.stderr}');
-    }
-  }
 
   setUp(() {
     tempDir = Directory.systemTemp.createTempSync('endcard_test_');
@@ -73,7 +54,7 @@ void main() {
   test("Warns when overriding inferred duration for video and uses override",
       () async {
     final videoFile = File('${tempDir.path}/clip.mp4');
-    await _createVideo(path: videoFile.path, seconds: 2);
+    await createDummyVideo(videoFile.path, seconds: 2);
 
     await expectLater(
       () async {
@@ -91,7 +72,7 @@ void main() {
   test("Infers duration from a video/gif file when no override is provided",
       () async {
     final videoFile = File('${tempDir.path}/clip.mp4');
-    await _createVideo(path: videoFile.path, seconds: 2);
+    await createDummyVideo(videoFile.path, seconds: 2);
 
     final result = await EndCard.create(path: "clip.mp4");
 

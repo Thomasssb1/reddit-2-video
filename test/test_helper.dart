@@ -1,20 +1,21 @@
 import 'dart:io';
 
-Future<void> createDummyVideo(String path) async {
-  // Generate a 1-second blank video using ffmpeg
+Future<void> createDummyVideo(String path, {int seconds = 1}) async {
+  // Generate a blank video using ffmpeg for media-based tests.
   final process = await Process.run('ffmpeg', [
     '-f',
     'lavfi',
     '-i',
-    'color=c=black:s=128x128:d=1',
+    'color=c=black:s=128x128:d=$seconds',
     '-c:v',
     'libx264',
+    '-pix_fmt',
+    'yuv420p',
     '-y',
     path,
   ]);
 
   if (process.exitCode != 0) {
-    // Fallback to a simple file if ffmpeg is missing or fails (though tests will likely fail)
-    File(path).writeAsStringSync("dummy content");
+    throw Exception('Failed to create test video: ${process.stderr}');
   }
 }

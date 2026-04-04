@@ -226,12 +226,12 @@ class Lexica extends ConfigItem {
   String toString() => id;
 
   @override
-  bool operator ==(Object obj) {
-    if (obj is Lexica) {
-      if (obj.languageCode == languageCode &&
-          obj.xmlVersion == xmlVersion &&
-          obj.lexicons.length == lexicons.length &&
-          obj.lexicons == lexicons) {
+  bool operator ==(Object other) {
+    if (other is Lexica) {
+      if (other.languageCode == languageCode &&
+          other.xmlVersion == xmlVersion &&
+          other.lexicons.length == lexicons.length &&
+          other.lexicons == lexicons) {
         return true;
       }
     }

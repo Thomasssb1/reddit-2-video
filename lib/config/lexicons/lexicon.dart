@@ -15,9 +15,9 @@ class Lexicon {
   }
 
   @override
-  bool operator ==(Object obj) {
-    if (obj is Lexicon) {
-      if (obj.grapheme == _grapheme && obj.alias == _alias) {
+  bool operator ==(Object other) {
+    if (other is Lexicon) {
+      if (other.grapheme == _grapheme && other.alias == _alias) {
         return true;
       }
     }

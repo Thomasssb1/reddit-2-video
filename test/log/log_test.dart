@@ -114,8 +114,8 @@ void main() {
 
       final json =
           jsonDecode(logFile.readAsStringSync()) as Map<String, dynamic>;
-      final visited = (json['visited'] as List<dynamic>)
-          .cast<Map<String, dynamic>>();
+      final visited =
+          (json['visited'] as List<dynamic>).cast<Map<String, dynamic>>();
       expect(visited.any((e) => e['post_id'] == 'abc123'), isFalse);
       expect(visited.any((e) => e['post_id'] == 'xyz999'), isTrue);
     });

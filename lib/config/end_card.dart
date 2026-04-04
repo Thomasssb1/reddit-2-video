@@ -24,7 +24,7 @@ Future<Duration?> _probeFileDuration(File file) async {
     ]);
     if (result.exitCode != 0) return null;
 
-    final json = jsonDecode(result.stdout as String) as Map<String, dynamic>;
+    final json = jsonDecode(result.stdout) as Map<String, dynamic>;
     final raw = (json['format'] as Map<String, dynamic>)['duration'];
     if (raw == null) return null;
 

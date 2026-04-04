@@ -34,14 +34,14 @@ Future<List<File>> splitVideo(
   }
 
   // Find the generated segments
-  final segmentPattern = RegExp('^' +
-      RegExp.escape(baseName) +
-      r'\d+\.' +
-      RegExp.escape(fileExtension) +
-      r'$');
+  final segmentPattern = RegExp(
+    '^${RegExp.escape(baseName)}\\d+\\.${RegExp.escape(fileExtension)}\$',
+  );
+
   return Directory(dir)
       .listSync()
       .whereType<File>()
       .where((file) => segmentPattern.hasMatch(p.basename(file.path)))
-      .toList();
+      .toList()
+    ..sort((a, b) => a.path.compareTo(b.path));
 }

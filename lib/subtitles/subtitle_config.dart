@@ -3,7 +3,7 @@ import 'dart:io';
 
 class SubtitleConfig {
   final File tts;
-  late final segments;
+  late final List<Map<String, dynamic>> segments;
 
   SubtitleConfig.fromFile({
     required this.tts,
@@ -14,6 +14,6 @@ class SubtitleConfig {
   }
 
   SubtitleConfig.none() : tts = File('') {
-    segments = {};
+    segments = [];
   }
 }
