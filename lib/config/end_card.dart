@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 
 /// File extensions considered "static images" (duration cannot be inferred).
 const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif'};
@@ -12,10 +13,13 @@ const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif'};
 /// Returns `null` if ffprobe is unavailable or the file has no duration.
 Future<Duration?> _probeFileDuration(File file) async {
   try {
-    final result = await Process.run('ffprobe', [
-      '-v', 'error',
-      '-show_entries', 'format=duration',
-      '-of', 'json',
+    final result = await Subprocess.exec('ffprobe', [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'json',
       file.path,
     ]);
     if (result.exitCode != 0) return null;
@@ -33,7 +37,8 @@ Future<Duration?> _probeFileDuration(File file) async {
   }
 }
 
-Future<Duration> _resolveDuration(File file, Duration? override, bool isImage) async {
+Future<Duration> _resolveDuration(
+    File file, Duration? override, bool isImage) async {
   if (isImage) {
     if (override == null) {
       throw ArgumentMissingException(
@@ -50,8 +55,7 @@ Future<Duration> _resolveDuration(File file, Duration? override, bool isImage) a
         '(${probed.inSeconds}s) with ${override.inSeconds}s. '
         'Remove --end-card-length to use the file duration automatically.');
   } else if (override == null && probed == null) {
-    Warning.warn(
-        'Could not infer end-card duration from file. '
+    Warning.warn('Could not infer end-card duration from file. '
         'Falling back to 5s. Use --end-card-length to set an explicit value.');
   }
 

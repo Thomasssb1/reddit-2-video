@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/warning.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 
 Future<bool> checkInstall(String command) async {
   try {
     bool isWindows = Platform.isWindows;
-    var process = await Process.run(isWindows ? 'where' : 'which', [command]);
-    return process.exitCode == 0;
+    var result =
+        await Subprocess.exec(isWindows ? 'where' : 'which', [command]);
+    return result.exitCode == 0;
   } catch (e) {
     Warning.warn(
         "Warning: An error occurred while checking if '$command' is installed. Exception: $e");
@@ -17,12 +19,12 @@ Future<bool> checkInstall(String command) async {
 Future<void> installWhisper() async {
   print("Attempting to install whisper-timestamped via pip...");
   try {
-    var process = await Process.start(
+    var result = await Subprocess.exec(
       'pip',
       ['install', 'git+https://github.com/linto-ai/whisper-timestamped'],
-      mode: ProcessStartMode.inheritStdio,
+      verbose: true,
     );
-    int exitCode = await process.exitCode;
+    int exitCode = result.exitCode;
     if (exitCode != 0) {
       Warning.warn(
           "Whilst trying to install whisper-timestamped using pip something went wrong. Error code: $exitCode");
@@ -40,6 +42,13 @@ Future<void> checkDependencies() async {
   if (!ffmpegInstalled) {
     Warning.warn(
         "ffmpeg is missing. You need to have ffmpeg installed globally to generate videos. Download it here: ${Prettify.reset}https://ffmpeg.org/download.html");
+    exit(1);
+  }
+
+  bool ytDlpInstalled = await checkInstall('yt-dlp');
+  if (!ytDlpInstalled) {
+    Warning.warn(
+        "yt-dlp is missing. You need to have yt-dlp installed globally to download background videos. Download it here: ${Prettify.reset}https://github.com/yt-dlp/yt-dlp");
     exit(1);
   }
 
@@ -65,6 +74,12 @@ Future<void> runInstallCommand() async {
         "You need to have ffmpeg installed globally in order to generate videos. Download it here: ${Prettify.reset}https://ffmpeg.org/download.html");
   }
 
+  bool ytDlpInstalled = await checkInstall('yt-dlp');
+  if (!ytDlpInstalled) {
+    Warning.warn(
+        "You need to have yt-dlp installed globally in order to download background videos. Download it here: ${Prettify.reset}https://github.com/yt-dlp/yt-dlp");
+  }
+
   bool pipInstalled = await checkInstall('pip');
   if (!pipInstalled) {
     Warning.warn(
@@ -79,7 +94,7 @@ Future<void> runInstallCommand() async {
         "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
   }
 
-  if (pythonInstalled && ffmpegInstalled && pipInstalled) {
+  if (pythonInstalled && ffmpegInstalled && ytDlpInstalled && pipInstalled) {
     print("\x1b[32mAll core dependencies are installed!\x1b[0m");
   }
 }

@@ -11,6 +11,7 @@ import 'package:reddit_2_video/log/log.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'reddit/reddit_video_type.dart';
 import 'exceptions/exceptions.dart';
@@ -227,10 +228,10 @@ class RedditVideo {
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
     print(input);
 
-    final process = await Process.start("ffmpeg", input,
-        mode: ProcessStartMode.inheritStdio);
+    final result =
+        await Subprocess.exec("ffmpeg", input, verbose: command.verbose);
 
-    int code = await process.exitCode;
+    int code = result.exitCode;
 
     if (code != 0) {
       throw FFmpegCommandException(
@@ -242,8 +243,9 @@ class RedditVideo {
         "Video successfully generated: [${p.basename(input.last)}](file://${File(input.last).absolute.path})!");
 
     if (command.youtubeShort) {
-      List<File> segments =
-          await splitVideo(input.last, command.fileType.name, index);
+      List<File> segments = await splitVideo(
+          input.last, command.fileType.name, index,
+          verbose: command.verbose);
       printSuccess(
           "Video successfully split into ${segments.length} YouTube shorts:");
       for (var segment in segments) {

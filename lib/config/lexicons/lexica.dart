@@ -1,12 +1,12 @@
 import 'package:deep_pick/deep_pick.dart';
 import 'package:reddit_2_video/app_paths.dart';
-import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/config/lexicons/lexicon.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:xml/xml.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:reddit_2_video/utils/subprocess.dart';
 export 'package:reddit_2_video/config/lexicons/lexicon.dart';
 
 class Lexica extends ConfigItem {
@@ -81,10 +81,11 @@ class Lexica extends ConfigItem {
     return lexicas;
   }
 
-  static Future<void> update(
-      String configPath, List<Lexica> lexicas, ParsedCommand command) async {
-    final configFile = AppPaths.resolve('defaults/lexicons/lexemes.config.json');
-    await _update(configFile.path, lexicas, command);
+  static Future<void> update(String configPath, List<Lexica> lexicas,
+      {bool verbose = false}) async {
+    final configFile =
+        AppPaths.resolve('defaults/lexicons/lexemes.config.json');
+    await _update(configFile.path, lexicas, verbose: verbose);
   }
 
   static Future<DateTime> _getLastUpdatedFile(File config) async {
@@ -100,8 +101,8 @@ class Lexica extends ConfigItem {
     return mostRecent;
   }
 
-  static Future<void> _update(
-      String path, List<Lexica> lexicas, ParsedCommand command) async {
+  static Future<void> _update(String path, List<Lexica> lexicas,
+      {bool verbose = false}) async {
     File config = File(path);
     Future<DateTime> lastModified = _getLastUpdatedFile(config);
     Future<DateTime> lastUpdate = _getLastUpdated(path);
@@ -109,7 +110,7 @@ class Lexica extends ConfigItem {
     if (result[0].compareTo(result[1]) > 0) {
       try {
         for (Lexica lex in lexicas) {
-          await lex.upload(command);
+          await lex.upload(verbose: verbose);
         }
         _setLastUpdated(DateTime.now(), path);
       } on PollyInvalidPlsLexicon catch (e) {
@@ -200,26 +201,21 @@ class Lexica extends ConfigItem {
     return document.toXmlString();
   }
 
-  Future<void> upload(ParsedCommand command) async {
-    final process = await Process.start(
-        "aws",
-        [
-          "polly",
-          "put-lexicon",
-          "--name",
-          id,
-          "--content",
-          "file://${path.path}"
-        ],
-        workingDirectory: AppPaths.rootPath);
-    if (command.verbose) {
-      process.stderr.transform(utf8.decoder).listen((data) {
-        stdout.write(data);
-      });
-    }
+  Future<void> upload({bool verbose = false}) async {
+    final result = await Subprocess.exec(
+      "aws",
+      [
+        "polly",
+        "put-lexicon",
+        "--name",
+        id,
+        "--content",
+        "file://${path.path}"
+      ],
+      verbose: verbose,
+    );
 
-    int code = await process.exitCode;
-    if (code != 0) {
+    if (result.exitCode != 0) {
       throw PollyInvalidPlsLexicon(
           "Unable to put lexicon ${path.path}. Lexemes will not be updated.",
           path);

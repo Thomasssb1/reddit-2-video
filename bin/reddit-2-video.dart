@@ -16,11 +16,11 @@ import 'dart:io';
 void main(
   List<String> args,
 ) async {
+  await checkDependencies();
+  ParsedCommand command = ParsedCommand.parse(args);
+  AppPaths.init(isDev: command.isDev);
+  Log log = await Log.fromFile();
   try {
-    await checkDependencies();
-    ParsedCommand command = ParsedCommand.parse(args);
-    AppPaths.init(isDev: command.isDev);
-
     // Check that the dev flag is set whilst under development
     assert(command.isDev, true);
 
@@ -30,17 +30,17 @@ void main(
         if (command.video == null) {
           backgroundVideo = await BackgroundVideo.downloadVideo(
             BackgroundVideo.getDefaultVideoUrl(),
+            verbose: command.verbose,
           );
         } else {
-          backgroundVideo = BackgroundVideo(source: File(command.video!));
+          backgroundVideo = BackgroundVideo(path: command.video!);
         }
 
         // Setup config files
-        Log log = await Log.fromFile();
         List<Lexica> lexicons = Lexica.fromConfig(
-            configPath: '/defaults/lexicons/lexemes.config.json');
-        Lexica.update(
-            "/defaults/lexicons/lexemes.config.json", lexicons, command);
+            configPath: 'defaults/lexicons/lexemes.config.json');
+        Lexica.update("defaults/lexicons/lexemes.config.json", lexicons,
+            verbose: command.verbose);
         List<Voice> voices = Voices.fromFile(command);
         Voice initialVoice = Voices.find(voices, command.voice);
 
@@ -88,8 +88,6 @@ void main(
         }
         break;
       case CommandType.flush:
-        Log log = await Log.fromFile();
-
         RedditPost? post;
         if (command.post != null) {
           post = await RedditPost.fromUrl(url: command.post!);
@@ -110,5 +108,11 @@ void main(
   } on Exception catch (e) {
     stderr.writeln(e);
     exitCode = 1;
+  } finally {
+    if (command.isDev) {
+      print("Running in dev mode, not clearing temporary files.");
+    } else {
+      await log.clearTemporaryFiles();
+    }
   }
 }

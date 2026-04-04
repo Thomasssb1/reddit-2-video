@@ -16,6 +16,7 @@ import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:reddit_2_video/config/voices/voice.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 
 String formatTtsFailureMessage(
     {required int exitCode,
@@ -103,48 +104,36 @@ class Subtitles {
   Future<File> _generateTTS(
       String text, Voice voice, ParsedCommand command) async {
     print("voice: ${voice.id}, ${command.ntts}");
-    final process = await Process.start(
-        "aws",
-        [
-          "polly",
-          "synthesize-speech",
-          if (censor) ...<String>[
-            "--lexicon-names",
-            ...lexicons.map((e) => e.toString()),
-          ],
-          "--output-format",
-          "mp3",
-          "--voice-id",
-          voice.id,
-          "--text",
-          text,
-          "--engine",
-          ntts ? "neural" : "standard",
-          // TODO: add a way to toggle specific lexicons
-          ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
+    final result = await Subprocess.exec(
+      "aws",
+      [
+        "polly",
+        "synthesize-speech",
+        if (censor) ...<String>[
+          "--lexicon-names",
+          ...lexicons.map((e) => e.toString()),
         ],
-        workingDirectory: AppPaths.rootPath);
+        "--output-format",
+        "mp3",
+        "--voice-id",
+        voice.id,
+        "--text",
+        text,
+        "--engine",
+        ntts ? "neural" : "standard",
+        // TODO: add a way to toggle specific lexicons
+        ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
+      ],
+      verbose: command.verbose,
+    );
 
-    final stdoutFuture = process.stdout.transform(utf8.decoder).join();
-    final stderrFuture = process.stderr.transform(utf8.decoder).join();
+    final processStdout = result.stdout.trim();
+    final processStderr = result.stderr.trim();
 
-    int code = await process.exitCode;
-    final processStdout = (await stdoutFuture).trim();
-    final processStderr = (await stderrFuture).trim();
-
-    if (command.verbose) {
-      if (processStdout.isNotEmpty) {
-        stdout.writeln(processStdout);
-      }
-      if (processStderr.isNotEmpty) {
-        stderr.writeln(processStderr);
-      }
-    }
-
-    if (code != 0) {
+    if (result.exitCode != 0) {
       throw TTSFailedException(
           message: formatTtsFailureMessage(
-              exitCode: code,
+              exitCode: result.exitCode,
               stderrOutput: processStderr,
               stdoutOutput: processStdout),
           id: video.id,
@@ -155,7 +144,7 @@ class Subtitles {
 
   Future<SubtitleConfig> _alignSubtitles(
       Subtitle prevSubtitle, ParsedCommand command, File tts) async {
-    final process = await Process.start(
+    final result = await Subprocess.exec(
       "whisper_timestamped",
       [
         tts.absolute.path,
@@ -172,16 +161,9 @@ class Subtitles {
         "--output_dir",
         ".temp/${video.id}/config/",
       ],
-      workingDirectory: AppPaths.rootPath,
+      verbose: command.verbose,
     );
-    if (command.verbose) {
-      process.stderr.transform(utf8.decoder).listen((data) {
-        stdout.write(data);
-      });
-    }
-
-    int code = await process.exitCode;
-    if (code != 0) {
+    if (result.exitCode != 0) {
       throw TTSFailedException(
           message: "Aligning TTS to subtitles failed. Exiting.",
           id: video.id,
