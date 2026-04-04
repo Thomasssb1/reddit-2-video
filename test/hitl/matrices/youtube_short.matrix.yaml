@@ -1,0 +1,24 @@
+name: "reddit_video_youtube_short"
+mode: list
+parameters:
+  label:
+    - "youtube_short_comments_flow"
+  subreddit:
+    - "https://www.reddit.com/r/AskReddit/comments/1jpnzyl/what_screams_i_have_no_personality/"
+  type:
+    - "comments"
+  count:
+    - "8"
+  sort:
+    - "top"
+  voice:
+    - "Matthew"
+  youtube_short:
+    - "true"
+  output:
+    - ".temp/hitl/youtube_short_comments_flow.mp4"
+checklist:
+  - "Primary video renders without ffmpeg errors."
+  - "Short segmentation output files are created for YouTube Shorts."
+  - "Each segment starts/ends cleanly without abrupt audio clipping."
+  - "Subtitle readability and timing remain acceptable across split segments."

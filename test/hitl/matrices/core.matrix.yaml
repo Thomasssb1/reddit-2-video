@@ -1,0 +1,28 @@
+name: "reddit_video_core"
+mode: list
+parameters:
+  label:
+    - "post_flow_single_story"
+    - "comments_flow_with_top_comments"
+  subreddit:
+    - "https://www.reddit.com/r/TrueOffMyChest/comments/1850nn6/my_husband_is_cheating_on_me_with_our_best_friend/"
+    - "https://www.reddit.com/r/AskReddit/comments/1jpnzyl/what_screams_i_have_no_personality/"
+  type:
+    - "post"
+    - "comments"
+  count:
+    - "1"
+    - "5"
+  sort:
+    - "top"
+    - "rising"
+  voice:
+    - "Russell"
+    - "Russell"
+  output:
+    - ".temp/hitl/post_flow_single_story.mp4"
+    - ".temp/hitl/comments_flow_with_top_comments.mp4"
+checklist:
+  - "Title/body/comment subtitles stay aligned with spoken audio."
+  - "No overlapping TTS tracks, clipping, or unexpected silence."
+  - "Final render uses a 9:16 crop and expected styling."
