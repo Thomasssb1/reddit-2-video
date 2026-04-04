@@ -25,6 +25,7 @@ When working in this codebase, all AI coding assistants must adhere to the follo
 - **Command Handling:** Isolate all CLI parsing, validation, and user input strictly within `lib/command/` (e.g., `parsed_command.dart`). Do not mix UI/CLI logic with core business logic.
 - **Strongly-Typed Models:** Represent all Reddit data using the established models in `lib/reddit/` (such as `RedditPost`, `RedditComment`, or `RedditUrl`). Avoid passing unstructured JSON maps or raw strings between functions.
 - **Domain Separation:** Maintain the strict separation of concerns across existing domains: media generation logic in `lib/ffmpeg/`, subtitle generation in `lib/subtitles/`, configuration in `lib/config/`, and generic utilities in `lib/utils/`.
+- **Subprocess Execution:** Centralize subprocess execution (`ffmpeg`, `ffprobe`, `yt-dlp`, etc.) through a shared utility in `lib/utils/` so test injection is done in one place, not per-class or per-method ad-hoc parameters.
 - Write tests first or side-by-side with new implementations.
 
 ## 4. Continuous Learning (Self-Updating)

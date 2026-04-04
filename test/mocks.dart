@@ -33,3 +33,5 @@ class MockEmptyNoise extends Mock implements EmptyNoise {}
 class MockMusic extends Mock implements Music {}
 
 class MockVoices extends Mock implements Voices {}
+
+class MockProcess extends Mock implements Process {}
