@@ -1,47 +1,55 @@
 import 'dart:io';
-import 'package:test/test.dart';
-import 'package:reddit_2_video/ffmpeg/splitter.dart';
+
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import '../test_helper.dart';
+import 'package:reddit_2_video/ffmpeg/splitter.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:test/test.dart';
+
+import '../mocks.dart';
 
 void main() {
   group('FFmpeg Splitter Tests', () {
-    const String testVideoPath = 'test_output.mp4';
+    late Directory tempDir;
     late File mockVideo;
 
-    setUp(() async {
-      await createDummyVideo(testVideoPath);
-      mockVideo = File(testVideoPath);
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('splitter_test_');
+      mockVideo = File('${tempDir.path}/test_output.mp4')..createSync();
     });
 
     tearDown(() {
-      if (mockVideo.existsSync()) {
-        mockVideo.deleteSync();
-      }
-
-      // Attempt to clean up any split segments generated
-      var dir = Directory('.');
-      for (var entity in dir.listSync()) {
-        if (entity.path.contains(RegExp(r'test_output\d+\.mp4$'))) {
-          entity.deleteSync();
-        }
-      }
+      Subprocess.resetForTest();
+      tempDir.deleteSync(recursive: true);
     });
 
-    test('Throws FFmpegCommandException when splitting an invalid video',
-        () async {
-      // Overwrite with invalid content to force failure
-      mockVideo.writeAsStringSync("not a video");
+    test('Throws FFmpegCommandException when splitting fails', () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 1);
+      });
 
-      expect(
-        () async => await splitVideo(mockVideo.path, 'mp4', 0),
+      await expectLater(
+        () => splitVideo(mockVideo.path, 'mp4', 0),
         throwsA(isA<FFmpegCommandException>()
             .having((e) => e.command, 'command', isNotEmpty)),
       );
     });
 
-    test('Successfully splits a valid video (Happy Path)', () async {
-      // Since our dummy is 1s and segment_time is 55s, it will produce 1 segment
+    test('Successfully returns generated matching segments', () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        File('${tempDir.path}/test_output000.mp4').writeAsStringSync('');
+        return FakeProcess(exitCode: 0);
+      });
+
       final segments = await splitVideo(mockVideo.path, 'mp4', 0);
 
       expect(segments, isNotEmpty);
@@ -50,11 +58,20 @@ void main() {
     });
 
     test('Returns only matching segments in a deterministic order', () async {
-      File('test_output001.mp4').writeAsStringSync('');
-      File('test_output010.mp4').writeAsStringSync('');
-      File('test_output002.mp4').writeAsStringSync('');
-      File('test_output_notes.mp4').writeAsStringSync('');
-      File('other_output001.mp4').writeAsStringSync('');
+      File('${tempDir.path}/test_output001.mp4').writeAsStringSync('');
+      File('${tempDir.path}/test_output010.mp4').writeAsStringSync('');
+      File('${tempDir.path}/test_output002.mp4').writeAsStringSync('');
+      File('${tempDir.path}/test_output_notes.mp4').writeAsStringSync('');
+      File('${tempDir.path}/other_output001.mp4').writeAsStringSync('');
+
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 0);
+      });
 
       final segments = await splitVideo(mockVideo.path, 'mp4', 0);
       final fileNames =

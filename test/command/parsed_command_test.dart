@@ -1,4 +1,6 @@
 import 'package:args/args.dart';
+import 'dart:io';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
@@ -12,6 +14,18 @@ ParsedCommand _build(List<String> args) {
 }
 
 void main() {
+  late Directory tempDir;
+
+  setUp(() {
+    tempDir = Directory.systemTemp.createTempSync('parsed_command_test_');
+    AppPaths.initForTest(tempDir);
+    File('${tempDir.path}/song.mp3').createSync();
+  });
+
+  tearDown(() {
+    tempDir.deleteSync(recursive: true);
+  });
+
   group('ParsedCommand.parse', () {
     group('required arguments', () {
       test('throws ArgumentMissingException when --subreddit is absent', () {
@@ -86,6 +100,31 @@ void main() {
       test('maxLength returns null when set to false', () {
         final cmd = _build(['--max-length', 'false']);
         expect(cmd.maxLength, isNull);
+      });
+
+      test('music parses typed volume from cli', () {
+        final cmd = _build(['--music', 'song.mp3,0.25']);
+        final music = cmd.music;
+
+        expect(music, isNotNull);
+        expect(music!.volume, 0.25);
+        expect(music.path.path, contains('song.mp3'));
+      });
+
+      test('music defaults volume to 1.0 when omitted', () {
+        final cmd = _build(['--music', 'song.mp3']);
+        final music = cmd.music;
+
+        expect(music, isNotNull);
+        expect(music!.volume, 1.0);
+      });
+
+      test('music falls back to 1.0 when volume is invalid', () {
+        final cmd = _build(['--music', 'song.mp3,not-a-double']);
+        final music = cmd.music;
+
+        expect(music, isNotNull);
+        expect(music!.volume, 1.0);
       });
     });
 

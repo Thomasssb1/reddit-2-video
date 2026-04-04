@@ -235,12 +235,25 @@ class ParsedCommand extends Command {
   int get repeat => subredditIsLink ? 1 : int.parse(args!['repeat']);
   // need to figure out what to do with video
   String? get video => args!['video'];
-  Music? get music => args!['music'].length > 0
-      ? Music(
-          path: args!['music'][0],
-          volume: args!['music'].length == 2 ? args!['music'][1] : "1.0",
-        )
-      : null;
+  Music? get music {
+    if (args!['music'].length == 0) {
+      return null;
+    }
+
+    final path = args!['music'][0];
+    double volume = 1.0;
+    if (args!['music'].length == 2) {
+      final parsed = double.tryParse(args!['music'][1]);
+      if (parsed == null) {
+        Warning.warn("Volume must be a double. Defaulting to 1.0");
+      } else {
+        volume = parsed;
+      }
+    }
+
+    return Music(path: path, volume: volume);
+  }
+
   bool get horror => args!['horror'];
   String get output => args!['output'];
   FileType get fileType => FileType.called(args!['file-type'])!;
