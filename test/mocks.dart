@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:mocktail/mocktail.dart';
@@ -34,4 +36,31 @@ class MockMusic extends Mock implements Music {}
 
 class MockVoices extends Mock implements Voices {}
 
-class MockProcess extends Mock implements Process {}
+class FakeProcess implements Process {
+  final int _fakeExitCode;
+  final Stream<List<int>> _stdout;
+  final Stream<List<int>> _stderr;
+
+  FakeProcess({required int exitCode, String out = '', String err = ''})
+      : _fakeExitCode = exitCode,
+        _stdout = Stream.value(utf8.encode(out)),
+        _stderr = Stream.value(utf8.encode(err));
+
+  @override
+  Future<int> get exitCode async => _fakeExitCode;
+
+  @override
+  int get pid => 1337;
+
+  @override
+  IOSink get stdin => IOSink(StreamController<List<int>>().sink);
+
+  @override
+  Stream<List<int>> get stderr => _stderr;
+
+  @override
+  Stream<List<int>> get stdout => _stdout;
+
+  @override
+  bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => true;
+}

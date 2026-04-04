@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:mocktail/mocktail.dart';
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:test/test.dart';
 
@@ -35,8 +35,6 @@ void main() {
 
     test('uses injected start handler', () async {
       var invoked = false;
-      final processMock = MockProcess();
-      when(() => processMock.exitCode).thenAnswer((_) async => 0);
 
       Subprocess.setStartForTest((executable, arguments,
           {workingDirectory,
@@ -48,13 +46,77 @@ void main() {
         expect(executable, 'ffmpeg');
         expect(arguments, ['-version']);
         expect(mode, ProcessStartMode.inheritStdio);
-        return processMock;
+        return FakeProcess(exitCode: 0);
       });
 
       final process = await Subprocess.start('ffmpeg', ['-version'],
           mode: ProcessStartMode.inheritStdio);
       expect(invoked, isTrue);
       expect(await process.exitCode, 0);
+    });
+
+    test('exec captures stdout and stderr', () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        expect(executable, 'yt-dlp');
+        expect(arguments, ['--version']);
+        return FakeProcess(exitCode: 0, out: 'out', err: 'err');
+      });
+
+      final result = await Subprocess.exec('yt-dlp', ['--version']);
+      expect(result.exitCode, 0);
+      expect(result.stdout, 'out');
+      expect(result.stderr, 'err');
+    });
+
+    test('uses AppPaths.rootPath as default working directory when available',
+        () async {
+      final root = Directory.systemTemp.createTempSync('subprocess_test_');
+      addTearDown(() {
+        root.deleteSync(recursive: true);
+      });
+      AppPaths.initForTest(root);
+
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        expect(workingDirectory, root.path);
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await Subprocess.exec('yt-dlp', ['--version']);
+      expect(result.exitCode, 0);
+    });
+
+    test('explicit working directory overrides AppPaths.rootPath', () async {
+      final root = Directory.systemTemp.createTempSync('subprocess_test_');
+      final override = Directory.systemTemp.createTempSync('subprocess_test_');
+      addTearDown(() {
+        root.deleteSync(recursive: true);
+        override.deleteSync(recursive: true);
+      });
+      AppPaths.initForTest(root);
+
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        expect(workingDirectory, override.path);
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await Subprocess.exec('yt-dlp', ['--version'],
+          workingDirectory: override.path);
+      expect(result.exitCode, 0);
     });
   });
 }
