@@ -53,8 +53,8 @@ class RedditVideo {
       }
 
       RedditPost post = await RedditPost.fromUrl(url: command.subreddit);
-      RedditVideo video = RedditVideo.single(
-          post: post, videoType: command.type);
+      RedditVideo video =
+          RedditVideo.single(post: post, videoType: command.type);
 
       if (log.contains(video.posts.first)) {
         throw PostAlreadyGeneratedException(
@@ -109,9 +109,8 @@ class RedditVideo {
       // if the type is not multi and the user does not need to select a post
       if (command.type != RedditVideoType.multi && !command.postConfirmation) {
         // get the first post
-        RedditVideo video = RedditVideo.single(
-            post: postData.first,
-            videoType: command.type);
+        RedditVideo video =
+            RedditVideo.single(post: postData.first, videoType: command.type);
         log.temporaryAdd(video);
         return video;
       }
@@ -192,8 +191,7 @@ class RedditVideo {
       } else {
         postData = postData.sublist(0, command.commentCount);
       }
-      RedditVideo video = RedditVideo(
-          posts: postData, videoType: command.type);
+      RedditVideo video = RedditVideo(posts: postData, videoType: command.type);
       log.temporaryAdd(video);
       return video;
     } else {

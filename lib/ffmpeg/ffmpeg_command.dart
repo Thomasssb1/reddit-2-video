@@ -94,7 +94,7 @@ class FFmpegCommand {
   }
 
   String _getFilter(ParsedCommand command) {
-    return """${_concat()}${_horrorMode(command.horror)}${_addMusic()}[final_a];${_addEndCard()}${_cropVideo()},${_addSubtitles()}${_addFps(command.framerate)}""";
+    return """${_concat()}${_horrorMode(command.horror)}${_addMusic()}[final_a];${_addEndCard()}${_cropVideo()},${_addSubtitles()}${_addFps(command.framerate)}[final_v]""";
   }
 
   String _getOutput(ParsedCommand command, int index) {
@@ -104,7 +104,7 @@ class FFmpegCommand {
     String fileExtension = p.extension(output);
     if (fileExtension.isEmpty) {
       Warning.warn("No filename provided - using a default filename.");
-      output += "final";
+      output = "final";
     } else {
       if (FileType.called(fileExtension.substring(1)) != fileType) {
         Warning.warn(
@@ -125,6 +125,8 @@ class FFmpegCommand {
       ..._getFlags(command),
       "-map",
       "[final_a]",
+      "-map",
+      "[final_v]",
       "-filter_complex",
       _getFilter(command),
       _getOutput(command, index)

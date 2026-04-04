@@ -20,17 +20,7 @@ class Log {
     required File logfile,
     required HashSet<RedditId> ids,
   })  : _logfile = logfile,
-        _ids = ids {
-    ProcessSignal.sigint.watch().listen((_) async {
-      await clearTemporaryFiles();
-      exit(130);
-    });
-
-    ProcessSignal.sigterm.watch().listen((_) async {
-      await clearTemporaryFiles();
-      exit(143);
-    });
-  }
+        _ids = ids;
 
   static Future<Log> fromFile() async {
     File logfile = AppPaths.resolve('.temp/visited_log.json');

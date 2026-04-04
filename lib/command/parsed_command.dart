@@ -1,5 +1,4 @@
 import 'package:args/args.dart';
-import 'dart:io';
 import 'package:reddit_2_video/command/command_type.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
