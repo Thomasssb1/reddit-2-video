@@ -45,7 +45,6 @@ void main(
         Voice initialVoice = Voices.find(voices, command.voice);
 
         Future<RedditVideo> generateVideo(RedditVideo video, int index) async {
-          print("$index : ${video.id}");
           if (command.type == RedditVideoType.comments) {
             RedditPost post = video.posts.first;
             // TODO: add some sort of retry when there are < target comments
@@ -69,7 +68,6 @@ void main(
         for (int i = 0; i < command.repeat; i++) {
           RedditVideo video = await RedditVideo.parse(command, log);
           videos.add(video);
-          print("$i - ${video.id}");
         }
 
         List<Future<RedditVideo>> generatedVideos =
@@ -79,7 +77,6 @@ void main(
         List<RedditVideo> finalVideos = await Future.wait(generatedVideos);
 
         for (int i = 1; i <= finalVideos.length; i++) {
-          print(i);
           RedditVideo vid = finalVideos.elementAt(i - 1);
           File cutVideo = await backgroundVideo.cutVideo(
               vid.subtitles!.duration, vid, command);

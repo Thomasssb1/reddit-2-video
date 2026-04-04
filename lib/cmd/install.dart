@@ -95,6 +95,6 @@ Future<void> runInstallCommand() async {
   }
 
   if (pythonInstalled && ffmpegInstalled && ytDlpInstalled && pipInstalled) {
-    print("\x1b[32mAll core dependencies are installed!\x1b[0m");
+    printSuccess("All core dependencies are installed!");
   }
 }

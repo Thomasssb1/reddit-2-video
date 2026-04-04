@@ -102,7 +102,6 @@ class Subtitles {
 
   Future<File> _generateTTS(
       String text, Voice voice, ParsedCommand command) async {
-    print("voice: ${voice.id}, ${command.ntts}");
     final result = await Subprocess.exec(
       "aws",
       [

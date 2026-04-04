@@ -2,6 +2,21 @@ import 'dart:io';
 
 import 'package:reddit_2_video/utils/subprocess.dart';
 
+String resolveExecutable(String executable) {
+  if (File(executable).existsSync()) {
+    return executable;
+  }
+
+  for (final prefix in const ['/opt/homebrew/bin', '/usr/local/bin']) {
+    final candidate = '$prefix/$executable';
+    if (File(candidate).existsSync()) {
+      return candidate;
+    }
+  }
+
+  return executable;
+}
+
 void useRealSubprocesses() {
   Subprocess.setStartForTest((executable, arguments,
       {workingDirectory,
@@ -10,7 +25,7 @@ void useRealSubprocesses() {
       runInShell = false,
       mode = ProcessStartMode.normal}) {
     return Process.start(
-      executable,
+      resolveExecutable(executable),
       arguments,
       workingDirectory: workingDirectory,
       environment: environment,
@@ -24,7 +39,7 @@ void useRealSubprocesses() {
 Future<void> createDummyVideo(String path,
     {int seconds = 1, String size = '128x128'}) async {
   // Generate a blank video using ffmpeg for media-based tests.
-  final process = await Process.run('ffmpeg', [
+  final process = await Process.run(resolveExecutable('ffmpeg'), [
     '-f',
     'lavfi',
     '-i',
@@ -43,7 +58,7 @@ Future<void> createDummyVideo(String path,
 }
 
 Future<void> createDummyAudio(String path, {int seconds = 1}) async {
-  final process = await Process.run('ffmpeg', [
+  final process = await Process.run(resolveExecutable('ffmpeg'), [
     '-f',
     'lavfi',
     '-i',

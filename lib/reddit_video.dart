@@ -184,8 +184,6 @@ class RedditVideo {
               message: "No posts have been selected, try again.");
         }
       }
-      // commentCount is also responsible for the number of posts selected
-      print("post length: ${postData.length}");
       if (postData.length < command.commentCount) {
         Warning.warn(
             "Not enough posts selected as specified by the count option (${command.commentCount}). Generating video with only the posts that you have selected.");
@@ -226,7 +224,6 @@ class RedditVideo {
     );
 
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
-    print(input);
 
     final result =
         await Subprocess.exec("ffmpeg", input, verbose: command.verbose);
