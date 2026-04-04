@@ -3,10 +3,10 @@ import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
 import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
 import 'package:reddit_2_video/app_paths.dart';
 import 'dart:io';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'dart:math';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/reddit_video.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 
 enum VideoType { muxed, video }
 
@@ -15,12 +15,15 @@ class BackgroundVideo {
   Uri? url;
   int position = 0;
 
-  BackgroundVideo({required this.source, this.url});
-
-  BackgroundVideo.fromPath({
+  BackgroundVideo({
     required String path,
-    Uri? url,
-  }) : this(source: File(path), url: url);
+    this.url,
+  }) : source = AppPaths.resolve(path);
+
+  BackgroundVideo.fromFile({
+    required this.source,
+    this.url,
+  });
 
   static File _getFileFromUrl(Uri url) {
     String vId = url.queryParameters["v"]!;
@@ -48,7 +51,7 @@ class BackgroundVideo {
   static bool _validShareUrl(Uri url) {
     Uri shareValid = Uri.https("youtu.be", "0");
     return (url.authority == shareValid.authority &&
-        VideoId.validateVideoId(url.pathSegments.first));
+        _validVideoId(url.pathSegments.first));
   }
 
   static bool _validDefaultUrl(Uri url) {
@@ -56,8 +59,11 @@ class BackgroundVideo {
     return (url.authority == defaultValid.authority &&
         url.path == defaultValid.path &&
         url.queryParameters.containsKey("v") &&
-        VideoId.validateVideoId(url.queryParameters["v"]!));
+        _validVideoId(url.queryParameters["v"]!));
   }
+
+  static bool _validVideoId(String id) =>
+      RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(id);
 
   static bool _validYoutubeUrl(Uri url) {
     // First check default uri validity, then share validity
@@ -65,7 +71,7 @@ class BackgroundVideo {
   }
 
   static Future<BackgroundVideo> downloadVideo(Uri url,
-      {VideoType videoType = VideoType.video}) async {
+      {VideoType videoType = VideoType.video, bool verbose = false}) async {
     if (!_validYoutubeUrl(url)) {
       throw InvalidVideoUrl("Invalid youtube url", url);
     }
@@ -73,77 +79,66 @@ class BackgroundVideo {
     url = normalizeYoutubeUri(url);
     File path = _getFileFromUrl(url);
 
+    // Download the video if not already downloaded
     if (!_videoExists(url)) {
-      String? videoID = url.queryParameters['v'];
-      if (videoID == null) {
-        throw InvalidVideoUrl("Invalid video url", url);
-      }
-      YoutubeExplode yt = YoutubeExplode();
-      late IOSink? fileStream;
+      path.parent.createSync(recursive: true);
+      final format = _ytDlpFormatSelector(videoType);
+      final args = [
+        '--no-playlist',
+        '--no-part',
+        '-f',
+        format,
+        '-o',
+        path.path,
+        url.toString(),
+      ];
+
       try {
-        StreamManifest manifest = await yt.videos.streams.getManifest(videoID);
-        final VideoStreamInfo chosenStream =
-            _selectMp4Stream(manifest, preferredType: videoType);
-        var stream = yt.videos.streamsClient.get(chosenStream);
-
-        await path.create().then((File file) async {
-          fileStream = file.openWrite();
-          await stream.pipe(fileStream!).whenComplete(() => print(
-              "\rBackground video successfully downloaded. You will not have to redownload the video again."));
-        });
-
-        await fileStream!.flush();
-        await fileStream!.close();
-      } on StateError catch (e) {
+        final result = await Subprocess.exec(
+          'yt-dlp',
+          args,
+          verbose: verbose,
+        );
+        if (result.exitCode != 0) {
+          final stderrOutput = result.stderr.trim();
+          final details = stderrOutput.isNotEmpty ? ' $stderrOutput' : '';
+          throw VideoDownloadFailedException(
+              message:
+                  "yt-dlp failed with exit code ${result.exitCode}.$details",
+              url: url);
+        }
+      } on ProcessException catch (e) {
         throw VideoDownloadFailedException(message: e.message, url: url);
       } catch (e) {
         throw VideoDownloadFailedException(
             message: "Error downloading video: $e", url: url);
-      } finally {
-        yt.close();
       }
-      return BackgroundVideo(source: path, url: url);
-    } else {
-      return BackgroundVideo(source: path, url: url);
+
+      if (!path.existsSync()) {
+        throw VideoDownloadFailedException(
+            message: "yt-dlp finished but no output file was created.",
+            url: url);
+      }
     }
+    return BackgroundVideo.fromFile(source: path, url: url);
   }
 
-  static VideoStreamInfo _selectMp4Stream(StreamManifest manifest,
-      {required VideoType preferredType}) {
-    final preferred = preferredType == VideoType.video
-        ? manifest.videoOnly.sortByVideoQuality()
-        : manifest.muxed.sortByVideoQuality();
-    final secondary = preferredType == VideoType.video
-        ? manifest.muxed.sortByVideoQuality()
-        : manifest.videoOnly.sortByVideoQuality();
+  static String _ytDlpFormatSelector(VideoType videoType) =>
+      videoType == VideoType.video
+          ? 'bestvideo[ext=mp4]/best[ext=mp4]'
+          : 'best[ext=mp4]/best';
 
-    for (final stream in preferred) {
-      if (stream.container == StreamContainer.mp4) {
-        return stream;
-      }
-    }
-
-    for (final stream in secondary) {
-      if (stream.container == StreamContainer.mp4) {
-        return stream;
-      }
-    }
-
-    throw StateError("No mp4 streams available. Unable to download video.");
-  }
-
-  (int, int) _getRandomTime(Duration duration) {
+  (double, double) _getRandomTime(Duration duration) {
     final random = Random();
-    int newTime(startTime, maxTime) => 0 + random.nextInt(maxTime);
 
-    // temporarily store the video length as a fixed value
-    int videoLength = Duration(seconds: 4813).inMilliseconds;
+    double videoLengthSec = 4813.0;
+    double durationSec = duration.inMilliseconds / 1000.0;
+    double maxTimeSec = videoLengthSec - durationSec;
 
-    int maxTime = videoLength - duration.inMilliseconds;
+    if (maxTimeSec < 0) maxTimeSec = 0;
+    double startSec = random.nextDouble() * maxTimeSec;
 
-    int start = newTime(0, maxTime);
-
-    return (start, start + duration.inMilliseconds);
+    return (startSec, startSec + durationSec);
   }
 
   Future<File> cutVideo(
@@ -153,25 +148,30 @@ class BackgroundVideo {
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
 
-    final process = await Process.start(
-        'ffmpeg',
-        [
-          '-ss',
-          '${startTime}ms',
-          '-to',
-          '${endTime}ms',
-          '-y',
-          '-nostdin',
-          '-i',
-          source.path,
-          '-c:v',
-          'copy',
-          '-an',
-          if (!command.verbose) ...['-loglevel', 'quiet'],
-          '.temp/${video.id}/video.mp4'
-        ],
-        workingDirectory: AppPaths.rootPath);
-    int code = await process.exitCode;
+    final ffmpegCommand = [
+      '-ss',
+      startTime.toStringAsFixed(3),
+      '-y',
+      '-nostdin',
+      '-i',
+      source.path,
+      '-t',
+      (endTime - startTime).toStringAsFixed(3),
+      '-c:v',
+      'libx264',
+      '-preset',
+      'ultrafast',
+      '-an',
+      if (!command.verbose) ...['-loglevel', 'quiet'],
+      '.temp/${video.id}/video.mp4'
+    ];
+
+    final result = await Subprocess.exec(
+      'ffmpeg',
+      ffmpegCommand,
+      verbose: command.verbose,
+    );
+    int code = result.exitCode;
 
     if (code != 0) {
       throw BackgroundVideoCuttingException(

@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/end_card.dart';
+import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:test/test.dart';
 import 'package:mocktail/mocktail.dart';
 import '../mocks.dart';
@@ -14,14 +17,18 @@ void main() {
   late RedditVideo video;
   late ParsedCommand command;
   late File file;
+  late Directory tempDir;
   Uri testVideoUrl =
       Uri.https("www.youtube.com", "watch", {"v": "tCDvOQI3pco"});
 
   setUp(() {
+    tempDir = Directory.systemTemp.createTempSync('background_video_test_');
+    AppPaths.initForTest(tempDir);
     backgroundVideo = MockBackgroundVideo();
     video = MockRedditVideo();
     command = MockParsedCommand();
     file = MockFile();
+    when(() => command.verbose).thenReturn(false);
   });
 
   group("URI normalization", () {
@@ -36,8 +43,7 @@ void main() {
     });
 
     test("keeps default youtube watch url unchanged", () {
-      final input =
-          Uri.parse("https://www.youtube.com/watch?v=tCDvOQI3pco");
+      final input = Uri.parse("https://www.youtube.com/watch?v=tCDvOQI3pco");
 
       final normalized = BackgroundVideo.normalizeYoutubeUri(input);
 
@@ -51,6 +57,13 @@ void main() {
         () => BackgroundVideo.normalizeYoutubeUri(input),
         throwsA(isA<InvalidVideoUrl>()),
       );
+    });
+  });
+
+  group("Constructor path resolution", () {
+    test("resolves source path using AppPaths", () {
+      final bg = BackgroundVideo(path: 'defaults/local.mp4');
+      expect(bg.source.path, AppPaths.resolve('defaults/local.mp4').path);
     });
   });
 
@@ -83,6 +96,106 @@ void main() {
       expect(result.path, file.path);
     });
   });
+
+  group("Download video with yt-dlp", () {
+    test("downloads using process start when verbose is false", () async {
+      String? executable;
+      List<String>? arguments;
+      final outputFile = AppPaths.resolve('defaults/tCDvOQI3pco.mp4');
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        executable = exec;
+        arguments = args;
+        expect(mode, ProcessStartMode.normal);
+        outputFile.createSync(recursive: true);
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await BackgroundVideo.downloadVideo(
+        testVideoUrl,
+        verbose: command.verbose,
+      );
+
+      expect(executable, 'yt-dlp');
+      expect(arguments, isNotNull);
+      expect(arguments, contains('-f'));
+      expect(arguments, contains('bestvideo[ext=mp4]/best[ext=mp4]'));
+      expect(arguments, contains(outputFile.path));
+      expect(result.source.path, outputFile.path);
+    });
+
+    test("uses process start when verbose is true", () async {
+      String? executable;
+      List<String>? arguments;
+      final outputFile = AppPaths.resolve('defaults/tCDvOQI3pco.mp4');
+      when(() => command.verbose).thenReturn(true);
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        executable = exec;
+        arguments = args;
+        outputFile.createSync(recursive: true);
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await BackgroundVideo.downloadVideo(
+        testVideoUrl,
+        verbose: command.verbose,
+      );
+
+      expect(executable, 'yt-dlp');
+      expect(arguments, isNotNull);
+      expect(arguments, contains('bestvideo[ext=mp4]/best[ext=mp4]'));
+      expect(result.source.path, outputFile.path);
+    });
+
+    test("throws when yt-dlp exits with a non-zero code", () async {
+      Subprocess.setStartForTest((_, __,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 1, err: 'boom');
+      });
+      expect(
+        () => BackgroundVideo.downloadVideo(
+          testVideoUrl,
+        ),
+        throwsA(isA<VideoDownloadFailedException>()),
+      );
+    });
+
+    test("uses muxed format selector when muxed type requested", () async {
+      List<String>? arguments;
+      final outputFile = AppPaths.resolve('defaults/tCDvOQI3pco.mp4');
+      Subprocess.setStartForTest((_, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        arguments = args;
+        outputFile.createSync(recursive: true);
+        return FakeProcess(exitCode: 0);
+      });
+
+      await BackgroundVideo.downloadVideo(
+        testVideoUrl,
+        videoType: VideoType.muxed,
+        verbose: command.verbose,
+      );
+
+      expect(arguments, contains('best[ext=mp4]/best'));
+    });
+  });
   /*
   Fails on github actions -- need to investigate
   test("Downloading background video from source url", () async {
@@ -92,10 +205,7 @@ void main() {
   });*/
 
   tearDown(() async {
-    File file = File(
-        "${Directory.current.path}/defaults/${testVideoUrl.queryParameters['v']}.mp4");
-    if (file.existsSync()) {
-      await file.delete();
-    }
+    Subprocess.resetForTest();
+    tempDir.deleteSync(recursive: true);
   });
 }
