@@ -1,11 +1,17 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:mocktail/mocktail.dart';
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/config/text_color.dart';
+import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
+import 'package:reddit_2_video/subtitles/subtitle.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
+import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:test/test.dart';
 
@@ -28,6 +34,7 @@ void main() {
     when(() => command.type).thenReturn(type);
     when(() => command.ntts).thenReturn(true);
     when(() => command.censor).thenReturn(false);
+    when(() => command.verbose).thenReturn(false);
     when(() => command.delay).thenReturn(Duration(seconds: 1));
     when(() => command.alternate)
         .thenReturn(Alternate(tts: false, color: false));
@@ -39,7 +46,61 @@ void main() {
   setUp(() {
     command = MockParsedCommand();
     _stubCommand(command, type: RedditVideoType.comments);
+    TextColor.reset();
+    Subtitle.setDurationReaderForTest((file) => const Duration(seconds: 1));
   });
+
+  tearDown(() {
+    Subprocess.resetForTest();
+    Subtitle.resetForTest();
+    TextColor.reset();
+  });
+
+  void _stubTtsAndAlignmentProcesses(Directory root,
+      {int ttsExitCode = 0, int alignExitCode = 0, List<String>? seenTexts}) {
+    Subprocess.setStartForTest((executable, arguments,
+        {workingDirectory,
+        environment,
+        includeParentEnvironment = true,
+        runInShell = false,
+        mode = ProcessStartMode.normal}) async {
+      if (executable == 'aws') {
+        final outPath = arguments.last;
+        seenTexts?.add(arguments[arguments.indexOf('--text') + 1]);
+        File(outPath).createSync(recursive: true);
+        return FakeProcess(
+          exitCode: ttsExitCode,
+          out: ttsExitCode == 0 ? 'ok' : '',
+          err: ttsExitCode == 0 ? '' : 'aws failed',
+        );
+      }
+
+      if (executable == 'whisper_timestamped') {
+        final ttsPath = arguments.first;
+        final outputDir = arguments[arguments.indexOf('--output_dir') + 1];
+        final fileName = '${ttsPath.split('/').last}.words.json';
+        final configFile = File('${root.path}/$outputDir/$fileName');
+        configFile.createSync(recursive: true);
+        configFile.writeAsStringSync(jsonEncode({
+          'segments': [
+            {
+              'id': 1,
+              'words': [
+                {'text': 'hello', 'start': 0.0, 'end': 0.5},
+                {'text': 'world', 'start': 0.5, 'end': 1.0},
+              ]
+            }
+          ]
+        }));
+        return FakeProcess(
+          exitCode: alignExitCode,
+          err: alignExitCode == 0 ? '' : 'align failed',
+        );
+      }
+
+      return FakeProcess(exitCode: 0);
+    });
+  }
 
   group('Subtitles', () {
     group('constructor', () {
@@ -158,6 +219,178 @@ void main() {
 
         expect(subtitles.duration, Duration(seconds: 4));
       });
+
+      test('generates subtitles, ass output, and tts inputs on success',
+          () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+        _stubTtsAndAlignmentProcesses(tempDir);
+
+        final voice = Voice(id: 'Matthew', neural: true, standard: true);
+        final voices = MockVoices();
+        when(() => voices.current).thenReturn(voice);
+        when(() => voices.next()).thenReturn(null);
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('hello world');
+        when(() => post.body).thenReturn('');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+
+        await subtitles.parse(command);
+
+        expect(subtitles.duration, const Duration(seconds: 1));
+        expect(subtitles.getTTSFilesAsInput(), hasLength(2));
+        expect(subtitles.assFile.readAsStringSync(), contains('Dialogue: 0,'));
+      });
+
+      test('splits oversized text into multiple TTS requests', () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+        final seenTexts = <String>[];
+        _stubTtsAndAlignmentProcesses(tempDir, seenTexts: seenTexts);
+
+        final voice = Voice(id: 'Matthew', neural: true, standard: true);
+        final voices = MockVoices();
+        when(() => voices.current).thenReturn(voice);
+        when(() => voices.next()).thenReturn(null);
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('${'a' * 3001}.${'b' * 3001}.');
+        when(() => post.body).thenReturn('');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+
+        await subtitles.parse(command);
+
+        expect(seenTexts.length, greaterThan(1));
+      });
+
+      test('throws when TTS generation fails', () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+        _stubTtsAndAlignmentProcesses(tempDir, ttsExitCode: 1);
+
+        final voice = Voice(id: 'Matthew', neural: true, standard: true);
+        final voices = MockVoices();
+        when(() => voices.current).thenReturn(voice);
+        when(() => voices.next()).thenReturn(null);
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('hello world');
+        when(() => post.body).thenReturn('');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+
+        await expectLater(
+          () => subtitles.parse(command),
+          throwsA(isA<TTSFailedException>()),
+        );
+      });
+
+      test('throws when alignment fails', () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+        _stubTtsAndAlignmentProcesses(tempDir, alignExitCode: 1);
+
+        final voice = Voice(id: 'Matthew', neural: true, standard: true);
+        final voices = MockVoices();
+        when(() => voices.current).thenReturn(voice);
+        when(() => voices.next()).thenReturn(null);
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('hello world');
+        when(() => post.body).thenReturn('');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+
+        await expectLater(
+          () => subtitles.parse(command),
+          throwsA(isA<TTSFailedException>()),
+        );
+      });
+
+      test('alternates voice and colour when configured', () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+        _stubTtsAndAlignmentProcesses(tempDir);
+        when(() => command.alternate)
+            .thenReturn(const Alternate(tts: true, color: true));
+
+        final voice = Voice(id: 'Matthew', neural: true, standard: true);
+        final voices = MockVoices();
+        when(() => voices.current).thenReturn(voice);
+        when(() => voices.next()).thenReturn(null);
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('hello world');
+        when(() => post.body).thenReturn('body text');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+
+        final initialColor = TextColor.current;
+        await subtitles.parse(command);
+        final finalColor = TextColor.current;
+
+        verify(() => voices.next()).called(2);
+        expect(initialColor, SubstationAlphaSubtitleColor('#FFFFFF'));
+        expect(finalColor, SubstationAlphaSubtitleColor('#FF0000'));
+        final assOutput = subtitles.assFile.readAsStringSync();
+        expect(
+          assOutput,
+          contains('\\c&${SubstationAlphaSubtitleColor('#DCF5F5')}'),
+        );
+      });
     });
 
     group('maxLength via ParsedCommand', () {
@@ -185,6 +418,40 @@ void main() {
         final mockSubtitles = MockSubtitles();
         when(() => mockSubtitles.getTTSStream(null)).thenReturn([]);
         expect(mockSubtitles.getTTSStream(null), isEmpty);
+      });
+
+      test('returns expected stream order after parse', () async {
+        final tempDir = _initSubtitlesTestRoot();
+        addTearDown(() => tempDir.deleteSync(recursive: true));
+        _stubTtsAndAlignmentProcesses(tempDir);
+
+        final voice = Voice(id: 'Matthew', neural: true, standard: true);
+        final voices = MockVoices();
+        when(() => voices.current).thenReturn(voice);
+        when(() => voices.next()).thenReturn(null);
+
+        final post = MockRedditPost();
+        when(() => post.title).thenReturn('hello world');
+        when(() => post.body).thenReturn('');
+        when(() => post.comments).thenReturn([]);
+
+        final video = MockRedditVideo();
+        when(() => video.posts).thenReturn([post]);
+        when(() => video.id).thenReturn('test');
+
+        final subtitles = Subtitles(
+          video: video,
+          lexicons: const [],
+          voices: voices,
+          command: command,
+        );
+        subtitles.position = 3;
+
+        await subtitles.parse(command);
+
+        final noise = MockEmptyNoise();
+        when(() => noise.position).thenReturn(2);
+        expect(subtitles.getTTSStream(noise), ['[3:a]']);
       });
     });
   });
