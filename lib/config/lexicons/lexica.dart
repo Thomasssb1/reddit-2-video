@@ -228,10 +228,18 @@ class Lexica extends ConfigItem {
   @override
   bool operator ==(Object other) {
     if (other is Lexica) {
+      bool sameLexicons = other.lexicons.length == lexicons.length;
+      if (sameLexicons) {
+        for (int i = 0; i < lexicons.length; i++) {
+          if (other.lexicons[i] != lexicons[i]) {
+            sameLexicons = false;
+            break;
+          }
+        }
+      }
       if (other.languageCode == languageCode &&
           other.xmlVersion == xmlVersion &&
-          other.lexicons.length == lexicons.length &&
-          other.lexicons == lexicons) {
+          sameLexicons) {
         return true;
       }
     }

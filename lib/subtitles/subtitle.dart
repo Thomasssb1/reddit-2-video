@@ -5,6 +5,9 @@ import 'package:reddit_2_video/subtitles/subtitle_line_data.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 
 class Subtitle {
+  static Duration Function(File file) _durationReader =
+      (file) => MP3Processor.fromFile(file).duration;
+
   final int maxCharacterCount = 30;
 
   final String text;
@@ -68,7 +71,7 @@ class Subtitle {
 
       String end = _getNewTime(
           lineData[i].isFinalWord && lineData[i].isFinalSegment(segmentCount)
-              ? duration
+              ? duration + prevDuration
               : lineData[i].end + prevDuration);
 
       List<SubtitleLineData> words = lineData.sublist(0, i + 1);
@@ -84,7 +87,15 @@ class Subtitle {
     await sink.close();
   }
 
-  Duration get duration => MP3Processor.fromFile(config.tts).duration;
+  Duration get duration => _durationReader(config.tts);
+
+  static void setDurationReaderForTest(Duration Function(File file) reader) {
+    _durationReader = reader;
+  }
+
+  static void resetForTest() {
+    _durationReader = (file) => MP3Processor.fromFile(file).duration;
+  }
 
   void addHighlight(SubtitleLineData lineData) {
     lineData.text = "{\\c&$highlightColour}${lineData.text}";

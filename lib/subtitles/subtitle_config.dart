@@ -10,7 +10,9 @@ class SubtitleConfig {
     required File configFile,
   }) {
     final json = jsonDecode(configFile.readAsStringSync());
-    segments = json['segments'];
+    segments = (json['segments'] as List<dynamic>)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
   }
 
   SubtitleConfig.none() : tts = File('') {

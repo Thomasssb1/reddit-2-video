@@ -4,6 +4,7 @@ import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/end_card.dart';
+import 'package:reddit_2_video/exceptions/background_video_cutting_exception.dart';
 import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
@@ -58,10 +59,31 @@ void main() {
         throwsA(isA<InvalidVideoUrl>()),
       );
     });
+
+    test("accepts share urls through download path", () async {
+      final shareUrl = Uri.parse("https://youtu.be/tCDvOQI3pco");
+      final outputFile = AppPaths.resolve('defaults/tCDvOQI3pco.mp4');
+
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        outputFile.createSync(recursive: true);
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await BackgroundVideo.downloadVideo(shareUrl);
+      expect(
+          result.url.toString(), 'https://www.youtube.com/watch?v=tCDvOQI3pco');
+      expect(result.source.path, outputFile.path);
+    });
   });
 
   group("Constructor path resolution", () {
     test("resolves source path using AppPaths", () {
+      AppPaths.resolve('defaults/local.mp4').createSync(recursive: true);
       final bg = BackgroundVideo(path: 'defaults/local.mp4');
       expect(bg.source.path, AppPaths.resolve('defaults/local.mp4').path);
     });
@@ -173,6 +195,59 @@ void main() {
       );
     });
 
+    test("skips download when file already exists", () async {
+      final outputFile = AppPaths.resolve('defaults/tCDvOQI3pco.mp4');
+      outputFile.createSync(recursive: true);
+      var called = false;
+
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        called = true;
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await BackgroundVideo.downloadVideo(testVideoUrl);
+
+      expect(called, isFalse);
+      expect(result.source.path, outputFile.path);
+    });
+
+    test("throws when yt-dlp process start fails", () async {
+      Subprocess.setStartForTest((_, __,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        throw ProcessException('yt-dlp', [], 'missing');
+      });
+
+      await expectLater(
+        () => BackgroundVideo.downloadVideo(testVideoUrl),
+        throwsA(isA<VideoDownloadFailedException>()),
+      );
+    });
+
+    test("throws when yt-dlp succeeds but no output file is created", () async {
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 0);
+      });
+
+      await expectLater(
+        () => BackgroundVideo.downloadVideo(testVideoUrl),
+        throwsA(isA<VideoDownloadFailedException>()),
+      );
+    });
+
     test("uses muxed format selector when muxed type requested", () async {
       List<String>? arguments;
       final outputFile = AppPaths.resolve('defaults/tCDvOQI3pco.mp4');
@@ -194,6 +269,68 @@ void main() {
       );
 
       expect(arguments, contains('best[ext=mp4]/best'));
+    });
+  });
+
+  group('cutVideo', () {
+    test('returns cut video path on success', () async {
+      final sourceFile = AppPaths.resolve('defaults/source.mp4');
+      sourceFile.createSync(recursive: true);
+      final backgroundVideo = BackgroundVideo.fromFile(source: sourceFile);
+      final redditVideo = MockRedditVideo();
+      when(() => redditVideo.id).thenReturn('video_id');
+      when(() => command.endCard).thenAnswer((_) async => null);
+      List<String>? capturedArgs;
+
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        capturedArgs = args;
+        return FakeProcess(exitCode: 0);
+      });
+
+      final result = await backgroundVideo.cutVideo(
+        Duration(seconds: 10),
+        redditVideo,
+        command,
+      );
+
+      expect(result.path, '.temp/video_id/video.mp4');
+      expect(capturedArgs, isNotNull);
+      expect(capturedArgs,
+          containsAll(['-i', sourceFile.path, '-c:v', 'libx264']));
+      expect(double.parse(capturedArgs![1]), greaterThanOrEqualTo(0));
+      expect(double.parse(capturedArgs![7]), greaterThan(0));
+    });
+
+    test('throws when ffmpeg fails', () async {
+      final sourceFile = AppPaths.resolve('defaults/source.mp4');
+      sourceFile.createSync(recursive: true);
+      final backgroundVideo = BackgroundVideo.fromFile(source: sourceFile);
+      final redditVideo = MockRedditVideo();
+      when(() => redditVideo.id).thenReturn('video_id');
+      when(() => command.endCard).thenAnswer((_) async => null);
+
+      Subprocess.setStartForTest((exec, args,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 1);
+      });
+
+      await expectLater(
+        () => backgroundVideo.cutVideo(
+          Duration(seconds: 10),
+          redditVideo,
+          command,
+        ),
+        throwsA(isA<BackgroundVideoCuttingException>()),
+      );
     });
   });
   /*

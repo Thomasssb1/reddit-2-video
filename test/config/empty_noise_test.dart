@@ -9,6 +9,10 @@ void main() {
     AppPaths.initForTest(Directory.current);
   });
 
+  tearDown(() {
+    EmptyNoise.resetForTest();
+  });
+
   test("Check empty noise file exists", () {
     EmptyNoise emptyNoise = EmptyNoise();
     expect(emptyNoise.path.existsSync(), true);
@@ -23,5 +27,13 @@ void main() {
         (emptyNoise.duration - expectedDuration).abs();
 
     expect(calculatedDuration <= tolerance, true);
+  });
+
+  test("Check mocked length of empty noise file", () {
+    EmptyNoise.setDurationReaderForTest((file) => Duration(seconds: 2));
+
+    EmptyNoise emptyNoise = EmptyNoise();
+
+    expect(emptyNoise.duration, Duration(seconds: 2));
   });
 }

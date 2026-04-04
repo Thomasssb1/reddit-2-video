@@ -4,6 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/exceptions/reddit_api_exception.dart';
 
 class RedditHttpRetry {
+  static Future<http.Response> Function(Uri url) _get = http.get;
+  static Future<void> Function(Duration duration) _waitForRetry = waitForRetry;
+  static Future<void> Function(Duration duration) _delay = Future.delayed;
+
   static Future<void> waitForRetry(Duration duration) async {
     print(
         "The Reddit API requires ${duration.inSeconds}s in order to continue. Wait until available? ");
@@ -21,9 +25,7 @@ class RedditHttpRetry {
   static Future<http.Response> retryHttp(Uri url, {int maxRetries = 5}) async {
     int retryCount = 0;
     while (retryCount < maxRetries) {
-      print(url);
-      http.Response response = await http.get(url);
-      print(response.statusCode);
+      http.Response response = await _get(url);
       if (response.statusCode == 200) {
         return response;
       } else if (response.statusCode == 429) {
@@ -33,12 +35,13 @@ class RedditHttpRetry {
             seconds:
                 int.tryParse(response.headers['x-ratelimit-reset'] ?? '') ?? 0);
         if (remainingRequests == 0 && resets > Duration.zero) {
-          waitForRetry(resets);
+          await _waitForRetry(resets);
         }
 
         num waitTime = int.tryParse(response.headers['retry-after'] ?? '') ??
             pow(2, retryCount);
-        await Future.delayed(Duration(seconds: waitTime.ceil()));
+        await _delay(Duration(seconds: waitTime.ceil()));
+        retryCount++;
       } else {
         throw RedditApiException(
             message: "Something went wrong when trying to find a new post.",
@@ -49,5 +52,25 @@ class RedditHttpRetry {
         message:
             "Maximum retries reached. Posts cannot be requested, please wait before trying again.",
         statusCode: 429);
+  }
+
+  static void setGetForTest(Future<http.Response> Function(Uri url) handler) {
+    _get = handler;
+  }
+
+  static void setWaitForRetryForTest(
+      Future<void> Function(Duration duration) handler) {
+    _waitForRetry = handler;
+  }
+
+  static void setDelayForTest(
+      Future<void> Function(Duration duration) handler) {
+    _delay = handler;
+  }
+
+  static void resetForTest() {
+    _get = http.get;
+    _waitForRetry = waitForRetry;
+    _delay = Future.delayed;
   }
 }

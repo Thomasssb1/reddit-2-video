@@ -108,8 +108,7 @@ class FFmpegCommand {
     } else {
       if (FileType.called(fileExtension.substring(1)) != fileType) {
         Warning.warn(
-            "File extension of output does not match requested the --file-type option. Defaulting to the value of the --file-type option.");
-        fileType = FileType.called(fileExtension.substring(1))!;
+            "File extension of output does not match requested the --file-type option. Using the value of the --file-type option.");
       }
       output = p.withoutExtension(output);
     }

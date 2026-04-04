@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:test/test.dart';
-import '../test_helper.dart';
+import '../mocks.dart';
 
 void main() {
   late Directory tempDir;
@@ -15,6 +16,7 @@ void main() {
   });
 
   tearDown(() {
+    Subprocess.resetForTest();
     tempDir.deleteSync(recursive: true);
   });
 
@@ -54,7 +56,19 @@ void main() {
   test("Warns when overriding inferred duration for video and uses override",
       () async {
     final videoFile = File('${tempDir.path}/clip.mp4');
-    await createDummyVideo(videoFile.path, seconds: 2);
+    videoFile.createSync();
+
+    Subprocess.setStartForTest((executable, arguments,
+        {workingDirectory,
+        environment,
+        includeParentEnvironment = true,
+        runInShell = false,
+        mode = ProcessStartMode.normal}) async {
+      return FakeProcess(
+        exitCode: 0,
+        out: '{"format":{"duration":"2.0"}}',
+      );
+    });
 
     await expectLater(
       () async {
@@ -72,10 +86,58 @@ void main() {
   test("Infers duration from a video/gif file when no override is provided",
       () async {
     final videoFile = File('${tempDir.path}/clip.mp4');
-    await createDummyVideo(videoFile.path, seconds: 2);
+    videoFile.createSync();
+
+    Subprocess.setStartForTest((executable, arguments,
+        {workingDirectory,
+        environment,
+        includeParentEnvironment = true,
+        runInShell = false,
+        mode = ProcessStartMode.normal}) async {
+      return FakeProcess(
+        exitCode: 0,
+        out: '{"format":{"duration":"2.0"}}',
+      );
+    });
 
     final result = await EndCard.create(path: "clip.mp4");
 
     expect(result.duration, Duration(seconds: 2));
+  });
+
+  test("Falls back to 5 seconds when probe fails", () async {
+    final videoFile = File('${tempDir.path}/clip.mp4');
+    videoFile.createSync();
+
+    Subprocess.setStartForTest((executable, arguments,
+        {workingDirectory,
+        environment,
+        includeParentEnvironment = true,
+        runInShell = false,
+        mode = ProcessStartMode.normal}) async {
+      return FakeProcess(exitCode: 1, err: 'ffprobe failed');
+    });
+
+    final result = await EndCard.create(path: "clip.mp4");
+
+    expect(result.duration, const Duration(seconds: 5));
+  });
+
+  test("Falls back to 5 seconds when probe output is invalid", () async {
+    final videoFile = File('${tempDir.path}/clip.mp4');
+    videoFile.createSync();
+
+    Subprocess.setStartForTest((executable, arguments,
+        {workingDirectory,
+        environment,
+        includeParentEnvironment = true,
+        runInShell = false,
+        mode = ProcessStartMode.normal}) async {
+      return FakeProcess(exitCode: 0, out: '{not json}');
+    });
+
+    final result = await EndCard.create(path: "clip.mp4");
+
+    expect(result.duration, const Duration(seconds: 5));
   });
 }

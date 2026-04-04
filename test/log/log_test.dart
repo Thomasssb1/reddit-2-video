@@ -120,4 +120,34 @@ void main() {
       expect(visited.any((e) => e['post_id'] == 'xyz999'), isTrue);
     });
   });
+
+  group('temporaryAdd / clearTemporaryFiles', () {
+    test('temporaryAdd makes contains return true before permanent add',
+        () async {
+      final log = await Log.fromFile();
+      final video = MockRedditVideo();
+      final post = MockRedditPost();
+      when(() => post.redditId).thenReturn(RedditId('temp123', 'AskReddit'));
+      when(() => video.posts).thenReturn([post]);
+
+      log.temporaryAdd(video);
+
+      expect(log.contains(post), isTrue);
+    });
+
+    test('clearTemporaryFiles removes non-protected temp entries', () async {
+      final log = await Log.fromFile();
+      final extraFile = AppPaths.resolve('.temp/temp.txt');
+      extraFile.writeAsStringSync('x');
+      final extraDir = AppPaths.resolveDir('.temp/temp_dir');
+      extraDir.createSync(recursive: true);
+      File('${extraDir.path}/a.txt').writeAsStringSync('x');
+
+      await log.clearTemporaryFiles();
+
+      expect(AppPaths.resolve('.temp/visited_log.json').existsSync(), isTrue);
+      expect(extraFile.existsSync(), isFalse);
+      expect(extraDir.existsSync(), isFalse);
+    });
+  });
 }

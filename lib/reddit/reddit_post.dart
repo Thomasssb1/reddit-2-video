@@ -158,7 +158,7 @@ class RedditPost {
               "An error occurred whilst trying to fetch the subreddit data. Returned empty response body.",
           statusCode: response.statusCode);
     }
-    var json = jsonDecode(response.body);
+    var json = jsonDecode(utf8.decode(response.bodyBytes));
     Pick p0 = pick(json[0], 'data', 'children', 0, 'data');
     _setJsonAttributes(p0);
   }
@@ -167,7 +167,7 @@ class RedditPost {
     if (body.length < limit) {
       limit = body.length;
     }
-    return "${body.substring(limit)}...";
+    return "${body.substring(0, limit)}...";
   }
 
   // post attributes
@@ -201,10 +201,9 @@ class RedditPost {
 
   @override
   bool operator ==(Object other) {
-    if (other.runtimeType is! RedditPost) {
+    if (other is! RedditPost) {
       return false;
     }
-    other = other as RedditPost;
     return id == other.id;
   }
 

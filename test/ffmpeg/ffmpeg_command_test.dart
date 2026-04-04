@@ -155,6 +155,33 @@ void main() {
         expect(result.last, 'output.mp4');
       });
 
+      test('defaults to final filename when output has no extension', () {
+        when(() => command.output).thenReturn('output');
+
+        final ffCmd = FFmpegCommand(
+          subtitles: subtitles,
+          backgroundVideo: backgroundVideo,
+        );
+
+        final result = ffCmd.generate(command, cutVideo, 1);
+
+        expect(result.last, 'final.mp4');
+      });
+
+      test('uses fileType when output extension conflicts', () {
+        when(() => command.output).thenReturn('output.avi');
+        when(() => command.fileType).thenReturn(FileType.mp4);
+
+        final ffCmd = FFmpegCommand(
+          subtitles: subtitles,
+          backgroundVideo: backgroundVideo,
+        );
+
+        final result = ffCmd.generate(command, cutVideo, 1);
+
+        expect(result.last, 'output.mp4');
+      });
+
       test('adds repeat index suffix when repeat is greater than 1', () {
         when(() => command.repeat).thenReturn(2);
 

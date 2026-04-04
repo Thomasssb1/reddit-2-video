@@ -58,6 +58,20 @@ void main() {
             SubstationAlphaSubtitleColor("HFF00FF");
         expect(color.toString(), "\\1c&HFF00FF");
       });
+
+      test("Check equality works for matching colours", () {
+        expect(
+          SubstationAlphaSubtitleColor("#FF00FF"),
+          SubstationAlphaSubtitleColor("HFF00FF"),
+        );
+      });
+
+      test("Check toHash and hashCode are stable", () {
+        final color = SubstationAlphaSubtitleColor("#00FF00");
+        expect(color.toHash(), "#00FF00");
+        expect(
+            color.hashCode, SubstationAlphaSubtitleColor("#00FF00").hashCode);
+      });
     });
   });
 }
