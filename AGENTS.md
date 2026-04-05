@@ -18,7 +18,7 @@ When working in this codebase, all AI coding assistants must adhere to the follo
   - Tab Width: 2
   - Use Tabs: false (Spaces only)
 - **Dart Styling Conventions:** Follow standard, idiomatic Dart styling conventions. The project uses `package:lints/recommended.yaml` as defined in `analysis_options.yaml`. Ensure that generated code does not introduce new lint errors or warnings.
-- **Styling Preference:** Use native print helpers (like `printWarning` / `printSuccess`) for full-line colored prints instead of manually using color properties (like `Prettify.yellow`) inside strings, unless specifically dealing with an integrated/interpolated string.
+- **Styling Preference:** Use the logger helpers (like `printWarning` / `printSuccess`) for full-line colored prints instead of manually embedding ANSI color codes inside strings, unless specifically dealing with an integrated/interpolated string.
 
 ## 3. General Workflow
 

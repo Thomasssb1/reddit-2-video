@@ -15,6 +15,7 @@ import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:reddit_2_video/config/voices/voice.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 
 String formatTtsFailureMessage(
@@ -123,6 +124,7 @@ class Subtitles {
         ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
       ],
       verbose: command.verbose,
+      section: LogSection.subtitles,
     );
 
     final processStdout = result.stdout.trim();
@@ -160,6 +162,7 @@ class Subtitles {
         ".temp/${video.id}/config/",
       ],
       verbose: command.verbose,
+      section: LogSection.subtitles,
     );
     if (result.exitCode != 0) {
       throw TTSFailedException(
@@ -184,7 +187,8 @@ class Subtitles {
         if (prevDuration >= maxLength && _subtitles.isNotEmpty) {
           Warning.warn('Max length of ${maxLength}s reached '
               '(${prevDuration.inSeconds}s accumulated). '
-              'Stopping before next post.');
+              'Stopping before next post.',
+              section: LogSection.subtitles);
           break;
         }
       }
@@ -230,7 +234,8 @@ class Subtitles {
               prevDuration >= maxLength) {
             Warning.warn('Max length of ${maxLength}s reached '
                 '(${prevDuration.inSeconds}s accumulated). '
-                'Stopping before next comment.');
+                'Stopping before next comment.',
+                section: LogSection.subtitles);
             break;
           }
           prevDuration += delay;

@@ -10,6 +10,7 @@ import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/cmd/install.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 
 import 'dart:io';
 
@@ -29,6 +30,10 @@ void main(
 
     switch (command.name) {
       case CommandType.defaultCommand:
+        logger.info(
+          "Preparing background video.",
+          section: LogSection.backgroundVideo,
+        );
         late BackgroundVideo backgroundVideo;
         if (command.video == null) {
           backgroundVideo = await BackgroundVideo.downloadVideo(
@@ -69,6 +74,7 @@ void main(
 
         List<RedditVideo> videos = [];
         for (int i = 0; i < command.repeat; i++) {
+          logger.info("Selecting Reddit content.", section: LogSection.reddit);
           RedditVideo video = await RedditVideo.parse(command, log);
           videos.add(video);
         }
@@ -103,14 +109,17 @@ void main(
         command.printHelp();
         break;
       case null:
-        print("No command found.");
+        logger.error("No command found.", section: LogSection.setup);
     }
   } on Exception catch (e) {
-    stderr.writeln(e);
+    logger.error(e.toString(), section: LogSection.setup);
     exitCode = 1;
   } finally {
     if (command.isDev) {
-      print("Running in dev mode, not clearing temporary files.");
+      logger.warning(
+        "Running in dev mode, not clearing temporary files.",
+        section: LogSection.setup,
+      );
     } else {
       await log?.clearTemporaryFiles();
     }

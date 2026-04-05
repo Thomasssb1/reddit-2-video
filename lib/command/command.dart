@@ -1,14 +1,14 @@
 import 'package:args/args.dart';
 import 'package:reddit_2_video/exceptions/argument_missing_exception.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 
 abstract class Command {
   final ArgParser? parser;
 
   void printHelp({
-    String defaultsColourCode = Prettify.yellow,
-    String optionsColourCode = Prettify.magenta,
-    String flagsColourCode = Prettify.green,
+    String defaultsColourCode = ansiYellow,
+    String optionsColourCode = ansiMagenta,
+    String flagsColourCode = ansiGreen,
   }) {
     if (parser == null) {
       throw ArgumentMissingException(
@@ -23,16 +23,16 @@ abstract class Command {
 
     for (final match in bracketsRegex.allMatches(usage)) {
       usage = usage.replaceAll(
-          match[0]!, '$defaultsColourCode${match[0]}${Prettify.reset}');
+          match[0]!, '$defaultsColourCode${match[0]}$ansiReset');
     }
     for (final match in sqBracketsRegex.allMatches(usage)) {
       if (match[0] != '[no-]') {
         usage = usage.replaceAll(
-            match[0]!, '$optionsColourCode${match[0]}${Prettify.reset}');
+            match[0]!, '$optionsColourCode${match[0]}$ansiReset');
       }
     }
     for (final match in dashRegex.allMatches(usage)) {
-      usage = usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}\x1b[0m');
+      usage = usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}$ansiReset');
     }
     print(usage);
   }

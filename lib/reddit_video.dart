@@ -9,7 +9,7 @@ import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/subtitles/subtitles.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'reddit/reddit_video_type.dart';
@@ -95,7 +95,8 @@ class RedditVideo {
           }
         } on PickException {
           Warning.warn(
-              "An error occurred whilst trying to fetch the post. Ignoring post.");
+              "An error occurred whilst trying to fetch the post. Ignoring post.",
+              section: LogSection.reddit);
           continue;
         }
       }
@@ -120,32 +121,38 @@ class RedditVideo {
         // iterate through each post collected previously
         for (final post in postData) {
           // output relevant information
-          printUnderline(post.title);
+          logger.underline(post.title, section: LogSection.reddit);
           print(
-              "${Prettify.green}Upvotes: ${post.upvotes}     ${Prettify.yellow}Comments: ${post.commentCount} ${Prettify.reset}\n");
+              "${ansiGreen}Upvotes: ${post.upvotes}     ${ansiYellow}Comments: ${post.commentCount} $ansiReset\n");
           print(
-              "Created: ${post.created}, ${post.spoiler ? 'This post ${Prettify.red}is${Prettify.reset} marked as a spoiler' : ''}\n");
+              "Created: ${post.created}, ${post.spoiler ? 'This post ${ansiRed}is${ansiReset} marked as a spoiler' : ''}\n");
           if (post.hasMedia) {
             print("Media: ${post.hasMedia}\n");
           }
           if (command.nsfw) {
             print(
-                "This post is${post.nsfw ? '' : ' ${Prettify.red}not${Prettify.reset}'} marked as NSFW.");
+                "This post is${post.nsfw ? '' : ' ${ansiRed}not${ansiReset}'} marked as NSFW.");
           }
-          printUnderline(
-              "Post ${postData.indexOf(post) + 1}/${postData.length}.");
-          print(
-              "Do you want to see the body of the post? [${Prettify.green}y${Prettify.reset}/${Prettify.red}N${Prettify.reset}] ");
+          logger.underline(
+              "Post ${postData.indexOf(post) + 1}/${postData.length}.",
+              section: LogSection.reddit);
+          logger.info(
+              "Do you want to see the body of the post? [${ansiGreen}y${ansiReset}/${ansiRed}N${ansiReset}] ",
+              section: LogSection.reddit);
           // read the cli for what the user entered
           String showBody = stdin.readLineSync() ?? 'n';
           // if the user entered yes
           if (showBody.toLowerCase() == 'y') {
             print(post.body);
           }
-          print(
-              "Do you want to generate a video for this post? [${Prettify.green}y${Prettify.reset}/${Prettify.red}N${Prettify.reset}] ");
+          logger.info(
+              "Do you want to generate a video for this post? [${ansiGreen}y${ansiReset}/${ansiRed}N${ansiReset}] ",
+              section: LogSection.reddit);
           if (command.type == RedditVideoType.multi) {
-            print("You can also enter 'skip' to skip all remaining posts. ");
+            logger.info(
+              "You can also enter 'skip' to skip all remaining posts. ",
+              section: LogSection.reddit,
+            );
           }
           // read the cli for what the user entered
           String continueGeneration = stdin.readLineSync() ?? 'n';
@@ -168,7 +175,7 @@ class RedditVideo {
             break;
           } // if the user entered no or otherwise
           else {
-            print("Fetching next post...\n");
+            logger.info("Fetching next post...\n", section: LogSection.reddit);
             // if the post is the last post / if the user hasn't selected any posts but have multi type
             if (post == postData.last &&
                 command.type != RedditVideoType.multi) {
@@ -185,7 +192,8 @@ class RedditVideo {
       }
       if (postData.length < command.commentCount) {
         Warning.warn(
-            "Not enough posts selected as specified by the count option (${command.commentCount}). Generating video with only the posts that you have selected.");
+            "Not enough posts selected as specified by the count option (${command.commentCount}). Generating video with only the posts that you have selected.",
+            section: LogSection.reddit);
       } else {
         postData = postData.sublist(0, command.commentCount);
       }
@@ -226,7 +234,8 @@ class RedditVideo {
     final outputFile = AppPaths.resolve(input.last);
 
     final result =
-        await Subprocess.exec("ffmpeg", input, verbose: command.verbose);
+        await Subprocess.exec("ffmpeg", input,
+            verbose: command.verbose, section: LogSection.generation);
 
     int code = result.exitCode;
 
@@ -236,17 +245,19 @@ class RedditVideo {
           command: input);
     }
 
-    printSuccess(
-        "Video successfully generated: ${outputFile.path}");
+    logger.success(
+        "Video successfully generated: ${outputFile.path}",
+        section: LogSection.generation);
 
     if (command.youtubeShort) {
       List<File> segments = await splitVideo(
           input.last, command.fileType.name, index,
           verbose: command.verbose);
-      printSuccess(
-          "Video successfully split into ${segments.length} YouTube shorts:");
+      logger.success(
+          "Video successfully split into ${segments.length} YouTube shorts:",
+          section: LogSection.split);
       for (var segment in segments) {
-        print("  - ${segment.absolute.path}");
+        logger.info(segment.absolute.path, section: LogSection.split);
       }
     }
   }

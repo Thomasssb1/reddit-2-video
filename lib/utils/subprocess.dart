@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/app_paths.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 
 class SubprocessResult {
   final int exitCode;
@@ -105,6 +106,7 @@ class Subprocess {
     bool includeParentEnvironment = true,
     bool runInShell = false,
     bool verbose = false,
+    LogSection? section,
   }) async {
     final process = await start(
       executable,
@@ -120,7 +122,7 @@ class Subprocess {
 
     void mirrorIfNeeded(String data, StringSink sink) {
       if (verbose || _looksInteractivePrompt(data)) {
-        sink.write(data);
+        sink.write(logger.prefixLines(data, section: section));
       }
     }
 

@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/reddit_video.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 
 enum VideoType { muxed, video }
@@ -98,6 +99,7 @@ class BackgroundVideo {
           'yt-dlp',
           args,
           verbose: verbose,
+          section: LogSection.backgroundVideo,
         );
         if (result.exitCode != 0) {
           final stderrOutput = result.stderr.trim();
@@ -143,7 +145,10 @@ class BackgroundVideo {
 
   Future<File> cutVideo(
       Duration duration, RedditVideo video, ParsedCommand command) async {
-    stdout.writeln("Cutting the background video to a random point.");
+    logger.info(
+      "Cutting the background video to a random point.",
+      section: LogSection.backgroundVideo,
+    );
     Duration endCardLength = (await command.endCard)?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
@@ -170,6 +175,7 @@ class BackgroundVideo {
       'ffmpeg',
       ffmpegCommand,
       verbose: command.verbose,
+      section: LogSection.backgroundVideo,
     );
     int code = result.exitCode;
 

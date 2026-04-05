@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:reddit_2_video/app_paths.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:test/test.dart';
 
@@ -9,6 +10,7 @@ import '../mocks.dart';
 void main() {
   tearDown(() {
     Subprocess.resetForTest();
+    logger.resetForTest();
   });
 
   group('Subprocess', () {
@@ -150,6 +152,27 @@ void main() {
 
       await Subprocess.exec('ffmpeg', ['-i', 'input.mp4'], verbose: true);
 
+      expect(stdoutBuffer.toString(), contains('progress update'));
+    });
+
+    test('exec prefixes verbose output with section label when provided',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 0, out: 'progress update');
+      });
+
+      final stdoutBuffer = StringBuffer();
+      Subprocess.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
+      await Subprocess.exec('ffmpeg', ['-i', 'input.mp4'],
+          verbose: true, section: LogSection.generation);
+
+      expect(stdoutBuffer.toString(), contains('[Generation]'));
       expect(stdoutBuffer.toString(), contains('progress update'));
     });
 

@@ -7,6 +7,7 @@ import 'package:reddit_2_video/exceptions/warning.dart';
 import 'package:reddit_2_video/reddit/reddit_id.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 
 class Log {
   final File _logfile;
@@ -23,6 +24,7 @@ class Log {
         _ids = ids;
 
   static Future<Log> fromFile() async {
+    logger.info("Loading visited log.", section: LogSection.setup);
     File logfile = AppPaths.resolve('.temp/visited_log.json');
     if (!logfile.existsSync()) {
       logfile.createSync(recursive: true);

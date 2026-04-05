@@ -1,54 +1,65 @@
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/warning.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 
 Future<bool> checkInstall(String command) async {
   try {
     bool isWindows = Platform.isWindows;
-    var result =
-        await Subprocess.exec(isWindows ? 'where' : 'which', [command]);
+    var result = await Subprocess.exec(isWindows ? 'where' : 'which', [command],
+        section: LogSection.install);
     return result.exitCode == 0;
   } catch (e) {
-    Warning.warn(
-        "Warning: An error occurred while checking if '$command' is installed. Exception: $e");
+    logger.error(
+        "An error occurred while checking if '$command' is installed. Exception: $e",
+        section: LogSection.install);
     return false;
   }
 }
 
 Future<void> installWhisper() async {
-  print("Attempting to install whisper-timestamped via pip...");
+  logger.info(
+    "Attempting to install whisper-timestamped via pip.",
+    section: LogSection.install,
+  );
   try {
     var result = await Subprocess.exec(
       'pip',
       ['install', 'git+https://github.com/linto-ai/whisper-timestamped'],
       verbose: true,
+      section: LogSection.install,
     );
     int exitCode = result.exitCode;
     if (exitCode != 0) {
       Warning.warn(
-          "Whilst trying to install whisper-timestamped using pip something went wrong. Error code: $exitCode");
+          "Whilst trying to install whisper-timestamped using pip something went wrong. Error code: $exitCode",
+          section: LogSection.install);
     } else {
-      printSuccess("Successfully installed whisper-timestamped.");
+      logger.success("Successfully installed whisper-timestamped.",
+          section: LogSection.install);
     }
   } catch (e) {
-    Warning.warn(
-        "Failed to execute pip install for whisper-timestamped. Exception: $e");
+    logger.error(
+        "Failed to execute pip install for whisper-timestamped. Exception: $e",
+        section: LogSection.install);
   }
 }
 
 Future<void> checkDependencies() async {
+  logger.info("Checking dependencies.", section: LogSection.setup);
   bool ffmpegInstalled = await checkInstall('ffmpeg');
   if (!ffmpegInstalled) {
     Warning.warn(
-        "ffmpeg is missing. You need to have ffmpeg installed globally to generate videos. Download it here: ${Prettify.reset}https://ffmpeg.org/download.html");
+        "ffmpeg is missing. You need to have ffmpeg installed globally to generate videos. Download it here: $ansiReset https://ffmpeg.org/download.html",
+        section: LogSection.install);
     exit(1);
   }
 
   bool ytDlpInstalled = await checkInstall('yt-dlp');
   if (!ytDlpInstalled) {
     Warning.warn(
-        "yt-dlp is missing. You need to have yt-dlp installed globally to download background videos. Download it here: ${Prettify.reset}https://github.com/yt-dlp/yt-dlp");
+        "yt-dlp is missing. You need to have yt-dlp installed globally to download background videos. Download it here: $ansiReset https://github.com/yt-dlp/yt-dlp",
+        section: LogSection.install);
     exit(1);
   }
 
@@ -56,7 +67,8 @@ Future<void> checkDependencies() async {
   if (!awsCLIInstalled) {
     Warning.warn(
         "AWS CLI is missing. You need to install AWS CLI in order to use AWS-Polly TTS. \n"
-        "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
+        "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions",
+        section: LogSection.install);
     exit(1);
   }
 }
@@ -65,36 +77,43 @@ Future<void> runInstallCommand() async {
   bool pythonInstalled = await checkInstall('python');
   if (!pythonInstalled) {
     Warning.warn(
-        "In order to continue, you need to have python installed. Download it here: ${Prettify.reset}https://www.python.org/downloads/");
+        "In order to continue, you need to have python installed. Download it here: $ansiReset https://www.python.org/downloads/",
+        section: LogSection.install);
   }
 
   bool ffmpegInstalled = await checkInstall('ffmpeg');
   if (!ffmpegInstalled) {
     Warning.warn(
-        "You need to have ffmpeg installed globally in order to generate videos. Download it here: ${Prettify.reset}https://ffmpeg.org/download.html");
+        "You need to have ffmpeg installed globally in order to generate videos. Download it here: $ansiReset https://ffmpeg.org/download.html",
+        section: LogSection.install);
   }
 
   bool ytDlpInstalled = await checkInstall('yt-dlp');
   if (!ytDlpInstalled) {
     Warning.warn(
-        "You need to have yt-dlp installed globally in order to download background videos. Download it here: ${Prettify.reset}https://github.com/yt-dlp/yt-dlp");
+        "You need to have yt-dlp installed globally in order to download background videos. Download it here: $ansiReset https://github.com/yt-dlp/yt-dlp",
+        section: LogSection.install);
   }
 
   bool pipInstalled = await checkInstall('pip');
   if (!pipInstalled) {
     Warning.warn(
-        "You need to have pip installed in order to install the python dependencies (like whisper-timestamped).");
+        "You need to have pip installed in order to install the python dependencies (like whisper-timestamped).",
+        section: LogSection.install);
   } else {
     await installWhisper();
   }
 
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
-    Warning.warn("You need to install AWS CLI in order to use AWS-Polly TTS. \n"
-        "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
+    Warning.warn(
+        "You need to install AWS CLI in order to use AWS-Polly TTS. \n"
+        "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions",
+        section: LogSection.install);
   }
 
   if (pythonInstalled && ffmpegInstalled && ytDlpInstalled && pipInstalled) {
-    printSuccess("All core dependencies are installed!");
+    logger.success("All core dependencies are installed!",
+        section: LogSection.install);
   }
 }

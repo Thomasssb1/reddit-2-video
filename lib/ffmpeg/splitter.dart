@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:path/path.dart' as p;
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 
 Future<List<File>> splitVideo(
@@ -23,7 +24,8 @@ Future<List<File>> splitVideo(
     p.join(dir, '$baseName${count == 0 ? "" : count}%03d.$fileExtension'),
   ];
 
-  final result = await Subprocess.exec('ffmpeg', commandArgs, verbose: verbose);
+  final result = await Subprocess.exec('ffmpeg', commandArgs,
+      verbose: verbose, section: LogSection.split);
 
   int code = result.exitCode;
   if (code != 0) {
