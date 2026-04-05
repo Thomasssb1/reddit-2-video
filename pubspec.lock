@@ -73,6 +73,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  consola:
+    dependency: "direct main"
+    description:
+      name: consola
+      sha256: fa383e0a88dd3fa8ceb9cd905e35348b9f94370858ea012bfb147d846e878204
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   convert:
     dependency: transitive
     description:

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/utils/logger.dart';
+import 'package:reddit_2_video/utils/subprocess/progress_parser.dart';
 
 class SubprocessResult {
   final int exitCode;
@@ -22,9 +23,6 @@ class Subprocess {
     RegExp(r'\([yn]/[yn]\)', caseSensitive: false),
     RegExp(r'(enter|type) .+:$', caseSensitive: false),
   ];
-  static StringSink _stdoutSink = stdout;
-  static StringSink _stderrSink = stderr;
-
   static ProcessStartMode modeForVerbose(bool verbose) =>
       verbose ? ProcessStartMode.inheritStdio : ProcessStartMode.normal;
 
@@ -107,6 +105,9 @@ class Subprocess {
     bool runInShell = false,
     bool verbose = false,
     LogSection? section,
+    SubprocessProgressMode progressMode = SubprocessProgressMode.none,
+    Duration? expectedDuration,
+    void Function(SubprocessProgressUpdate update)? onProgress,
   }) async {
     final process = await start(
       executable,
@@ -119,24 +120,74 @@ class Subprocess {
 
     final stdoutBuffer = StringBuffer();
     final stderrBuffer = StringBuffer();
+    final stdoutLineBuffer = StringBuffer();
+    final stderrLineBuffer = StringBuffer();
+    final progressParser = createSubprocessProgressParser(
+      progressMode,
+      expectedDuration: expectedDuration,
+    );
 
-    void mirrorIfNeeded(String data, StringSink sink) {
-      if (verbose || _looksInteractivePrompt(data)) {
-        sink.write(logger.prefixLines(data, section: section));
+    void emitOutput(String data, {required bool isError}) {
+      if (data.isEmpty) return;
+      logger.emitRaw(data, section: section, isError: isError);
+    }
+
+    void handleLine(String line, {required bool isError}) {
+      final progressHandled =
+          progressParser?.handleLine(line, onProgress) ?? false;
+      if (progressHandled) {
+        return;
       }
+
+      if (verbose) {
+        emitOutput('$line\n', isError: isError);
+      }
+    }
+
+    void processChunk(String chunk, StringBuffer lineBuffer,
+        {required bool isError}) {
+      final normalized = chunk.replaceAll('\r', '\n');
+      lineBuffer.write(normalized);
+      final lines = lineBuffer.toString().split('\n');
+      lineBuffer
+        ..clear()
+        ..write(lines.removeLast());
+
+      for (final line in lines) {
+        handleLine(line, isError: isError);
+      }
+    }
+
+    void flushRemaining(StringBuffer lineBuffer, {required bool isError}) {
+      final data = lineBuffer.toString();
+      if (data.isEmpty) return;
+
+      final progressHandled =
+          progressParser?.handleLine(data, onProgress) ?? false;
+      if (!progressHandled && _looksInteractivePrompt(data)) {
+        emitOutput(data, isError: isError);
+      } else if (!progressHandled && verbose) {
+        emitOutput(data, isError: isError);
+      }
+    }
+
+    void flushAllRemaining() {
+      flushRemaining(stdoutLineBuffer, isError: false);
+      flushRemaining(stderrLineBuffer, isError: true);
     }
 
     final stdoutDone = process.stdout.transform(utf8.decoder).listen((data) {
       stdoutBuffer.write(data);
-      mirrorIfNeeded(data, _stdoutSink);
+      processChunk(data, stdoutLineBuffer, isError: false);
     }).asFuture<void>();
     final stderrDone = process.stderr.transform(utf8.decoder).listen((data) {
       stderrBuffer.write(data);
-      mirrorIfNeeded(data, _stderrSink);
+      processChunk(data, stderrLineBuffer, isError: true);
     }).asFuture<void>();
 
     final exitCode = await process.exitCode;
     await Future.wait([stdoutDone, stderrDone]);
+    flushAllRemaining();
 
     return SubprocessResult(
       exitCode: exitCode,
@@ -179,14 +230,15 @@ class Subprocess {
     StringSink? stdoutSink,
     StringSink? stderrSink,
   }) {
-    _stdoutSink = stdoutSink ?? stdout;
-    _stderrSink = stderrSink ?? stderr;
+    logger.setOutputSinksForTest(
+      stdoutSink: stdoutSink,
+      stderrSink: stderrSink,
+    );
   }
 
   static void resetForTest() {
     _run = Process.run;
     _start = Process.start;
-    _stdoutSink = stdout;
-    _stderrSink = stderr;
+    logger.setOutputSinksForTest();
   }
 }

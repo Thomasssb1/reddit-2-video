@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
 /// File extensions considered "static images" (duration cannot be inferred).
 const _imageExtensions = {'.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif'};

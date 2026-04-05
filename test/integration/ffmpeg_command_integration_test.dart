@@ -6,7 +6,7 @@ import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/ffmpeg/ffmpeg_command.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:test/test.dart';
 
 import '../mocks.dart';

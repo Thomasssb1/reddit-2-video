@@ -11,7 +11,7 @@ import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/subtitles/subtitle.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:test/test.dart';
 

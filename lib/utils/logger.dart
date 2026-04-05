@@ -28,6 +28,9 @@ enum LogSection {
 
 class Logger {
   LogSection? _lastPrintedSection;
+  void Function(String message, {required bool isError})? _overlayWriter;
+  StringSink _stdoutSink = stdout;
+  StringSink _stderrSink = stderr;
 
   String _colorText(String text, String colorCode) {
     if (!stdout.supportsAnsiEscapes) {
@@ -71,7 +74,18 @@ class Logger {
         : messageColor != null
             ? _colorText(message, messageColor)
             : message;
-    print(prefixLines(formattedMessage, section: section));
+    emitRaw('$formattedMessage\n', section: section);
+  }
+
+  void emitRaw(String message, {LogSection? section, bool isError = false}) {
+    final output = prefixLines(message, section: section);
+    if (_overlayWriter != null) {
+      _overlayWriter!(output, isError: isError);
+      return;
+    }
+
+    final sink = isError ? _stderrSink : _stdoutSink;
+    sink.write(output);
   }
 
   void info(String message, {LogSection? section}) {
@@ -96,6 +110,26 @@ class Logger {
 
   void resetForTest() {
     _lastPrintedSection = null;
+    _overlayWriter = null;
+    _stdoutSink = stdout;
+    _stderrSink = stderr;
+  }
+
+  void attachOverlay(
+      void Function(String message, {required bool isError}) writer) {
+    _overlayWriter = writer;
+  }
+
+  void detachOverlay() {
+    _overlayWriter = null;
+  }
+
+  void setOutputSinksForTest({
+    StringSink? stdoutSink,
+    StringSink? stderrSink,
+  }) {
+    _stdoutSink = stdoutSink ?? stdout;
+    _stderrSink = stderrSink ?? stderr;
   }
 }
 

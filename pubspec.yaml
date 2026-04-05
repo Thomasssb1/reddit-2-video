@@ -16,6 +16,7 @@ dev_dependencies:
   mocktail: ^1.0.4
 dependencies:
   args: ^2.4.2
+  consola: ^0.1.0
   deep_pick: ^1.0.0
   http: ^1.0.0
   remove_emoji: ^0.0.10

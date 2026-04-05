@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/lexicons/lexica.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:test/test.dart';
 import 'package:xml/xml.dart';
 

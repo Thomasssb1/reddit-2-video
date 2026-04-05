@@ -10,7 +10,9 @@ import 'package:reddit_2_video/log/log.dart';
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/progress.dart';
+import 'package:reddit_2_video/utils/subprocess/progress_parser.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:reddit_2_video/ffmpeg/splitter.dart';
 import 'reddit/reddit_video_type.dart';
 import 'exceptions/exceptions.dart';
@@ -269,17 +271,39 @@ class RedditVideo {
 
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
     final outputFile = AppPaths.resolve(input.last);
+    final progressTask = generationProgress.createTask(
+      title: 'Rendering final video',
+      detail: outputFile.path,
+      section: LogSection.generation,
+      totalUnits: 100,
+      weight: 18,
+    );
 
     final result = await Subprocess.exec("ffmpeg", input,
-        verbose: command.verbose, section: LogSection.generation);
+        verbose: command.verbose,
+        section: LogSection.generation,
+        progressMode: SubprocessProgressMode.ffmpeg,
+        expectedDuration: subtitles!.duration +
+            (resolvedEndCard?.duration ?? Duration.zero) +
+            const Duration(seconds: 2), onProgress: (update) {
+      if (update.fraction != null) {
+        generationProgress.updateTask(
+          progressTask,
+          completedUnits: update.fraction! * 100,
+          detail: update.detail.isEmpty ? outputFile.path : update.detail,
+        );
+      }
+    });
 
     int code = result.exitCode;
 
     if (code != 0) {
+      generationProgress.completeTask(progressTask, detail: 'Render failed');
       throw FFmpegCommandException(
           message: "Something went wrong when generating the video. Exiting.",
           command: input);
     }
+    generationProgress.completeTask(progressTask, detail: outputFile.path);
 
     logger.success("Video successfully generated: ${outputFile.path}",
         section: LogSection.generation);

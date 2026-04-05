@@ -6,7 +6,7 @@ import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:xml/xml.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 export 'package:reddit_2_video/config/lexicons/lexicon.dart';
 
 class Lexica extends ConfigItem {

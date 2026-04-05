@@ -13,7 +13,7 @@ import 'package:reddit_2_video/reddit/reddit_post_sort_type.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
 import 'package:test/test.dart';

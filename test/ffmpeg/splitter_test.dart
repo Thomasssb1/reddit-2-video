@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/splitter.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:test/test.dart';
 
 import '../mocks.dart';

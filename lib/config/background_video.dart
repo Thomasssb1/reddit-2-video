@@ -7,7 +7,9 @@ import 'dart:math';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/progress.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/progress_parser.dart';
 
 enum VideoType { muxed, video }
 
@@ -82,11 +84,20 @@ class BackgroundVideo {
 
     // Download the video if not already downloaded
     if (!_videoExists(url)) {
+      final progressTask = generationProgress.createTask(
+        title: 'Downloading background video',
+        detail: url.toString(),
+        section: LogSection.backgroundVideo,
+        totalUnits: 100,
+        weight: 10,
+      );
       path.parent.createSync(recursive: true);
       final format = _ytDlpFormatSelector(videoType);
       final args = [
         '--no-playlist',
         '--no-part',
+        '--newline',
+        '--progress',
         '-f',
         format,
         '-o',
@@ -100,6 +111,19 @@ class BackgroundVideo {
           args,
           verbose: verbose,
           section: LogSection.backgroundVideo,
+          progressMode: SubprocessProgressMode.ytDlp,
+          onProgress: (update) {
+            if (update.fraction != null) {
+              generationProgress.updateTask(
+                progressTask,
+                completedUnits: update.fraction! * 100,
+                detail: update.detail.isEmpty ? url.toString() : update.detail,
+              );
+            } else if (update.detail.isNotEmpty) {
+              generationProgress.updateTask(progressTask,
+                  detail: update.detail);
+            }
+          },
         );
         if (result.exitCode != 0) {
           final stderrOutput = result.stderr.trim();
@@ -109,9 +133,13 @@ class BackgroundVideo {
                   "yt-dlp failed with exit code ${result.exitCode}.$details",
               url: url);
         }
+        generationProgress.completeTask(progressTask,
+            detail: 'Saved to ${path.path}');
       } on ProcessException catch (e) {
+        generationProgress.completeTask(progressTask, detail: e.message);
         throw VideoDownloadFailedException(message: e.message, url: url);
       } catch (e) {
+        generationProgress.completeTask(progressTask, detail: e.toString());
         throw VideoDownloadFailedException(
             message: "Error downloading video: $e", url: url);
       }
@@ -149,6 +177,13 @@ class BackgroundVideo {
       "Cutting the background video to a random point.",
       section: LogSection.backgroundVideo,
     );
+    final progressTask = generationProgress.createTask(
+      title: 'Cutting background video',
+      detail: video.id,
+      section: LogSection.backgroundVideo,
+      totalUnits: 100,
+      weight: 6,
+    );
     Duration endCardLength = (await command.endCard)?.duration ?? Duration.zero;
     var (startTime, endTime) =
         _getRandomTime(duration + endCardLength + Duration(milliseconds: 1500));
@@ -176,16 +211,31 @@ class BackgroundVideo {
       ffmpegCommand,
       verbose: command.verbose,
       section: LogSection.backgroundVideo,
+      progressMode: SubprocessProgressMode.ffmpeg,
+      expectedDuration: duration,
+      onProgress: (update) {
+        if (update.fraction != null) {
+          generationProgress.updateTask(
+            progressTask,
+            completedUnits: update.fraction! * 100,
+            detail: update.detail.isEmpty ? video.id : update.detail,
+          );
+        }
+      },
     );
     int code = result.exitCode;
 
     if (code != 0) {
+      generationProgress.completeTask(progressTask,
+          detail: 'Background cut failed');
       throw BackgroundVideoCuttingException(
           message:
               "Something went wrong when trying to cut the background video.",
           url: url?.toString() ?? "None",
           duration: duration);
     } else {
+      generationProgress.completeTask(progressTask,
+          detail: 'Prepared .temp/${video.id}/video.mp4');
       return File(".temp/${video.id}/video.mp4");
     }
   }

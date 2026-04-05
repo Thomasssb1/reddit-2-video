@@ -13,6 +13,7 @@ import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/config/voices/voices.dart';
+import 'package:reddit_2_video/utils/progress.dart';
 
 class MockRedditVideo extends Mock implements RedditVideo {}
 
@@ -35,6 +36,31 @@ class MockEmptyNoise extends Mock implements EmptyNoise {}
 class MockMusic extends Mock implements Music {}
 
 class MockVoices extends Mock implements Voices {}
+
+class FakeTerminalProgressRenderer extends TerminalProgressRenderer {
+  final List<ProgressSnapshot> snapshots = [];
+  bool cleared = false;
+
+  FakeTerminalProgressRenderer()
+      : super(
+          enabled: true,
+          stdoutSink: stdout,
+          stderrSink: stderr,
+        );
+
+  @override
+  void update(ProgressSnapshot snapshot) {
+    snapshots.add(snapshot);
+  }
+
+  @override
+  void clear() {
+    cleared = true;
+  }
+
+  @override
+  void writeMessage(String message, {required bool isError}) {}
+}
 
 class FakeProcess implements Process {
   final int _fakeExitCode;

@@ -8,7 +8,7 @@ import 'package:reddit_2_video/exceptions/background_video_cutting_exception.dar
 import 'package:reddit_2_video/exceptions/video_download_failed_exception.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/exceptions/invalid_video_url_exception.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:test/test.dart';
 import 'package:mocktail/mocktail.dart';
 import '../mocks.dart';

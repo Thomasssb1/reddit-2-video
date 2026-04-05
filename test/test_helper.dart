@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
 String resolveExecutable(String executable) {
   if (File(executable).existsSync()) {

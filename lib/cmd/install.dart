@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:reddit_2_video/exceptions/warning.dart';
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
 Future<bool> checkInstall(String command) async {
   try {

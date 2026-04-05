@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/progress_parser.dart';
 import 'package:test/test.dart';
 
-import '../mocks.dart';
+import '../../mocks.dart';
 
 void main() {
   tearDown(() {
@@ -174,6 +175,107 @@ void main() {
 
       expect(stdoutBuffer.toString(), contains('[Generation]'));
       expect(stdoutBuffer.toString(), contains('progress update'));
+    });
+
+    test('exec parses ffmpeg progress updates without mirroring them',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(
+          exitCode: 0,
+          out: 'out_time_ms=500000\nfps=24.0\nspeed=1.2x\nprogress=continue\n',
+        );
+      });
+
+      final stdoutBuffer = StringBuffer();
+      final updates = <SubprocessProgressUpdate>[];
+      Subprocess.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
+      await Subprocess.exec(
+        'ffmpeg',
+        ['-i', 'input.mp4', 'output.mp4'],
+        verbose: true,
+        progressMode: SubprocessProgressMode.ffmpeg,
+        expectedDuration: const Duration(seconds: 1),
+        onProgress: updates.add,
+      );
+
+      expect(updates, hasLength(1));
+      expect(updates.first.fraction, closeTo(0.5, 0.001));
+      expect(updates.first.detail, equals('fps 24.0 | speed 1.2x'));
+      expect(stdoutBuffer.toString(), isNot(contains('out_time_ms=500000')));
+      expect(stdoutBuffer.toString(), isNot(contains('fps=24.0')));
+      expect(stdoutBuffer.toString(), isNot(contains('speed=1.2x')));
+      expect(stdoutBuffer.toString(), isNot(contains('progress=continue')));
+    });
+
+    test('exec parses yt-dlp progress updates without mirroring them',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(
+          exitCode: 0,
+          err: '[download]  25.0% of 10.00MiB at 1.00MiB/s ETA 00:07\n',
+        );
+      });
+
+      final stderrBuffer = StringBuffer();
+      final updates = <SubprocessProgressUpdate>[];
+      Subprocess.setOutputSinksForTest(stderrSink: stderrBuffer);
+
+      await Subprocess.exec(
+        'yt-dlp',
+        ['https://example.com'],
+        verbose: true,
+        progressMode: SubprocessProgressMode.ytDlp,
+        onProgress: updates.add,
+      );
+
+      expect(updates, hasLength(1));
+      expect(updates.first.fraction, closeTo(0.25, 0.001));
+      expect(updates.first.detail, equals('1.00MiB/s | ETA 00:07'));
+      expect(stderrBuffer.toString(), isNot(contains('[download]')));
+      expect(stderrBuffer.toString(), isNot(contains('25.0%')));
+      expect(stderrBuffer.toString(), isNot(contains('ETA 00:07')));
+    });
+
+    test('exec still mirrors non-progress verbose output beside progress',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(
+          exitCode: 0,
+          err:
+              '[download]  25.0% of 10.00MiB at 1.00MiB/s ETA 00:07\nwarning line\n',
+        );
+      });
+
+      final stderrBuffer = StringBuffer();
+      Subprocess.setOutputSinksForTest(stderrSink: stderrBuffer);
+
+      await Subprocess.exec(
+        'yt-dlp',
+        ['https://example.com'],
+        verbose: true,
+        progressMode: SubprocessProgressMode.ytDlp,
+      );
+
+      expect(
+        stderrBuffer.toString(),
+        equals('warning line\n'),
+      );
     });
 
     test('uses AppPaths.rootPath as default working directory when available',

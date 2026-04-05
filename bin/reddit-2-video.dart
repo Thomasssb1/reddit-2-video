@@ -11,6 +11,7 @@ import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/cmd/install.dart';
 import 'package:reddit_2_video/utils/logger.dart';
+import 'package:reddit_2_video/utils/progress.dart';
 
 import 'dart:io';
 
@@ -30,6 +31,7 @@ void main(
 
     switch (command.name) {
       case CommandType.defaultCommand:
+        generationProgress.start();
         logger.info(
           "Preparing background video.",
           section: LogSection.backgroundVideo,
@@ -54,9 +56,18 @@ void main(
 
         Future<RedditVideo> generateVideo(RedditVideo video, int index) async {
           if (command.type == RedditVideoType.comments) {
+            final commentTask = generationProgress.createTask(
+              title: 'Fetching Reddit comments',
+              detail: 'Video ${index + 1}/${command.repeat}',
+              section: LogSection.reddit,
+              totalUnits: 1,
+              weight: 2,
+            );
             RedditPost post = video.posts.first;
             // TODO: add some sort of retry when there are < target comments
             await post.addComments(command);
+            generationProgress.completeTask(commentTask,
+                detail: 'Fetched comments for ${post.id}');
           }
 
           Voices currentVoice = Voices(voices, initialVoice, command);
@@ -74,9 +85,18 @@ void main(
 
         List<RedditVideo> videos = [];
         for (int i = 0; i < command.repeat; i++) {
+          final selectionTask = generationProgress.createTask(
+            title: 'Selecting Reddit content',
+            detail: 'Video ${i + 1}/${command.repeat}',
+            section: LogSection.reddit,
+            totalUnits: 1,
+            weight: 2,
+          );
           logger.info("Selecting Reddit content.", section: LogSection.reddit);
           RedditVideo video = await RedditVideo.parse(command, log);
           videos.add(video);
+          generationProgress.completeTask(selectionTask,
+              detail: 'Selected ${video.id}');
         }
 
         List<Future<RedditVideo>> generatedVideos =
@@ -92,6 +112,7 @@ void main(
           await vid.generate(command, backgroundVideo, cutVideo, i);
           log.add(vid);
         }
+        generationProgress.stop();
         break;
       case CommandType.flush:
         RedditPost? post;
@@ -115,6 +136,7 @@ void main(
     logger.error(e.toString(), section: LogSection.setup);
     exitCode = 1;
   } finally {
+    generationProgress.stop();
     if (AppPaths.isDevMode) {
       logger.warning(
         "Running in dev mode, not clearing temporary files.",

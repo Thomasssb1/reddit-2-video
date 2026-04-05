@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:test/test.dart';
 import '../mocks.dart';
 

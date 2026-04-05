@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
@@ -16,7 +17,8 @@ import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/progress.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
 String formatTtsFailureMessage(
     {required int exitCode,
@@ -48,6 +50,8 @@ class Subtitles {
   int position = 0;
 
   final List<Subtitle> _subtitles = <Subtitle>[];
+  String? _progressTask;
+  int _plannedSegments = 0;
 
   Subtitles({
     required this.video,
@@ -139,6 +143,10 @@ class Subtitles {
           id: video.id,
           text: text);
     }
+    if (_progressTask != null) {
+      generationProgress.incrementTask(_progressTask!,
+          detail: 'Generated TTS ${_subtitles.length + 1}/$_plannedSegments');
+    }
     return File(".temp/${video.id}/tts/tts-${_subtitles.length}.mp3");
   }
 
@@ -170,6 +178,11 @@ class Subtitles {
           id: video.id,
           text: prevSubtitle.text);
     }
+    if (_progressTask != null) {
+      generationProgress.incrementTask(_progressTask!,
+          detail:
+              'Aligned subtitles ${_subtitles.length + 1}/$_plannedSegments');
+    }
     return SubtitleConfig.fromFile(
         tts: tts,
         configFile: AppPaths.resolve(
@@ -177,6 +190,14 @@ class Subtitles {
   }
 
   Future<void> parse(ParsedCommand command) async {
+    _plannedSegments = _countSegments();
+    _progressTask = generationProgress.createTask(
+      title: 'Preparing subtitles',
+      detail: '0/$_plannedSegments segments for ${video.id}',
+      section: LogSection.subtitles,
+      totalUnits: math.max(1, _plannedSegments * 3).toDouble(),
+      weight: math.max(6, _plannedSegments * 3).toDouble(),
+    );
     Subtitle prevSubtitle = Subtitle.none();
     Duration prevDuration = Duration.zero;
     final maxLength = command.maxLength;
@@ -250,6 +271,10 @@ class Subtitles {
       }
     }
     duration = prevDuration;
+    if (_progressTask != null) {
+      generationProgress.completeTask(_progressTask!,
+          detail: 'Prepared $_plannedSegments subtitle segments');
+    }
   }
 
   Future<(Subtitle, Duration)> _parse(ParsedCommand command, String text,
@@ -277,6 +302,11 @@ class Subtitles {
           }
 
           await subtitle.generate(_assFile, prevDuration);
+          if (_progressTask != null) {
+            generationProgress.incrementTask(_progressTask!,
+                detail:
+                    'Wrote subtitles ${_subtitles.length + 1}/$_plannedSegments');
+          }
 
           _subtitles.add(subtitle);
           prevSubtitle = subtitle;
@@ -314,4 +344,21 @@ class Subtitles {
   }
 
   File get assFile => _assFile;
+
+  int _countSegments() {
+    int countSegmentsInText(String text) {
+      if (text.isEmpty) return 0;
+      return _splitText(text).where((segment) => segment.isNotEmpty).length;
+    }
+
+    var count = 0;
+    for (final post in video.posts) {
+      count += countSegmentsInText(_removeCharacters(post.title));
+      count += countSegmentsInText(_removeCharacters(post.body));
+      for (final comment in post.comments) {
+        count += countSegmentsInText(_removeCharacters(comment.body));
+      }
+    }
+    return count;
+  }
 }

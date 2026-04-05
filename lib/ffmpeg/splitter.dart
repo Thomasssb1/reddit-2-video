@@ -2,11 +2,19 @@ import 'dart:io';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/utils/logger.dart';
-import 'package:reddit_2_video/utils/subprocess.dart';
+import 'package:reddit_2_video/utils/progress.dart';
+import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
 Future<List<File>> splitVideo(
     String outputFilePath, String fileExtension, int count,
     {bool verbose = false}) async {
+  final progressTask = generationProgress.createTask(
+    title: 'Splitting YouTube shorts',
+    detail: outputFilePath,
+    section: LogSection.split,
+    totalUnits: 1,
+    weight: 4,
+  );
   String dir = p.dirname(outputFilePath);
   String baseName = p.basenameWithoutExtension(outputFilePath);
 
@@ -29,6 +37,7 @@ Future<List<File>> splitVideo(
 
   int code = result.exitCode;
   if (code != 0) {
+    generationProgress.completeTask(progressTask, detail: 'Split failed');
     throw FFmpegCommandException(
         message:
             "Something went wrong when splitting the video into segments for youtube shorts. Error code $code",
@@ -40,10 +49,14 @@ Future<List<File>> splitVideo(
     '^${RegExp.escape(baseName)}\\d+\\.${RegExp.escape(fileExtension)}\$',
   );
 
-  return Directory(dir)
+  final segments = Directory(dir)
       .listSync()
       .whereType<File>()
       .where((file) => segmentPattern.hasMatch(p.basename(file.path)))
       .toList()
     ..sort((a, b) => a.path.compareTo(b.path));
+
+  generationProgress.completeTask(progressTask,
+      detail: 'Generated ${segments.length} short segments');
+  return segments;
 }
