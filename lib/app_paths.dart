@@ -8,10 +8,19 @@ import 'package:path/path.dart' as p;
 class AppPaths {
   static late Directory _root;
   static bool _initialised = false;
+  static bool _isDevMode = false;
+
+  static bool get isRunningFromDartTool {
+    final executableName = p.basename(Platform.resolvedExecutable).toLowerCase();
+    return executableName == 'dart' || executableName == 'dart.exe';
+  }
+
+  static bool get isDevMode => _isDevMode;
 
   /// Call once at startup from main().
-  static void init({required bool isDev}) {
-    _root = isDev
+  static void init() {
+    _isDevMode = isRunningFromDartTool;
+    _root = _isDevMode
         ? Directory.current
         : File(Platform.resolvedExecutable).parent.parent;
     _initialised = true;
@@ -20,6 +29,7 @@ class AppPaths {
   /// For testing: override root to a specific directory.
   static void initForTest(Directory root) {
     _root = root;
+    _isDevMode = true;
     _initialised = true;
   }
 

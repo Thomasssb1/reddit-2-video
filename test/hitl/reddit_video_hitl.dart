@@ -47,7 +47,6 @@ Future<void> main(List<String> args) async {
             'run',
             'bin/reddit-2-video.dart',
             'flush',
-            '--dev'
           ];
           final flush = await _runCommandWithStreaming(
             executable: 'dart',
@@ -91,7 +90,6 @@ Future<void> main(List<String> args) async {
           'mp4',
           '--repeat',
           '1',
-          '--dev',
           '--override',
           '--verbose',
           if (horror) '--horror',

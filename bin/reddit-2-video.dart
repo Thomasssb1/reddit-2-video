@@ -17,16 +17,16 @@ import 'dart:io';
 void main(
   List<String> args,
 ) async {
-  await checkDependencies();
-  ParsedCommand command = ParsedCommand.parse(args);
   Log? log;
   try {
-    AppPaths.init(isDev: command.isDev);
+    ParsedCommand command = ParsedCommand.parse(args);
+    if (command.name == CommandType.defaultCommand) {
+      await checkDependencies();
+    }
+
+    AppPaths.init();
     command.validateOutputFilesAvailable();
     log = await Log.fromFile();
-
-    // Check that the dev flag is set whilst under development
-    assert(command.isDev, true);
 
     switch (command.name) {
       case CommandType.defaultCommand:
@@ -115,7 +115,7 @@ void main(
     logger.error(e.toString(), section: LogSection.setup);
     exitCode = 1;
   } finally {
-    if (command.isDev) {
+    if (AppPaths.isDevMode) {
       logger.warning(
         "Running in dev mode, not clearing temporary files.",
         section: LogSection.setup,

@@ -131,7 +131,6 @@ class ParsedCommand extends Command {
           defaultsTo: false,
           help:
               'Whether to split the final generated video into ~1 minute shorts.')
-      ..addFlag('dev', abbr: 'd', hide: true, defaultsTo: false)
       ..addFlag('keep-temp',
           defaultsTo: false,
           help: 'When set, do not delete the .temp directory on exit.');
@@ -152,10 +151,8 @@ class ParsedCommand extends Command {
     // add a command specific option
     flush.addOption('post',
         abbr: 'p', help: 'Remove a specific reddit post from the visited log.');
-    flush.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
 
-    var install = parser.addCommand('install');
-    install.addFlag('dev', abbr: 'd', hide: true, defaultsTo: false);
+    parser.addCommand('install');
     return parser;
   }
 
@@ -205,14 +202,11 @@ class ParsedCommand extends Command {
       return ParsedCommand.defaultCommand(args: results);
       // if the command is flush
     } else if (results.command!.name == 'flush') {
-      return ParsedCommand(
-          command: CommandType.flush,
-          args: parser.commands['flush']!.parse(args));
+      return ParsedCommand(command: CommandType.flush, args: results.command!);
       // if the command is install
     } else if (results.command!.name == 'install') {
       return ParsedCommand(
-          command: CommandType.install,
-          args: parser.commands['install']!.parse(args));
+          command: CommandType.install, args: results.command!);
     }
     throw NoCommandException(
         'There is no such command ${results.command?.name}');
@@ -298,7 +292,6 @@ class ParsedCommand extends Command {
   T getArg<T>(String key) => _args![key] as T;
 
   bool get isDefault => _command == CommandType.defaultCommand;
-  bool get isDev => _args?['dev'] ?? false;
   bool get isHelp => _args?['help'] ?? false;
   bool get subredditIsLink =>
       Uri.tryParse(_args!['subreddit'])?.hasAbsolutePath ?? false;
@@ -321,7 +314,7 @@ class ParsedCommand extends Command {
   }
 
   void validateOutputFilesAvailable() {
-    if (override || !isDefault) {
+    if (!isDefault || override) {
       return;
     }
 

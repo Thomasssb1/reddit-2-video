@@ -161,8 +161,7 @@ void main() {
         expect(cmd.outputFile(1).path, '${tempDir.path}/output.mp4');
       });
 
-      test('outputFile appends repeat index when repeat is greater than 1',
-          () {
+      test('outputFile appends repeat index when repeat is greater than 1', () {
         final cmd = _build(['--output', 'video.mp4', '--repeat', '3']);
 
         expect(cmd.outputFile(2).path, '${tempDir.path}/video-2.mp4');
@@ -170,7 +169,8 @@ void main() {
     });
 
     group('output collision validation', () {
-      test('throws when target output file already exists and override is false',
+      test(
+          'throws when target output file already exists and override is false',
           () {
         File('${tempDir.path}/final.mp4').createSync();
         final cmd = _build([]);
@@ -227,6 +227,20 @@ void main() {
       test('parse returns flush command', () {
         final cmd = ParsedCommand.parse(['flush']);
         expect(cmd.name, CommandType.flush);
+      });
+
+      test('flush command parses --post option', () {
+        final cmd = ParsedCommand.parse([
+          'flush',
+          '--post',
+          'https://www.reddit.com/r/AskReddit/comments/abc123/title/',
+        ]);
+
+        expect(cmd.name, CommandType.flush);
+        expect(
+          cmd.post,
+          'https://www.reddit.com/r/AskReddit/comments/abc123/title/',
+        );
       });
 
       test('parse returns install command', () {
