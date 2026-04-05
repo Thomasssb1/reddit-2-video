@@ -15,6 +15,15 @@ class SubprocessResult {
 }
 
 class Subprocess {
+  static final List<RegExp> _interactivePromptPatterns = [
+    RegExp(r'overwrite\?', caseSensitive: false),
+    RegExp(r'\[[yn]/[yn]\]', caseSensitive: false),
+    RegExp(r'\([yn]/[yn]\)', caseSensitive: false),
+    RegExp(r'(enter|type) .+:$', caseSensitive: false),
+  ];
+  static StringSink _stdoutSink = stdout;
+  static StringSink _stderrSink = stderr;
+
   static ProcessStartMode modeForVerbose(bool verbose) =>
       verbose ? ProcessStartMode.inheritStdio : ProcessStartMode.normal;
 
@@ -109,13 +118,19 @@ class Subprocess {
     final stdoutBuffer = StringBuffer();
     final stderrBuffer = StringBuffer();
 
+    void mirrorIfNeeded(String data, StringSink sink) {
+      if (verbose || _looksInteractivePrompt(data)) {
+        sink.write(data);
+      }
+    }
+
     final stdoutDone = process.stdout.transform(utf8.decoder).listen((data) {
       stdoutBuffer.write(data);
-      if (verbose) stdout.write(data);
+      mirrorIfNeeded(data, _stdoutSink);
     }).asFuture<void>();
     final stderrDone = process.stderr.transform(utf8.decoder).listen((data) {
       stderrBuffer.write(data);
-      if (verbose) stderr.write(data);
+      mirrorIfNeeded(data, _stderrSink);
     }).asFuture<void>();
 
     final exitCode = await process.exitCode;
@@ -127,6 +142,9 @@ class Subprocess {
       stderr: stderrBuffer.toString(),
     );
   }
+
+  static bool _looksInteractivePrompt(String data) =>
+      _interactivePromptPatterns.any((pattern) => pattern.hasMatch(data));
 
   static void setRunForTest(
       Future<ProcessResult> Function(
@@ -155,8 +173,18 @@ class Subprocess {
     _start = startHandler;
   }
 
+  static void setOutputSinksForTest({
+    StringSink? stdoutSink,
+    StringSink? stderrSink,
+  }) {
+    _stdoutSink = stdoutSink ?? stdout;
+    _stderrSink = stderrSink ?? stderr;
+  }
+
   static void resetForTest() {
     _run = Process.run;
     _start = Process.start;
+    _stdoutSink = stdout;
+    _stderrSink = stderr;
   }
 }

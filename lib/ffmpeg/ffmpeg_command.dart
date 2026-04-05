@@ -54,7 +54,8 @@ class FFmpegCommand {
 
   List<String> _getFlags(ParsedCommand command) {
     return [
-      if (command.override) "-y",
+      "-nostdin",
+      if (command.override) "-y" else "-n",
       if (!command.verbose) ...["-loglevel", "quiet"],
     ];
   }

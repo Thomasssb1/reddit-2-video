@@ -73,6 +73,86 @@ void main() {
       expect(result.stderr, 'err');
     });
 
+    test('exec mirrors interactive prompts from stderr when verbose is false',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(
+            exitCode: 0,
+            err: "File 'final.mp4' already exists. Overwrite? [y/N] ");
+      });
+
+      final stderrBuffer = StringBuffer();
+      Subprocess.setOutputSinksForTest(stderrSink: stderrBuffer);
+
+      await Subprocess.exec('ffmpeg', ['-i', 'input.mp4']);
+
+      expect(
+        stderrBuffer.toString(),
+        contains("Overwrite? [y/N]"),
+      );
+    });
+
+    test('exec does not mirror non-prompt stderr when verbose is false',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 0, err: 'regular diagnostic output');
+      });
+
+      final stderrBuffer = StringBuffer();
+      Subprocess.setOutputSinksForTest(stderrSink: stderrBuffer);
+
+      await Subprocess.exec('ffmpeg', ['-i', 'input.mp4']);
+
+      expect(stderrBuffer.toString(), isEmpty);
+    });
+
+    test('exec mirrors enter or type prompts from stderr when verbose is false',
+        () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 0, err: 'Type selection:');
+      });
+
+      final stderrBuffer = StringBuffer();
+      Subprocess.setOutputSinksForTest(stderrSink: stderrBuffer);
+
+      await Subprocess.exec('ffmpeg', ['-i', 'input.mp4']);
+
+      expect(stderrBuffer.toString(), contains('Type selection:'));
+    });
+
+    test('exec mirrors stdout when verbose is true', () async {
+      Subprocess.setStartForTest((executable, arguments,
+          {workingDirectory,
+          environment,
+          includeParentEnvironment = true,
+          runInShell = false,
+          mode = ProcessStartMode.normal}) async {
+        return FakeProcess(exitCode: 0, out: 'progress update');
+      });
+
+      final stdoutBuffer = StringBuffer();
+      Subprocess.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
+      await Subprocess.exec('ffmpeg', ['-i', 'input.mp4'], verbose: true);
+
+      expect(stdoutBuffer.toString(), contains('progress update'));
+    });
+
     test('uses AppPaths.rootPath as default working directory when available',
         () async {
       final root = Directory.systemTemp.createTempSync('subprocess_test_');

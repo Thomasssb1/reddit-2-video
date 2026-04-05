@@ -208,6 +208,28 @@ void main() {
         expect(result, contains('-y'));
       });
 
+      test('includes -n flag when override is false', () {
+        final ffCmd = FFmpegCommand(
+          subtitles: subtitles,
+          backgroundVideo: backgroundVideo,
+        );
+
+        final result = ffCmd.generate(command, cutVideo, 1);
+
+        expect(result, contains('-n'));
+      });
+
+      test('includes -nostdin to prevent ffmpeg interactive prompts', () {
+        final ffCmd = FFmpegCommand(
+          subtitles: subtitles,
+          backgroundVideo: backgroundVideo,
+        );
+
+        final result = ffCmd.generate(command, cutVideo, 1);
+
+        expect(result, contains('-nostdin'));
+      });
+
       test('includes quiet flag when verbose is false', () {
         final ffCmd = FFmpegCommand(
           subtitles: subtitles,
