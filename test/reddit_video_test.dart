@@ -12,6 +12,7 @@ import 'package:reddit_2_video/reddit/reddit_http_retry.dart';
 import 'package:reddit_2_video/reddit/reddit_post_sort_type.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
@@ -40,6 +41,7 @@ void main() {
   tearDown(() {
     RedditHttpRetry.resetForTest();
     Subprocess.resetForTest();
+    logger.resetForTest();
     tempDir.deleteSync(recursive: true);
   });
 
@@ -245,10 +247,28 @@ void main() {
         });
 
         final log = await Log.fromFile();
-        final video = await RedditVideo.parse(command, log);
+        final printBuffer = <String>[];
+        late RedditVideo video;
+
+        await runZoned(
+          () async {
+            video = await RedditVideo.parse(command, log);
+          },
+          zoneSpecification: ZoneSpecification(
+            print: (_, __, ___, String line) {
+              printBuffer.add(line);
+            },
+          ),
+        );
 
         expect(video.posts, hasLength(1));
         expect(video.posts.first.id, 'abc123-t5_test');
+
+        final output = printBuffer.join('\n');
+        expect(output, contains('Fetching posts from r/test sorted by top.'));
+        expect(output, contains('Received 1 post candidates from Reddit.'));
+        expect(output, contains('Found 1 eligible post after filtering.'));
+        expect(output, contains('Selected post abc123-t5_test.'));
       });
 
       test('throws PostsExhausted when no eligible posts are returned',

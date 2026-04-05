@@ -32,7 +32,8 @@ abstract class Command {
       }
     }
     for (final match in dashRegex.allMatches(usage)) {
-      usage = usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}$ansiReset');
+      usage =
+          usage.replaceAll(match[0]!, '$flagsColourCode${match[0]}$ansiReset');
     }
     print(usage);
   }

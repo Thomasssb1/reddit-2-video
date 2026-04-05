@@ -11,7 +11,8 @@ class AppPaths {
   static bool _isDevMode = false;
 
   static bool get isRunningFromDartTool {
-    final executableName = p.basename(Platform.resolvedExecutable).toLowerCase();
+    final executableName =
+        p.basename(Platform.resolvedExecutable).toLowerCase();
     return executableName == 'dart' || executableName == 'dart.exe';
   }
 

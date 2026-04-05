@@ -44,6 +44,10 @@ class RedditVideo {
     List<RedditPost> postData = [];
 
     if (command.subredditIsLink) {
+      logger.info(
+        "Resolving direct Reddit post link.",
+        section: LogSection.reddit,
+      );
       if (command.type == RedditVideoType.multi) {
         // can't use a singular link if you want to have multiple posts
         throw ArgumentConflictException(
@@ -55,6 +59,10 @@ class RedditVideo {
       RedditPost post = await RedditPost.fromUrl(url: command.subreddit);
       RedditVideo video =
           RedditVideo.single(post: post, videoType: command.type);
+      logger.info(
+        "Resolved post ${post.id} from r/${post.subreddit}.",
+        section: LogSection.reddit,
+      );
 
       if (log.contains(video.posts.first)) {
         throw PostAlreadyGeneratedException(
@@ -64,23 +72,39 @@ class RedditVideo {
                 "If you have already generated a video for this post you can remove this from the log by running reddit-2-video flush with the -p argument supplied.");
       }
       log.temporaryAdd(video);
+      logger.info(
+        "Selected direct-link post ${video.posts.first.id}.",
+        section: LogSection.reddit,
+      );
       return video;
     }
 
     // create a new link that also contains the sort
     Uri subredditLink = Uri.https(
         "reddit.com", "/r/${command.subreddit}/${command.sort.name}.json");
+    logger.info(
+      "Fetching posts from r/${command.subreddit} sorted by ${command.sort.name}.",
+      section: LogSection.reddit,
+    );
 
     http.Response response = await RedditHttpRetry.retryHttp(subredditLink);
+    logger.info(
+      "Reddit returned status ${response.statusCode}.",
+      section: LogSection.reddit,
+    );
 
     if (response.statusCode == 200) {
       // generate json data
       var json = jsonDecode(utf8.decode(response.bodyBytes));
       // get all of the necessary data
       // title, id, body, upvotes, created, spoiler, media, nsfw and comment count
+      final rawPosts = pick(json, 'data', 'children').asListOrEmpty((p0) => p0);
+      logger.info(
+        "Received ${rawPosts.length} post candidates from Reddit.",
+        section: LogSection.reddit,
+      );
 
-      for (final p0
-          in pick(json, 'data', 'children').asListOrEmpty((p0) => p0)) {
+      for (final p0 in rawPosts) {
         try {
           String id = p0('data', 'id').required().asString();
           String subreddit = p0('data', 'subreddit').required().asString();
@@ -101,6 +125,11 @@ class RedditVideo {
         }
       }
 
+      logger.info(
+        "Found ${postData.length} eligible post${postData.length == 1 ? '' : 's'} after filtering.",
+        section: LogSection.reddit,
+      );
+
       if (postData.isEmpty) {
         throw PostsExhaustedException(
             message:
@@ -113,6 +142,10 @@ class RedditVideo {
         RedditVideo video =
             RedditVideo.single(post: postData.first, videoType: command.type);
         log.temporaryAdd(video);
+        logger.info(
+          "Selected post ${video.posts.first.id}.",
+          section: LogSection.reddit,
+        );
         return video;
       }
 
@@ -199,6 +232,10 @@ class RedditVideo {
       }
       RedditVideo video = RedditVideo(posts: postData, videoType: command.type);
       log.temporaryAdd(video);
+      logger.info(
+        "Selected ${video.posts.length} post${video.posts.length == 1 ? '' : 's'} for generation.",
+        section: LogSection.reddit,
+      );
       return video;
     } else {
       throw RedditApiException(
@@ -233,9 +270,8 @@ class RedditVideo {
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
     final outputFile = AppPaths.resolve(input.last);
 
-    final result =
-        await Subprocess.exec("ffmpeg", input,
-            verbose: command.verbose, section: LogSection.generation);
+    final result = await Subprocess.exec("ffmpeg", input,
+        verbose: command.verbose, section: LogSection.generation);
 
     int code = result.exitCode;
 
@@ -245,8 +281,7 @@ class RedditVideo {
           command: input);
     }
 
-    logger.success(
-        "Video successfully generated: ${outputFile.path}",
+    logger.success("Video successfully generated: ${outputFile.path}",
         section: LogSection.generation);
 
     if (command.youtubeShort) {

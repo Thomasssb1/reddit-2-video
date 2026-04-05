@@ -185,7 +185,8 @@ class Subtitles {
       // --- multi type: check before starting a new post ---
       if (command.type == RedditVideoType.multi && maxLength != null) {
         if (prevDuration >= maxLength && _subtitles.isNotEmpty) {
-          Warning.warn('Max length of ${maxLength}s reached '
+          Warning.warn(
+              'Max length of ${maxLength}s reached '
               '(${prevDuration.inSeconds}s accumulated). '
               'Stopping before next post.',
               section: LogSection.subtitles);
@@ -232,7 +233,8 @@ class Subtitles {
           if (command.type != RedditVideoType.post &&
               maxLength != null &&
               prevDuration >= maxLength) {
-            Warning.warn('Max length of ${maxLength}s reached '
+            Warning.warn(
+                'Max length of ${maxLength}s reached '
                 '(${prevDuration.inSeconds}s accumulated). '
                 'Stopping before next comment.',
                 section: LogSection.subtitles);
