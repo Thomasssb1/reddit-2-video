@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/app_paths.dart';
@@ -400,6 +401,64 @@ void main() {
           () => video.generate(command, backgroundVideo, cutVideo, 1),
           throwsA(isA<FFmpegCommandException>()),
         );
+      });
+
+      test('prints plain success path after ffmpeg succeeds', () async {
+        final video = RedditVideo(
+          posts: [post],
+          videoType: RedditVideoType.post,
+        );
+        final subtitles = MockSubtitles();
+        video.subtitles = subtitles;
+        final cutVideo = File('${tempDir.path}/cut.mp4')..createSync();
+
+        when(() => command.type).thenReturn(RedditVideoType.post);
+        when(() => command.endCard).thenAnswer((_) async => null);
+        when(() => command.music).thenReturn(null);
+        when(() => command.verbose).thenReturn(false);
+        when(() => command.override).thenReturn(false);
+        when(() => command.horror).thenReturn(false);
+        when(() => command.framerate).thenReturn(FPS.fps45);
+        when(() => command.output).thenReturn('final.mp4');
+        when(() => command.fileType).thenReturn(FileType.mp4);
+        when(() => command.repeat).thenReturn(1);
+        when(() => command.youtubeShort).thenReturn(false);
+
+        when(() => backgroundVideo.position).thenReturn(0);
+        when(() => subtitles.getTTSFilesAsInput()).thenReturn([]);
+        when(() => subtitles.getTTSStream(any())).thenReturn(['[1:a]']);
+        when(() => subtitles.assFile)
+            .thenReturn(File('${tempDir.path}/sub.ass'));
+        when(() => subtitles.duration).thenReturn(const Duration(seconds: 5));
+        when(() => subtitles.position = any<int>()).thenReturn(0);
+
+        Subprocess.setStartForTest((executable, arguments,
+            {workingDirectory,
+            environment,
+            includeParentEnvironment = true,
+            runInShell = false,
+            mode = ProcessStartMode.normal}) async {
+          return FakeProcess(exitCode: 0);
+        });
+
+        final printBuffer = <String>[];
+
+        await runZoned(
+          () async {
+            await video.generate(command, backgroundVideo, cutVideo, 1);
+          },
+          zoneSpecification: ZoneSpecification(
+            print: (_, __, ___, String line) {
+              printBuffer.add(line);
+            },
+          ),
+        );
+
+        expect(
+          printBuffer.join('\n'),
+          contains('Video successfully generated: ${tempDir.path}/final.mp4'),
+        );
+        expect(printBuffer.join('\n'), isNot(contains('[final.mp4](file://')));
       });
     });
   });

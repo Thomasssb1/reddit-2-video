@@ -1,4 +1,3 @@
-import 'package:args/args.dart';
 import 'dart:io';
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
@@ -154,6 +153,61 @@ void main() {
 
         expect(music, isNotNull);
         expect(music!.volume, 1.0);
+      });
+
+      test('outputFile appends fileType when output has no extension', () {
+        final cmd = _build(['--output', 'output']);
+
+        expect(cmd.outputFile(1).path, '${tempDir.path}/output.mp4');
+      });
+
+      test('outputFile appends repeat index when repeat is greater than 1',
+          () {
+        final cmd = _build(['--output', 'video.mp4', '--repeat', '3']);
+
+        expect(cmd.outputFile(2).path, '${tempDir.path}/video-2.mp4');
+      });
+    });
+
+    group('output collision validation', () {
+      test('throws when target output file already exists and override is false',
+          () {
+        File('${tempDir.path}/final.mp4').createSync();
+        final cmd = _build([]);
+
+        expect(
+          () => cmd.validateOutputFilesAvailable(),
+          throwsA(
+            isA<OutputFileExistsException>().having(
+              (exception) => exception.file.path,
+              'file.path',
+              '${tempDir.path}/final.mp4',
+            ),
+          ),
+        );
+      });
+
+      test('throws when any repeated output file already exists', () {
+        File('${tempDir.path}/video-2.mp4').createSync();
+        final cmd = _build(['--output', 'video.mp4', '--repeat', '3']);
+
+        expect(
+          () => cmd.validateOutputFilesAvailable(),
+          throwsA(
+            isA<OutputFileExistsException>().having(
+              (exception) => exception.file.path,
+              'file.path',
+              '${tempDir.path}/video-2.mp4',
+            ),
+          ),
+        );
+      });
+
+      test('does not throw when override is enabled', () {
+        File('${tempDir.path}/final.mp4').createSync();
+        final cmd = _build(['--override']);
+
+        expect(() => cmd.validateOutputFilesAvailable(), returnsNormally);
       });
     });
 

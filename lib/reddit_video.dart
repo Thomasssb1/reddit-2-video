@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:path/path.dart' as p;
 
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/background_video.dart';
@@ -224,6 +223,7 @@ class RedditVideo {
     );
 
     List<String> input = ffmpegCommand.generate(command, cutVideo, index);
+    final outputFile = AppPaths.resolve(input.last);
 
     final result =
         await Subprocess.exec("ffmpeg", input, verbose: command.verbose);
@@ -237,7 +237,7 @@ class RedditVideo {
     }
 
     printSuccess(
-        "Video successfully generated: [${p.basename(input.last)}](file://${File(input.last).absolute.path})!");
+        "Video successfully generated: ${outputFile.path}");
 
     if (command.youtubeShort) {
       List<File> segments = await splitVideo(
@@ -246,8 +246,7 @@ class RedditVideo {
       printSuccess(
           "Video successfully split into ${segments.length} YouTube shorts:");
       for (var segment in segments) {
-        print(
-            "  - [${p.basename(segment.path)}](file://${segment.absolute.path})");
+        print("  - ${segment.absolute.path}");
       }
     }
   }

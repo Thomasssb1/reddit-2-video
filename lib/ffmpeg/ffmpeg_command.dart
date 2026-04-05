@@ -7,9 +7,6 @@ import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/config/music.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
-import 'package:path/path.dart' as p;
-import 'package:reddit_2_video/exceptions/exceptions.dart';
-import 'package:reddit_2_video/ffmpeg/file_type.dart';
 
 class FFmpegCommand {
   final Subtitles subtitles;
@@ -105,26 +102,6 @@ class FFmpegCommand {
     return """${_concat()}${_horrorMode(command.horror)}${_addMusic()}[final_a];${_addEndCard()}${_cropVideo()},${_addSubtitles()}${_addFps(command.framerate)}[final_v]""";
   }
 
-  String _getOutput(ParsedCommand command, int index) {
-    String output = command.output;
-    FileType fileType = command.fileType;
-
-    String fileExtension = p.extension(output);
-    if (fileExtension.isEmpty) {
-      Warning.warn("No filename provided - using a default filename.");
-      output = "final";
-    } else {
-      if (FileType.called(fileExtension.substring(1)) != fileType) {
-        Warning.warn(
-            "File extension of output does not match requested the --file-type option. Using the value of the --file-type option.");
-      }
-      output = p.withoutExtension(output);
-    }
-    String count = command.repeat == 1 ? "" : "-$index";
-    return "$output$count.${fileType.name}";
-    // need to handle youtube short naming
-  }
-
   List<String> generate(ParsedCommand command, File cutVideo, int index) {
     /// Generate the command to be executed
     return [
@@ -136,7 +113,7 @@ class FFmpegCommand {
       "[final_v]",
       "-filter_complex",
       _getFilter(command),
-      _getOutput(command, index)
+      command.outputFile(index).path
     ];
   }
 }

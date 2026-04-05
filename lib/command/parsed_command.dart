@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:args/args.dart';
+import 'package:path/path.dart' as p;
+import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/command_type.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
@@ -298,4 +302,39 @@ class ParsedCommand extends Command {
   bool get isHelp => _args?['help'] ?? false;
   bool get subredditIsLink =>
       Uri.tryParse(_args!['subreddit'])?.hasAbsolutePath ?? false;
+
+  File outputFile(int index) {
+    String resolvedOutput = output;
+    final resolvedFileType = fileType;
+    final fileExtension = p.extension(resolvedOutput).substring(1);
+
+    if (fileExtension.isNotEmpty) {
+      if (FileType.called(fileExtension) != resolvedFileType) {
+        Warning.warn(
+            "File extension of output does not match requested the --file-type option. Using the value of the --file-type option.");
+      }
+      resolvedOutput = p.withoutExtension(resolvedOutput);
+    }
+
+    final count = repeat == 1 ? "" : "-$index";
+    return AppPaths.resolve("$resolvedOutput$count.${resolvedFileType.name}");
+  }
+
+  void validateOutputFilesAvailable() {
+    if (override || !isDefault) {
+      return;
+    }
+
+    final count = repeat == 1 ? 1 : repeat;
+    for (int index = 1; index <= count; index++) {
+      final file = outputFile(index);
+      if (file.existsSync()) {
+        throw OutputFileExistsException(
+          message:
+              "Output file already exists. Use --override to replace it: ${file.path}",
+          file: file,
+        );
+      }
+    }
+  }
 }

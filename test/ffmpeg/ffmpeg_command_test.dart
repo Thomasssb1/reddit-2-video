@@ -155,7 +155,7 @@ void main() {
         expect(result.last, 'output.mp4');
       });
 
-      test('defaults to final filename when output has no extension', () {
+      test('appends fileType when output has no extension', () {
         when(() => command.output).thenReturn('output');
 
         final ffCmd = FFmpegCommand(
@@ -165,7 +165,7 @@ void main() {
 
         final result = ffCmd.generate(command, cutVideo, 1);
 
-        expect(result.last, 'final.mp4');
+        expect(result.last, 'output.mp4');
       });
 
       test('uses fileType when output extension conflicts', () {

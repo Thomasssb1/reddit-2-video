@@ -18,9 +18,12 @@ void main(
 ) async {
   await checkDependencies();
   ParsedCommand command = ParsedCommand.parse(args);
-  AppPaths.init(isDev: command.isDev);
-  Log log = await Log.fromFile();
+  Log? log;
   try {
+    AppPaths.init(isDev: command.isDev);
+    command.validateOutputFilesAvailable();
+    log = await Log.fromFile();
+
     // Check that the dev flag is set whilst under development
     assert(command.isDev, true);
 
@@ -109,7 +112,7 @@ void main(
     if (command.isDev) {
       print("Running in dev mode, not clearing temporary files.");
     } else {
-      await log.clearTemporaryFiles();
+      await log?.clearTemporaryFiles();
     }
   }
 }
