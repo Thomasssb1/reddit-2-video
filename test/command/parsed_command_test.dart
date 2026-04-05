@@ -81,6 +81,35 @@ void main() {
           () => expect(cmd.maxLength, isNull));
     });
 
+    group('count warning behavior', () {
+      test('warns for link input when type is post', () {
+        expect(
+          () => ParsedCommand.parse([
+            '--subreddit',
+            'https://www.reddit.com/r/AskReddit/comments/abc123/title/',
+            '--type',
+            'post',
+            '--count',
+            '3',
+          ]),
+          prints(contains('--count does not work with a link')),
+        );
+      });
+
+      test('keeps count for link input when type is comments', () {
+        final cmd = ParsedCommand.parse([
+          '--subreddit',
+          'https://www.reddit.com/r/AskReddit/comments/abc123/title/',
+          '--type',
+          'comments',
+          '--count',
+          '3',
+        ]);
+
+        expect(cmd.commentCount, 3);
+      });
+    });
+
     group('new parameter getters', () {
       test('delay returns correct Duration', () {
         final cmd = _build(['--delay', '3']);

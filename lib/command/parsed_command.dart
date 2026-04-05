@@ -184,8 +184,11 @@ class ParsedCommand extends Command {
             'The value provided for --repeat must be an integer.');
       } else {
         // Non-terminating errors
+        final type = RedditVideoType.called(results['type']);
+
         if (results.wasParsed('count') &&
-            RedditUrl.validLink(results['subreddit'])) {
+            RedditUrl.validLink(results['subreddit']) &&
+            type == RedditVideoType.post) {
           Warning.warn(
               'The option --count does not work with a link, generation will continue but the --count option will be omitted.');
         }
