@@ -14,6 +14,5 @@ coverage/**
 test/hitl/.overseer.lock
 
 !defaults/silence.mp3
-.temp/visited_log.json
 # Ignore implementation plans
 implementation_plan*.md

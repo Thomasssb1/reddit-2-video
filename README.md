@@ -33,8 +33,13 @@ This will install ffmpeg and whisper_timestamped that are required to run reddit
 >```zsh
 >$ dart pub global activate --source path reddit-2-video
 >```
->Ensure that whenever you run the command, you add the `--dev, -d` flag to change the path to pwd.<br>
->You can now run reddit-2-video throughout your file system and rebuild whenever you change the source code.
+>You can now run reddit-2-video throughout your file system and rebuild whenever you change the source code.<br>
+>**Contributing?**
+>
+>Add the following filter to ignore checked in file changes touched by the program unless necessary:
+>```zsh
+> git config filter.cleanJsonState.clean "jq '(if has(\"_last_updated\") then ._last_updated=\"\" else . end) | (if has(\"visited\") then .visited=[] else . end)'"
+>```
 </details>
 
 ## Usage
