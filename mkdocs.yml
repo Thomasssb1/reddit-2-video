@@ -1,0 +1,20 @@
+site_name: reddit-2-video
+site_description: Documentation for the reddit-2-video CLI
+repo_url: https://github.com/Thomasssb1/reddit-2-video
+theme:
+  name: material
+  logo: assets/images/icon.svg
+  favicon: assets/images/icon.svg
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Quirks and Defaults: quirks-and-defaults.md
+  - Useful References: useful-references.md
+  - CLI Reference: cli.md
+  - Contributing: contributing.md
+  - Testing: testing.md
+markdown_extensions:
+  - admonition
+  - tables
+extra_css:
+  - stylesheets/extra.css
