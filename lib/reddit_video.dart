@@ -120,7 +120,7 @@ class RedditVideo {
             postData.add(post);
           }
         } on PickException {
-          Warning.warn(
+          logger.warning(
               "An error occurred whilst trying to fetch the post. Ignoring post.",
               section: LogSection.reddit);
           continue;
@@ -226,7 +226,7 @@ class RedditVideo {
         }
       }
       if (postData.length < command.commentCount) {
-        Warning.warn(
+        logger.warning(
             "Not enough posts selected as specified by the count option (${command.commentCount}). Generating video with only the posts that you have selected.",
             section: LogSection.reddit);
       } else {

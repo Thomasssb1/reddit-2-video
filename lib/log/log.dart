@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:reddit_2_video/app_paths.dart';
-import 'package:reddit_2_video/exceptions/warning.dart';
 import 'package:reddit_2_video/reddit/reddit_id.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit_video.dart';
@@ -46,7 +45,7 @@ class Log {
         }
       }
     } on FormatException {
-      Warning.warn(
+      logger.warning(
           'visited_log.json is corrupt or empty — starting with a fresh log.');
     }
 

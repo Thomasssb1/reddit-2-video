@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:reddit_2_video/exceptions/warning.dart';
 import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
@@ -31,7 +30,7 @@ Future<void> installWhisper() async {
     );
     int exitCode = result.exitCode;
     if (exitCode != 0) {
-      Warning.warn(
+      logger.warning(
           "Whilst trying to install whisper-timestamped using pip something went wrong. Error code: $exitCode",
           section: LogSection.install);
     } else {
@@ -49,7 +48,7 @@ Future<void> checkDependencies() async {
   logger.info("Checking dependencies.", section: LogSection.setup);
   bool ffmpegInstalled = await checkInstall('ffmpeg');
   if (!ffmpegInstalled) {
-    Warning.warn(
+    logger.warning(
         "ffmpeg is missing. You need to have ffmpeg installed globally to generate videos. Download it here: $ansiReset https://ffmpeg.org/download.html",
         section: LogSection.install);
     exit(1);
@@ -57,7 +56,7 @@ Future<void> checkDependencies() async {
 
   bool ytDlpInstalled = await checkInstall('yt-dlp');
   if (!ytDlpInstalled) {
-    Warning.warn(
+    logger.warning(
         "yt-dlp is missing. You need to have yt-dlp installed globally to download background videos. Download it here: $ansiReset https://github.com/yt-dlp/yt-dlp",
         section: LogSection.install);
     exit(1);
@@ -65,7 +64,7 @@ Future<void> checkDependencies() async {
 
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
-    Warning.warn(
+    logger.warning(
         "AWS CLI is missing. You need to install AWS CLI in order to use AWS-Polly TTS. \n"
         "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions",
         section: LogSection.install);
@@ -76,28 +75,28 @@ Future<void> checkDependencies() async {
 Future<void> runInstallCommand() async {
   bool pythonInstalled = await checkInstall('python');
   if (!pythonInstalled) {
-    Warning.warn(
+    logger.warning(
         "In order to continue, you need to have python installed. Download it here: $ansiReset https://www.python.org/downloads/",
         section: LogSection.install);
   }
 
   bool ffmpegInstalled = await checkInstall('ffmpeg');
   if (!ffmpegInstalled) {
-    Warning.warn(
+    logger.warning(
         "You need to have ffmpeg installed globally in order to generate videos. Download it here: $ansiReset https://ffmpeg.org/download.html",
         section: LogSection.install);
   }
 
   bool ytDlpInstalled = await checkInstall('yt-dlp');
   if (!ytDlpInstalled) {
-    Warning.warn(
+    logger.warning(
         "You need to have yt-dlp installed globally in order to download background videos. Download it here: $ansiReset https://github.com/yt-dlp/yt-dlp",
         section: LogSection.install);
   }
 
   bool pipInstalled = await checkInstall('pip');
   if (!pipInstalled) {
-    Warning.warn(
+    logger.warning(
         "You need to have pip installed in order to install the python dependencies (like whisper-timestamped).",
         section: LogSection.install);
   } else {
@@ -106,7 +105,7 @@ Future<void> runInstallCommand() async {
 
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
-    Warning.warn(
+    logger.warning(
         "You need to install AWS CLI in order to use AWS-Polly TTS. \n"
         "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions",
         section: LogSection.install);

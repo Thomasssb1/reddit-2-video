@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 
 class Voices {
   List<Voice> _voices = List.empty();
@@ -30,7 +31,7 @@ class Voices {
     }
 
     if (!voices.contains(currentVoice)) {
-      Warning.warn("Unable to use selected --voice, maybe it is disabled?");
+      logger.warning("Unable to use selected --voice, maybe it is disabled?");
     }
     int index = voices.indexOf(currentVoice);
     _currentVoice = index == -1 ? 0 : index;
@@ -82,7 +83,7 @@ class Voices {
 
   static Voice find(List<Voice> voices, String id) {
     if (voices.isEmpty) {
-      Warning.warn(
+      logger.warning(
           "Ensure voice.config.json is loaded otherwise default voice Brian will be used.");
     }
     return voices.firstWhere((e) => e.id == id, orElse: () => Voice.standard());

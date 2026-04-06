@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 
 /// File extensions considered "static images" (duration cannot be inferred).
@@ -50,12 +51,12 @@ Future<Duration> _resolveDuration(
   final probed = await _probeFileDuration(file);
 
   if (override != null && probed != null) {
-    Warning.warn(
+    logger.warning(
         '--end-card-length is overriding the inferred end-card duration '
         '(${probed.inSeconds}s) with ${override.inSeconds}s. '
         'Remove --end-card-length to use the file duration automatically.');
   } else if (override == null && probed == null) {
-    Warning.warn('Could not infer end-card duration from file. '
+    logger.warning('Could not infer end-card duration from file. '
         'Falling back to 5s. Use --end-card-length to set an explicit value.');
   }
 

@@ -14,7 +14,7 @@ import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:reddit_2_video/subtitles/subtitle.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/reddit/reddit_post.dart';
-import 'package:remove_emoji/remove_emoji.dart';
+import 'package:reddit_2_video/utils/string_utils.dart';
 import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/progress.dart';
@@ -68,11 +68,6 @@ class Subtitles {
     File defaultASS = AppPaths.resolve('defaults/default.ass');
     File assDestination = AppPaths.resolve('.temp/${video.id}/comments.ass');
     _assFile = defaultASS.copySync(assDestination.path);
-  }
-
-  String _removeCharacters(String text) {
-    RemoveEmoji removeEmoji = RemoveEmoji();
-    return removeEmoji.clean(text).replaceAll('&amp;#x200B;', '');
   }
 
   List<String> _splitText(String text) {
@@ -206,7 +201,7 @@ class Subtitles {
       // --- multi type: check before starting a new post ---
       if (command.type == RedditVideoType.multi && maxLength != null) {
         if (prevDuration >= maxLength && _subtitles.isNotEmpty) {
-          Warning.warn(
+          logger.warning(
               'Max length of ${maxLength}s reached '
               '(${prevDuration.inSeconds}s accumulated). '
               'Stopping before next post.',
@@ -215,11 +210,11 @@ class Subtitles {
         }
       }
 
-      String title = _removeCharacters(post.title);
-      String body = _removeCharacters(post.body);
+      String title = post.title.cleanse();
+      String body = post.body.cleanse();
 
       List<String> comments = post.comments
-          .map((e) => _removeCharacters(e.body))
+          .map((e) => e.body.cleanse())
           .where((e) => e.isNotEmpty)
           .toList();
 
@@ -254,7 +249,7 @@ class Subtitles {
           if (command.type != RedditVideoType.post &&
               maxLength != null &&
               prevDuration >= maxLength) {
-            Warning.warn(
+            logger.warning(
                 'Max length of ${maxLength}s reached '
                 '(${prevDuration.inSeconds}s accumulated). '
                 'Stopping before next comment.',
@@ -353,10 +348,10 @@ class Subtitles {
 
     var count = 0;
     for (final post in video.posts) {
-      count += countSegmentsInText(_removeCharacters(post.title));
-      count += countSegmentsInText(_removeCharacters(post.body));
+      count += countSegmentsInText(post.title.cleanse());
+      count += countSegmentsInText(post.body.cleanse());
       for (final comment in post.comments) {
-        count += countSegmentsInText(_removeCharacters(comment.body));
+        count += countSegmentsInText(comment.body.cleanse());
       }
     }
     return count;

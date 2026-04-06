@@ -15,9 +15,10 @@ import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/utils/substation_alpha_subtitle_color.dart';
 import 'package:reddit_2_video/config/music.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 export 'package:reddit_2_video/command/command_type.dart';
 import 'package:reddit_2_video/command/command.dart';
-import 'package:reddit_2_video/utils/boolean_conversion.dart';
+import 'package:reddit_2_video/utils/string_utils.dart';
 
 class ParsedCommand extends Command {
   final CommandType? _command;
@@ -190,11 +191,11 @@ class ParsedCommand extends Command {
         if (results.wasParsed('count') &&
             RedditUrl.validLink(results['subreddit']) &&
             type == RedditVideoType.post) {
-          Warning.warn(
+          logger.warning(
               'The option --count does not work with a link, generation will continue but the --count option will be omitted.');
         }
         if (results.wasParsed('spoiler')) {
-          Warning.warn(
+          logger.warning(
               'Currently, --spoiler is not implemented, generation will continue as normal.');
         }
       }
@@ -223,8 +224,8 @@ class ParsedCommand extends Command {
   int get commentCount => int.parse(args!['count']);
   RedditVideoType get type => RedditVideoType.called(args!['type'])!;
   Alternate get alternate => Alternate(
-        tts: BooleanConversion(args!['alternate'][0]).parseBool(),
-        color: BooleanConversion(args!['alternate'][1]).parseBool(),
+        tts: args!['alternate'][0].toString().parseBool(),
+        color: args!['alternate'][1].toString().parseBool(),
       );
   SubstationAlphaSubtitleColor get titleColor =>
       SubstationAlphaSubtitleColor(args!['title-color']);
@@ -246,7 +247,7 @@ class ParsedCommand extends Command {
     if (args!['music'].length == 2) {
       final parsed = double.tryParse(args!['music'][1]);
       if (parsed == null) {
-        Warning.warn("Volume must be a double. Defaulting to 1.0");
+        logger.warning("Volume must be a double. Defaulting to 1.0");
       } else {
         volume = parsed;
       }
@@ -303,7 +304,7 @@ class ParsedCommand extends Command {
 
     if (fileExtension.isNotEmpty) {
       if (FileType.called(fileExtension) != resolvedFileType) {
-        Warning.warn(
+        logger.warning(
             "File extension of output does not match requested the --file-type option. Using the value of the --file-type option.");
       }
       resolvedOutput = p.withoutExtension(resolvedOutput);

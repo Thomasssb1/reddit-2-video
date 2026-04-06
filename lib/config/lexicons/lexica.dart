@@ -3,6 +3,7 @@ import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/config_item.dart';
 import 'package:reddit_2_video/config/lexicons/lexicon.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:xml/xml.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -75,7 +76,7 @@ class Lexica extends ConfigItem {
       for (Lexica lex in lexicas) {
         sb.write("${lex.id},");
       }
-      Warning.warn(sb.toString());
+      logger.warning(sb.toString());
     }
 
     return lexicas;
@@ -114,7 +115,7 @@ class Lexica extends ConfigItem {
         }
         _setLastUpdated(DateTime.now(), path);
       } on PollyInvalidPlsLexicon catch (e) {
-        Warning.warn(e.message);
+        logger.warning(e.message);
         return;
       }
     }
@@ -196,7 +197,7 @@ class Lexica extends ConfigItem {
     });
     final document = builder.buildDocument();
     if (!path.existsSync()) {
-      Warning.warn("File $path already exists, overwriting.");
+      logger.warning("File $path already exists, overwriting.");
     }
     return document.toXmlString();
   }

@@ -5,7 +5,7 @@ class Music extends ConfigItem {
   int? position;
 
   Music({
-    required String path,
+    required super.path,
     this.volume = 1.0,
-  }) : super(path: path);
+  });
 }

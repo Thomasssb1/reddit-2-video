@@ -121,11 +121,6 @@ class RedditPost {
     }
   }
 
-  static DateTime _createdAt(Duration created) {
-    return DateTime.fromMillisecondsSinceEpoch(
-        (created.inMilliseconds).round());
-  }
-
   void _setJsonAttributes(Pick pick) {
     try {
       _subreddit = pick('subreddit').asStringOrNull() ?? "Unknown";
@@ -136,13 +131,13 @@ class RedditPost {
       _id = RedditId(pick('id').asStringOrThrow(), _subredditId);
       _body = pick('selftext').asStringOrNull() ?? "";
       _upvotes = pick('ups').asIntOrNull() ?? 0;
-      _created = _createdAt(Duration(
-          seconds: pick('created_utc').asDoubleOrNull()?.floor() ?? 0));
+      _created = DateTime.fromMillisecondsSinceEpoch(
+          ((pick('created_utc').asDoubleOrNull() ?? 0.0) * 1000).round());
       _spoiler = pick('spoiler').asBoolOrFalse();
       _hasMedia = pick('media').asBoolOrFalse();
       _nsfw = pick('over_18').asBoolOrFalse();
     } on PickException {
-      String reason = pick(json, "reason").asStringOrNull() ?? "unknown";
+      String reason = pick('reason').asStringOrNull() ?? "unknown";
       throw RedditApiException(
           message: "Unable to get information for post $_url - reason: $reason",
           statusCode: 200);
