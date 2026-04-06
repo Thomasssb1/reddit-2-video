@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/app_paths.dart';
@@ -247,24 +246,14 @@ void main() {
         });
 
         final log = await Log.fromFile();
-        final printBuffer = <String>[];
-        late RedditVideo video;
-
-        await runZoned(
-          () async {
-            video = await RedditVideo.parse(command, log);
-          },
-          zoneSpecification: ZoneSpecification(
-            print: (_, __, ___, String line) {
-              printBuffer.add(line);
-            },
-          ),
-        );
+        final stdoutBuffer = StringBuffer();
+        logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+        final video = await RedditVideo.parse(command, log);
 
         expect(video.posts, hasLength(1));
         expect(video.posts.first.id, 'abc123-t5_test');
 
-        final output = printBuffer.join('\n');
+        final output = stdoutBuffer.toString();
         expect(output, contains('Fetching posts from r/test sorted by top.'));
         expect(output, contains('Received 1 post candidates from Reddit.'));
         expect(output, contains('Found 1 eligible post after filtering.'));
@@ -461,24 +450,16 @@ void main() {
           return FakeProcess(exitCode: 0);
         });
 
-        final printBuffer = <String>[];
+        final stdoutBuffer = StringBuffer();
+        logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
 
-        await runZoned(
-          () async {
-            await video.generate(command, backgroundVideo, cutVideo, 1);
-          },
-          zoneSpecification: ZoneSpecification(
-            print: (_, __, ___, String line) {
-              printBuffer.add(line);
-            },
-          ),
-        );
+        await video.generate(command, backgroundVideo, cutVideo, 1);
 
         expect(
-          printBuffer.join('\n'),
+          stdoutBuffer.toString(),
           contains('Video successfully generated: ${tempDir.path}/final.mp4'),
         );
-        expect(printBuffer.join('\n'), isNot(contains('[final.mp4](file://')));
+        expect(stdoutBuffer.toString(), isNot(contains('[final.mp4](file://')));
       });
     });
   });

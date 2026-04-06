@@ -4,6 +4,7 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:test/test.dart';
 
 /// Builds a minimal [ArgResults] from a list of CLI args, returning a
@@ -82,6 +83,9 @@ void main() {
 
     group('count warning behavior', () {
       test('warns for link input when type is post', () {
+        final stdoutBuffer = StringBuffer();
+        logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
         expect(
           () => ParsedCommand.parse([
             '--subreddit',
@@ -91,8 +95,10 @@ void main() {
             '--count',
             '3',
           ]),
-          prints(contains('--count does not work with a link')),
+          returnsNormally,
         );
+        expect(stdoutBuffer.toString(),
+            contains('--count does not work with a link'));
       });
 
       test('keeps count for link input when type is comments', () {

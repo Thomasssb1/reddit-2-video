@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/config/end_card.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
+import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
 import 'package:test/test.dart';
 import '../mocks.dart';
@@ -58,6 +59,8 @@ void main() {
       () async {
     final videoFile = File('${tempDir.path}/clip.mp4');
     videoFile.createSync();
+    final stdoutBuffer = StringBuffer();
+    logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
 
     Subprocess.setStartForTest((executable, arguments,
         {workingDirectory,
@@ -71,16 +74,16 @@ void main() {
       );
     });
 
-    await expectLater(
-      () async {
-        final result = await EndCard.create(
-          path: "clip.mp4",
-          durationOverride: Duration(seconds: 8),
-        );
-        expect(result.duration, Duration(seconds: 8));
-      },
-      prints(contains(
-          '--end-card-length is overriding the inferred end-card duration')),
+    final result = await EndCard.create(
+      path: "clip.mp4",
+      durationOverride: Duration(seconds: 8),
+    );
+
+    expect(result.duration, Duration(seconds: 8));
+    expect(
+      stdoutBuffer.toString(),
+      contains(
+          '--end-card-length is overriding the inferred end-card duration'),
     );
   });
 

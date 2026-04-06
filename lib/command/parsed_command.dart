@@ -300,10 +300,10 @@ class ParsedCommand extends Command {
   File outputFile(int index) {
     String resolvedOutput = output;
     final resolvedFileType = fileType;
-    final fileExtension = p.extension(resolvedOutput).substring(1);
+    final fileExtension = p.extension(resolvedOutput);
 
     if (fileExtension.isNotEmpty) {
-      if (FileType.called(fileExtension) != resolvedFileType) {
+      if (FileType.called(fileExtension.substring(1)) != resolvedFileType) {
         logger.warning(
             "File extension of output does not match requested the --file-type option. Using the value of the --file-type option.");
       }

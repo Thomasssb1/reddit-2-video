@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:mocktail/mocktail.dart';
+import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/config/empty_noise.dart';
@@ -21,7 +22,21 @@ class MockRedditPost extends Mock implements RedditPost {}
 
 class MockBackgroundVideo extends Mock implements BackgroundVideo {}
 
-class MockParsedCommand extends Mock implements ParsedCommand {}
+class MockParsedCommand extends Mock implements ParsedCommand {
+  @override
+  File outputFile(int index) {
+    var resolvedOutput = output;
+    final resolvedFileType = fileType;
+    final fileExtension = p.extension(resolvedOutput);
+
+    if (fileExtension.isNotEmpty) {
+      resolvedOutput = p.withoutExtension(resolvedOutput);
+    }
+
+    final count = repeat == 1 ? '' : '-$index';
+    return File('$resolvedOutput$count.${resolvedFileType.name}');
+  }
+}
 
 class MockEndCard extends Mock implements EndCard {}
 
