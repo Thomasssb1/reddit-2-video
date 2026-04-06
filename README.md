@@ -1,4 +1,4 @@
-# reddit-2-video
+# <img src="docs/assets/images/icon.svg" alt="reddit-2-video icon" width="32" valign="middle"> reddit-2-video
 
 A highly customisable command line script for generating a tiktok-style video offering granular controls over output settings. <br>
 
@@ -38,10 +38,10 @@ This will install ffmpeg and whisper_timestamped that are required to run reddit
 >
 >Add the following filter to ignore checked in file changes touched by the program unless necessary:
 >```zsh
-> git config filter.cleanJsonState.clean "jq '(if has(\"_last_updated\") then ._last_updated=null else . end) | (if has(\"visited\") then .visited=[] else . end)'"
->git config filter.cleanJsonState.smudge cat
->git config filter.cleanJsonState.required true
->git add --renormalize .temp/visited_log.json defaults/lexicons/lexemes.config.json
+>$ git config filter.cleanJsonState.clean "jq '(if has(\"_last_updated\") then ._last_updated=null else . end) | (if has(\"visited\") then .visited=[] else . end)'"
+>$ git config filter.cleanJsonState.smudge cat
+>$ git config filter.cleanJsonState.required true
+>$ git add --renormalize .temp/visited_log.json defaults/lexicons/lexemes.config.json
 >```
 </details>
 

@@ -28,6 +28,8 @@ When working in this codebase, all AI coding assistants must adhere to the follo
 - **Strongly-Typed Models:** Represent all Reddit data using the established models in `lib/reddit/` (such as `RedditPost`, `RedditComment`, or `RedditUrl`). Avoid passing unstructured JSON maps or raw strings between functions.
 - **Domain Separation:** Maintain the strict separation of concerns across existing domains: media generation logic in `lib/ffmpeg/`, subtitle generation in `lib/subtitles/`, configuration in `lib/config/`, and generic utilities in `lib/utils/`.
 - **Subprocess Execution:** Centralize subprocess execution (`ffmpeg`, `ffprobe`, `yt-dlp`, etc.) through a shared utility in `lib/utils/` so test injection is done in one place, not per-class or per-method ad-hoc parameters.
+- **Docs Theme Styling:** When styling the MkDocs site, use the Reddit-inspired palette already chosen for this repo, including `#336699` for UI text and link accents.
+- **Docs Freshness Notes:** Hand-written docs pages should include a simple `Last reviewed: YYYY-MM-DD` note near the top. Do not add confidence labels.
 - Write tests first or side-by-side with new implementations.
 
 ## 4. Continuous Learning (Self-Updating)
