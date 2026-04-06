@@ -11,6 +11,7 @@ When working in this codebase, all AI coding assistants must adhere to the follo
 - **Run the Tests:** After making changes, always run the tests (e.g., using `dart test`) to verify the new implementation and ensure no regressions are introduced.
 - **Mocking:** Use the `mocktail` package for mocking dependencies (see `test/mocks.dart` for examples of mock implementations).
 - Tests must be grouped logically using `group()` and clearly described using `test()`.
+- **Cross-Platform Paths:** Tests must not hardcode POSIX path separators in expected file paths. Use `package:path` helpers like `p.join(...)` or normalize both sides so tests pass on Windows and Unix CI runners.
 
 ## 2. Formatting and Styling
 

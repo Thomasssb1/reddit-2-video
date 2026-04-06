@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
@@ -164,13 +165,13 @@ void main() {
       test('outputFile appends fileType when output has no extension', () {
         final cmd = _build(['--output', 'output']);
 
-        expect(cmd.outputFile(1).path, '${tempDir.path}/output.mp4');
+        expect(cmd.outputFile(1).path, p.join(tempDir.path, 'output.mp4'));
       });
 
       test('outputFile appends repeat index when repeat is greater than 1', () {
         final cmd = _build(['--output', 'video.mp4', '--repeat', '3']);
 
-        expect(cmd.outputFile(2).path, '${tempDir.path}/video-2.mp4');
+        expect(cmd.outputFile(2).path, p.join(tempDir.path, 'video-2.mp4'));
       });
     });
 
@@ -187,7 +188,7 @@ void main() {
             isA<OutputFileExistsException>().having(
               (exception) => exception.file.path,
               'file.path',
-              '${tempDir.path}/final.mp4',
+              p.join(tempDir.path, 'final.mp4'),
             ),
           ),
         );
@@ -203,7 +204,7 @@ void main() {
             isA<OutputFileExistsException>().having(
               (exception) => exception.file.path,
               'file.path',
-              '${tempDir.path}/video-2.mp4',
+              p.join(tempDir.path, 'video-2.mp4'),
             ),
           ),
         );

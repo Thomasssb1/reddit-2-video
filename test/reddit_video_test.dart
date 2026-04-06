@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/config/background_video.dart';
@@ -457,7 +458,9 @@ void main() {
 
         expect(
           stdoutBuffer.toString(),
-          contains('Video successfully generated: ${tempDir.path}/final.mp4'),
+          contains(
+            'Video successfully generated: ${p.join(tempDir.path, 'final.mp4')}',
+          ),
         );
         expect(stdoutBuffer.toString(), isNot(contains('[final.mp4](file://')));
       });
