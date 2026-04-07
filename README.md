@@ -1,10 +1,10 @@
 # <img src="docs/assets/images/icon.svg" alt="reddit-2-video icon" width="32" valign="middle"> reddit-2-video
 
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-336699)](https://thomasssb1.github.io/reddit-2-video/) [![CI](https://github.com/Thomasssb1/reddit-2-video/actions/workflows/ci.yml/badge.svg)](https://github.com/Thomasssb1/reddit-2-video/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/badge/coverage-pending-lightgrey)](https://github.com/Thomasssb1/reddit-2-video/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/Thomasssb1/reddit-2-video?display_name=tag)](https://github.com/Thomasssb1/reddit-2-video/releases) [![License](https://img.shields.io/github/license/Thomasssb1/reddit-2-video)](https://github.com/Thomasssb1/reddit-2-video/blob/master/LICENSE)
+
 A highly customisable command line script for generating a tiktok-style video offering granular controls over output settings. <br>
 
-> This is currently being [rewritten](https://github.com/Thomasssb1/reddit-2-video/pull/3), certain functionality may change
-
-View the wiki [here](https://github.com/Thomasssb1/reddit-2-video/wiki) for information on how to use reddit-2-video.
+View the docs [here](https://thomasssb1.github.io/reddit-2-video/) for information on how to use reddit-2-video.
 
 ## Setup
 

@@ -1,0 +1,84 @@
+name: Update Coverage Badge
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-badge:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
+          path: coverage-data
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Update coverage badge in README
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git merge-base --is-ancestor "${{ github.event.workflow_run.head_sha }}" HEAD; then
+            echo "Skipping update because the completed CI run is not an ancestor of current master."
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          coverage = json.loads(Path("coverage-data/coverage.json").read_text())["line_coverage"]
+          display = f"{coverage:.2f}".rstrip("0").rstrip(".")
+
+          if coverage < 80:
+              color = "red"
+          elif coverage < 90:
+              color = "yellow"
+          else:
+              color = "brightgreen"
+
+          readme = Path("README.md").read_text()
+          updated = re.sub(
+              r"https://img\.shields\.io/badge/coverage-[^)]*",
+              f"https://img.shields.io/badge/coverage-{display}%25-{color}",
+              readme,
+              count=1,
+          )
+          Path("README.md").write_text(updated)
+          print(f"Updated coverage badge to {display}% ({color})")
+          PY
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add README.md
+
+          if git diff --cached --quiet; then
+            echo "No coverage badge changes to commit."
+            exit 0
+          fi
+
+          BRANCH_NAME="coverage-badge-update-${{ github.event.workflow_run.id }}"
+          git checkout -b "$BRANCH_NAME"
+          git commit -m "docs: update coverage badge [skip ci]"
+          git push origin "$BRANCH_NAME"
+
+          gh pr create \
+            --base master \
+            --head "$BRANCH_NAME" \
+            --title "docs: update coverage badge" \
+            --body "Automated update of the README coverage badge based on the latest successful CI run on master." || echo "Pull request creation skipped or failed"
