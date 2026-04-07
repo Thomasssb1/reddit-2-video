@@ -9,6 +9,7 @@ import 'package:reddit_2_video/config/background_video.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/reddit/reddit_http_retry.dart';
+import 'package:reddit_2_video/reddit/reddit_id.dart';
 import 'package:reddit_2_video/reddit/reddit_post_sort_type.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
@@ -305,6 +306,74 @@ void main() {
           () => RedditVideo.parse(command, log),
           throwsA(isA<PostsExhaustedException>()),
         );
+      });
+
+      test(
+          'confirmPostSelection keeps candidates unchanged and returns accepted multi posts',
+          () async {
+        final firstPost = MockRedditPost();
+        final secondPost = MockRedditPost();
+        final thirdPost = MockRedditPost();
+        final candidates = [firstPost, secondPost, thirdPost];
+
+        when(() => command.type).thenReturn(RedditVideoType.multi);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+        when(() => command.subreddit).thenReturn('test');
+
+        when(() => firstPost.title).thenReturn('First');
+        when(() => firstPost.upvotes).thenReturn(10);
+        when(() => firstPost.commentCount).thenReturn(5);
+        when(() => firstPost.created)
+            .thenReturn(DateTime.fromMillisecondsSinceEpoch(1701083780000));
+        when(() => firstPost.spoiler).thenReturn(false);
+        when(() => firstPost.hasMedia).thenReturn(false);
+        when(() => firstPost.nsfw).thenReturn(false);
+        when(() => firstPost.body).thenReturn('First body');
+        when(() => firstPost.redditId).thenReturn(RedditId('first', 't5_test'));
+        when(() => firstPost.id).thenReturn('first-t5_test');
+
+        when(() => secondPost.title).thenReturn('Second');
+        when(() => secondPost.upvotes).thenReturn(20);
+        when(() => secondPost.commentCount).thenReturn(6);
+        when(() => secondPost.created)
+            .thenReturn(DateTime.fromMillisecondsSinceEpoch(1701083781000));
+        when(() => secondPost.spoiler).thenReturn(false);
+        when(() => secondPost.hasMedia).thenReturn(false);
+        when(() => secondPost.nsfw).thenReturn(false);
+        when(() => secondPost.body).thenReturn('Second body');
+        when(() => secondPost.redditId)
+            .thenReturn(RedditId('second', 't5_test'));
+        when(() => secondPost.id).thenReturn('second-t5_test');
+
+        when(() => thirdPost.title).thenReturn('Third');
+        when(() => thirdPost.upvotes).thenReturn(30);
+        when(() => thirdPost.commentCount).thenReturn(7);
+        when(() => thirdPost.created)
+            .thenReturn(DateTime.fromMillisecondsSinceEpoch(1701083782000));
+        when(() => thirdPost.spoiler).thenReturn(false);
+        when(() => thirdPost.hasMedia).thenReturn(false);
+        when(() => thirdPost.nsfw).thenReturn(false);
+        when(() => thirdPost.body).thenReturn('Third body');
+        when(() => thirdPost.redditId).thenReturn(RedditId('third', 't5_test'));
+        when(() => thirdPost.id).thenReturn('third-t5_test');
+
+        final log = await Log.fromFile();
+        final responses = ['n', 'y', 'n', 'n', 'n', 'y'].iterator;
+
+        final selected = await RedditVideo.confirmPostSelection(
+          candidates: candidates,
+          command: command,
+          log: log,
+          readLine: () {
+            expect(responses.moveNext(), isTrue);
+            return responses.current;
+          },
+        );
+
+        expect(candidates, hasLength(3));
+        expect(selected, equals([firstPost, thirdPost]));
+        expect(log.contains(secondPost), isTrue);
       });
     });
 
