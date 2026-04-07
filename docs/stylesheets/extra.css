@@ -11,7 +11,7 @@
   --reddit-code-bg: #f7fbff;
 }
 
-[data-md-color-scheme='default'] {
+[data-md-color-scheme="default"] {
   --md-default-bg-color: var(--reddit-light-bg);
   --md-default-fg-color: #1d2a36;
   --md-default-fg-color--light: #5a6b7b;
@@ -44,7 +44,11 @@
 }
 
 .md-tabs {
-  background: linear-gradient(180deg, rgba(255, 139, 96, 0.14), rgba(255, 255, 255, 0.7));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 139, 96, 0.14),
+    rgba(255, 255, 255, 0.7)
+  );
   border-top: 1px solid rgba(255, 87, 0, 0.18);
 }
 
@@ -57,7 +61,11 @@
 
 .md-main {
   background:
-    radial-gradient(circle at top right, rgba(255, 139, 96, 0.12), transparent 28%),
+    radial-gradient(
+      circle at top right,
+      rgba(255, 139, 96, 0.12),
+      transparent 28%
+    ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)),
     var(--reddit-light-bg);
 }
@@ -109,7 +117,10 @@
 .md-nav__link {
   border-left: 2px solid transparent;
   padding-left: 0.45rem;
-  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
 }
 
 .md-nav__link:hover {
@@ -138,7 +149,9 @@
   text-decoration: underline;
   text-decoration-color: rgba(255, 87, 0, 0.22);
   text-underline-offset: 0.16em;
-  transition: color 140ms ease, text-decoration-color 140ms ease;
+  transition:
+    color 140ms ease,
+    text-decoration-color 140ms ease;
 }
 
 .md-typeset a:hover {

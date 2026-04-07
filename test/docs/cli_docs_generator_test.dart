@@ -17,13 +17,15 @@ void main() {
       final markdown = generator.generateFromSource(source);
 
       expect(markdown, startsWith('# CLI Reference'));
-      expect(markdown,
-          contains('This page is generated from `lib/command/parsed_command.dart`.'));
+      expect(
+          markdown,
+          contains(
+              'This page is generated from `lib/command/parsed_command.dart`.'));
       expect(markdown, contains('## Command Overview'));
-      expect(markdown,
-          contains('reddit-2-video --subreddit AskReddit [options]'));
-      expect(markdown,
-          contains('reddit-2-video flush --post <reddit-post-id>'));
+      expect(
+          markdown, contains('reddit-2-video --subreddit AskReddit [options]'));
+      expect(
+          markdown, contains('reddit-2-video flush --post <reddit-post-id>'));
       expect(markdown, contains('reddit-2-video install'));
     });
 
@@ -41,8 +43,10 @@ void main() {
 
       expect(markdown, contains('#### `--alternate`'));
       expect(markdown, contains('- Type: `multi-option`'));
-      expect(markdown,
-          contains('- Value: `<alternate-tts(on/off),alternate-colour(on/off)>`'));
+      expect(
+          markdown,
+          contains(
+              '- Value: `<alternate-tts(on/off),alternate-colour(on/off)>`'));
       expect(markdown, contains('- Default: `[off, off]`'));
       expect(markdown, contains('tts - alternate TTS voice'));
 
@@ -57,26 +61,33 @@ void main() {
       expect(markdown, contains('- Default: `true`'));
 
       expect(markdown, contains('#### `--max-length`'));
-      expect(markdown,
-          contains('Generation stops at a logical boundary once this limit is reached.'));
+      expect(
+          markdown,
+          contains(
+              'Generation stops at a logical boundary once this limit is reached.'));
     });
 
     test('extracts command specific sections and options', () {
       final markdown = generator.generateFromSource(source);
 
       expect(markdown, contains('## `install` Command'));
-      expect(markdown,
-          contains('Installs or bootstraps runtime dependencies.'));
-      expect(markdown, contains('This command has no command-specific options.'));
+      expect(
+          markdown, contains('Installs or bootstraps runtime dependencies.'));
+      expect(
+          markdown, contains('This command has no command-specific options.'));
 
       expect(markdown, contains('## `flush` Command'));
-      expect(markdown,
-          contains('remove a post from the visited log and allow it to be reused.'));
+      expect(
+          markdown,
+          contains(
+              'remove a post from the visited log and allow it to be reused.'));
       expect(markdown, contains('#### `--post`'));
       expect(markdown, contains('- Type: `option`'));
       expect(markdown, contains('- Short flag: `-p`'));
-      expect(markdown,
-          contains('- Description: Remove a specific reddit post from the visited log.'));
+      expect(
+          markdown,
+          contains(
+              '- Description: Remove a specific reddit post from the visited log.'));
     });
 
     test('supports custom labels and reading from file', () {
@@ -92,8 +103,10 @@ void main() {
 
       final markdown = customGenerator.generateFromFile(sourceFile.path);
 
-      expect(markdown,
-          contains('This page is generated from `custom/parsed_command.dart`.'));
+      expect(
+          markdown,
+          contains(
+              'This page is generated from `custom/parsed_command.dart`.'));
       expect(markdown, contains('r2v --subreddit AskReddit [options]'));
       expect(markdown, contains('r2v flush --post <reddit-post-id>'));
       expect(markdown, contains('r2v install'));
@@ -110,7 +123,8 @@ void main() {
 
       expect(markdown, contains('reddit-2-video doctor'));
       expect(markdown, contains('## `doctor` Command'));
-      expect(markdown, contains('Command discovered from the parser definition.'));
+      expect(
+          markdown, contains('Command discovered from the parser definition.'));
       expect(markdown, isNot(contains('```bash\ndoctor')));
       expect(markdown, contains('```bash\nreddit-2-video doctor\n```'));
     });
