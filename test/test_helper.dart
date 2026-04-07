@@ -37,20 +37,33 @@ void useRealSubprocesses() {
 }
 
 Future<void> createDummyVideo(String path,
-    {int seconds = 1, String size = '128x128'}) async {
+    {int seconds = 1, String size = '128x128', bool withAudio = false}) async {
   // Generate a blank video using ffmpeg for media-based tests.
-  final process = await Process.run(resolveExecutable('ffmpeg'), [
+  final arguments = <String>[
     '-f',
     'lavfi',
     '-i',
     'color=c=black:s=$size:d=$seconds',
+    if (withAudio) ...[
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=880:duration=$seconds',
+    ],
     '-c:v',
     'libx264',
     '-pix_fmt',
     'yuv420p',
+    if (withAudio) ...[
+      '-c:a',
+      'aac',
+      '-shortest',
+    ],
     '-y',
     path,
-  ]);
+  ];
+
+  final process = await Process.run(resolveExecutable('ffmpeg'), arguments);
 
   if (process.exitCode != 0) {
     throw Exception('Failed to create test video: ${process.stderr}');

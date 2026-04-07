@@ -17,6 +17,7 @@ Future<List<File>> splitVideo(
   );
   String dir = p.dirname(outputFilePath);
   String baseName = p.basenameWithoutExtension(outputFilePath);
+  final segmentBaseName = count == 0 ? baseName : '$baseName-';
 
   List<String> commandArgs = [
     '-i',
@@ -25,11 +26,13 @@ Future<List<File>> splitVideo(
     'copy',
     '-map',
     '0',
+    '-reset_timestamps',
+    '1',
     '-segment_time',
     '00:00:55',
     '-f',
     'segment',
-    p.join(dir, '$baseName${count == 0 ? "" : count}%03d.$fileExtension'),
+    p.join(dir, '$segmentBaseName%03d.$fileExtension'),
   ];
 
   final result = await Subprocess.exec('ffmpeg', commandArgs,
@@ -46,7 +49,7 @@ Future<List<File>> splitVideo(
 
   // Find the generated segments
   final segmentPattern = RegExp(
-    '^${RegExp.escape(baseName)}\\d+\\.${RegExp.escape(fileExtension)}\$',
+    '^${RegExp.escape(segmentBaseName)}\\d{3}\\.${RegExp.escape(fileExtension)}\$',
   );
 
   final segments = Directory(dir)

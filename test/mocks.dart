@@ -78,6 +78,7 @@ class FakeTerminalProgressRenderer extends TerminalProgressRenderer {
   @override
   void suspend() {
     suspendCalls++;
+    cleared = true;
     super.suspend();
   }
 
