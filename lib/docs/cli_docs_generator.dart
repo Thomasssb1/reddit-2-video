@@ -16,6 +16,10 @@ class CliDocsGenerator {
   String generateFromSource(String source) {
     final options = _parseOptions(source);
     final commands = _parseCommands(source);
+    final overviewCommands = [
+      '$executableName --subreddit AskReddit [options]',
+      ...commands.map(_commandUsage),
+    ];
     final buffer = StringBuffer()
       ..writeln('# CLI Reference')
       ..writeln()
@@ -25,14 +29,13 @@ class CliDocsGenerator {
       ..writeln('## Command Overview')
       ..writeln()
       ..writeln('```bash')
-      ..writeln('$executableName --subreddit AskReddit [options]')
-      ..writeln('$executableName flush --post <reddit-post-id>')
-      ..writeln('$executableName install')
+      ..writeln(overviewCommands.join('\n'))
       ..writeln('```')
       ..writeln()
       ..writeln('## Default Command')
       ..writeln()
-      ..writeln('The default command generates videos from a subreddit or a Reddit post URL.')
+      ..writeln(
+          'The default command generates videos from a subreddit or a Reddit post URL.')
       ..writeln()
       ..writeln('```bash')
       ..writeln('$executableName --subreddit AskReddit [options]')
@@ -69,29 +72,36 @@ class CliDocsGenerator {
       buffer.writeln();
     }
 
-    _writeCommandSection(
-      buffer,
-      command: commands.firstWhere(
-        (command) => command.name == 'install',
-        orElse: () => const CliCommandDoc(name: 'install', options: []),
-      ),
-      usage: '$executableName install',
-      description:
-          'Installs or bootstraps runtime dependencies. In practice this is a starting point for setup rather than a complete environment installer.',
-    );
+    for (final command in commands) {
+      _writeCommandSection(
+        buffer,
+        command: command,
+        usage: _commandUsage(command),
+        description: _commandDescription(command),
+      );
+    }
 
-    _writeCommandSection(
-      buffer,
-      command: commands.firstWhere(
-        (command) => command.name == 'flush',
-        orElse: () => const CliCommandDoc(name: 'flush', options: []),
-      ),
-      usage: '$executableName flush --post <reddit-post-id>',
-      description:
-          'Manages visited-post state so you can remove a post from the visited log and allow it to be reused.',
-    );
+    return '${buffer.toString().trimRight()}\n';
+  }
 
-    return buffer.toString().trimRight() + '\n';
+  String _commandUsage(CliCommandDoc command) {
+    switch (command.name) {
+      case 'flush':
+        return '$executableName flush --post <reddit-post-id>';
+      default:
+        return '$executableName ${command.name}';
+    }
+  }
+
+  String _commandDescription(CliCommandDoc command) {
+    switch (command.name) {
+      case 'install':
+        return 'Installs or bootstraps runtime dependencies. In practice this is a starting point for setup rather than a complete environment installer.';
+      case 'flush':
+        return 'Manages visited-post state so you can remove a post from the visited log and allow it to be reused.';
+      default:
+        return 'Command discovered from the parser definition.';
+    }
   }
 
   void _writeCommandSection(
@@ -133,7 +143,8 @@ class CliDocsGenerator {
   }
 
   List<CliOptionDoc> _parseOptions(String source) {
-    final parserBlock = _extractMethodBody(source, 'static ArgParser getParser()');
+    final parserBlock =
+        _extractMethodBody(source, 'static ArgParser getParser()');
     final options = <CliOptionDoc>[];
     for (final invocation in _extractInvocations(
       parserBlock,
@@ -147,7 +158,7 @@ class CliDocsGenerator {
         name: name,
         kind: _normalizeKind(kind),
         abbr: _extractStringValue(args, 'abbr'),
-        defaultValue: _extractStringValue(args, 'defaultsTo'),
+        defaultValue: _extractDefaultValue(args),
         help: _normalizeText(_extractStringValue(args, 'help')),
         valueHelp: _extractStringValue(args, 'valueHelp'),
         allowedValues: _extractListValue(args, 'allowed'),
@@ -158,7 +169,8 @@ class CliDocsGenerator {
   }
 
   List<CliCommandDoc> _parseCommands(String source) {
-    final parserBlock = _extractMethodBody(source, 'static ArgParser getParser()');
+    final parserBlock =
+        _extractMethodBody(source, 'static ArgParser getParser()');
     final commandVarMatches = RegExp(
       r"var\s+(\w+)\s*=\s*parser\.addCommand\('([^']+)'\);",
     ).allMatches(parserBlock);
@@ -179,14 +191,11 @@ class CliDocsGenerator {
                 name: invocation.name,
                 kind: _normalizeKind(invocation.method),
                 abbr: _extractStringValue(invocation.args, 'abbr'),
-                defaultValue:
-                    _extractStringValue(invocation.args, 'defaultsTo'),
+                defaultValue: _extractDefaultValue(invocation.args),
                 help: _normalizeText(
                     _extractStringValue(invocation.args, 'help')),
-                valueHelp:
-                    _extractStringValue(invocation.args, 'valueHelp'),
-                allowedValues:
-                    _extractListValue(invocation.args, 'allowed'),
+                valueHelp: _extractStringValue(invocation.args, 'valueHelp'),
+                allowedValues: _extractListValue(invocation.args, 'allowed'),
                 isMandatory:
                     _extractBoolValue(invocation.args, 'mandatory') ?? false,
               ))
@@ -215,9 +224,8 @@ class CliDocsGenerator {
     required List<String> receivers,
   }) {
     final invocations = <_Invocation>[];
-    final patterns = receivers
-        .map((receiver) => RegExp.escape(receiver))
-        .join('|');
+    final patterns =
+        receivers.map((receiver) => RegExp.escape(receiver)).join('|');
     final startMatches = RegExp(
       '(?:$patterns)\\s*\\.?\\s*(addOption|addFlag|addMultiOption)\\(',
       multiLine: true,
@@ -228,8 +236,9 @@ class CliDocsGenerator {
       final openParenIndex = match.end - 1;
       final closeParenIndex = _findMatchingParen(source, openParenIndex);
       final contents = source.substring(openParenIndex + 1, closeParenIndex);
-      final nameMatch = RegExp(r"^\s*'([^']+)'(?:\s*,([\s\S]*))?$", multiLine: true)
-          .firstMatch(contents);
+      final nameMatch =
+          RegExp(r"^\s*'([^']+)'(?:\s*,([\s\S]*))?$", multiLine: true)
+              .firstMatch(contents);
       if (nameMatch == null) {
         continue;
       }
@@ -323,47 +332,144 @@ class CliDocsGenerator {
   }
 
   String? _extractStringValue(String source, String key) {
-    final match = RegExp(
-      "$key\\s*:\\s*((?:'((?:\\\\'|[^'])*)'\\s*)+)",
-      multiLine: true,
-    ).firstMatch(source);
-    if (match == null) {
+    final raw = _extractNamedValue(source, key);
+    if (raw == null) {
       return null;
     }
 
     return RegExp(r"'((?:\\'|[^'])*)'")
-        .allMatches(match.group(1)!)
+        .allMatches(raw)
         .map((item) => item.group(1)!.replaceAll("\\'", "'"))
         .join();
   }
 
   bool? _extractBoolValue(String source, String key) {
-    final match =
-        RegExp('$key\\s*:\\s*(true|false)', multiLine: true).firstMatch(source);
-    if (match == null) {
+    final raw = _extractNamedValue(source, key);
+    if (raw == null) {
       return null;
     }
-    return match.group(1) == 'true';
+    if (raw == 'true') {
+      return true;
+    }
+    if (raw == 'false') {
+      return false;
+    }
+    return null;
   }
 
   List<String> _extractListValue(String source, String key) {
-    final match = RegExp('$key\\s*:\\s*\\[([\\s\\S]*?)\\]', multiLine: true)
-        .firstMatch(source);
-    if (match == null) {
+    final raw = _extractNamedValue(source, key);
+    if (raw == null || !raw.startsWith('[') || !raw.endsWith(']')) {
       return const [];
     }
 
     return RegExp(r"'([^']+)'")
-        .allMatches(match.group(1)!)
+        .allMatches(raw)
         .map((item) => item.group(1)!)
         .toList();
   }
+
+  String? _extractDefaultValue(String source) {
+    final raw = _extractNamedValue(source, 'defaultsTo');
+    if (raw == null) {
+      return null;
+    }
+
+    if (raw == 'true' || raw == 'false') {
+      return raw;
+    }
+
+    if (raw.startsWith('[') && raw.endsWith(']')) {
+      final values = RegExp(r"'([^']+)'")
+          .allMatches(raw)
+          .map((item) => item.group(1)!)
+          .toList();
+      return values.isEmpty ? raw : '[${values.join(', ')}]';
+    }
+
+    final stringValue = _extractStringValue(source, 'defaultsTo');
+    return stringValue ?? raw;
+  }
+
+  String? _extractNamedValue(String source, String key) {
+    final keyMatch = RegExp('$key\\s*:', multiLine: true).firstMatch(source);
+    if (keyMatch == null) {
+      return null;
+    }
+
+    final start = keyMatch.end;
+    var valueStart = start;
+    while (valueStart < source.length && _isWhitespace(source[valueStart])) {
+      valueStart++;
+    }
+
+    var roundDepth = 0;
+    var squareDepth = 0;
+    var curlyDepth = 0;
+    var inSingleQuote = false;
+    var escaping = false;
+
+    for (var index = valueStart; index < source.length; index++) {
+      final character = source[index];
+
+      if (inSingleQuote) {
+        if (escaping) {
+          escaping = false;
+          continue;
+        }
+        if (character == r'\') {
+          escaping = true;
+          continue;
+        }
+        if (character == "'") {
+          inSingleQuote = false;
+        }
+        continue;
+      }
+
+      if (character == "'") {
+        inSingleQuote = true;
+        continue;
+      }
+
+      switch (character) {
+        case '(':
+          roundDepth++;
+        case ')':
+          roundDepth--;
+        case '[':
+          squareDepth++;
+        case ']':
+          squareDepth--;
+        case '{':
+          curlyDepth++;
+        case '}':
+          curlyDepth--;
+        case ',':
+          if (roundDepth == 0 && squareDepth == 0 && curlyDepth == 0) {
+            return source.substring(valueStart, index).trim();
+          }
+      }
+    }
+
+    return source.substring(valueStart).trim();
+  }
+
+  bool _isWhitespace(String character) =>
+      character == ' ' ||
+      character == '\n' ||
+      character == '\r' ||
+      character == '\t';
 
   String? _normalizeText(String? text) {
     if (text == null) {
       return null;
     }
-    return text.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    return text
+        .replaceAll(r'\n', ' ')
+        .replaceAll('\n', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }
 

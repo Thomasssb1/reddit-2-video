@@ -43,11 +43,18 @@ void main() {
       expect(markdown, contains('- Type: `multi-option`'));
       expect(markdown,
           contains('- Value: `<alternate-tts(on/off),alternate-colour(on/off)>`'));
+      expect(markdown, contains('- Default: `[off, off]`'));
       expect(markdown, contains('tts - alternate TTS voice'));
 
       expect(markdown, contains('#### `--title-color`'));
       expect(markdown, contains('- Value: `<RRGGBB>`'));
       expect(markdown, contains('- Default: `FF0000`'));
+
+      expect(markdown, contains('#### `--post-confirmation`'));
+      expect(markdown, contains('- Default: `false`'));
+
+      expect(markdown, contains('#### `--nsfw`'));
+      expect(markdown, contains('- Default: `true`'));
 
       expect(markdown, contains('#### `--max-length`'));
       expect(markdown,
@@ -91,6 +98,21 @@ void main() {
       expect(markdown, contains('r2v flush --post <reddit-post-id>'));
       expect(markdown, contains('r2v install'));
       expect(markdown.endsWith('\n'), isTrue);
+    });
+
+    test('renders newly added parser commands without hardcoded support', () {
+      final extendedSource = source.replaceFirst(
+        "    parser.addCommand('install');",
+        "    parser.addCommand('install');\n    parser.addCommand('doctor');",
+      );
+
+      final markdown = generator.generateFromSource(extendedSource);
+
+      expect(markdown, contains('reddit-2-video doctor'));
+      expect(markdown, contains('## `doctor` Command'));
+      expect(markdown, contains('Command discovered from the parser definition.'));
+      expect(markdown, isNot(contains('```bash\ndoctor')));
+      expect(markdown, contains('```bash\nreddit-2-video doctor\n```'));
     });
   });
 }
