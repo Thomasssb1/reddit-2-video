@@ -152,11 +152,6 @@ reddit-2-video --subreddit AskReddit [options]
 - Type: `flag`
 - Description: Whether to split the final generated video into ~1 minute shorts.
 
-#### `--keep-temp`
-
-- Type: `flag`
-- Description: When set, do not delete the .temp directory on exit.
-
 #### `--help`
 
 - Type: `flag`

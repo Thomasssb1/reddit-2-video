@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
 import 'package:reddit_2_video/command/parsed_command.dart';
@@ -29,6 +30,17 @@ void main() {
 
   group('ParsedCommand.parse', () {
     group('required arguments', () {
+      test('throws when an unknown flag is provided', () {
+        expect(
+          () => ParsedCommand.parse([
+            '--subreddit',
+            'AskReddit',
+            '--unknown-flag',
+          ]),
+          throwsA(isA<ArgParserException>()),
+        );
+      });
+
       test('throws ArgumentMissingException when --subreddit is absent', () {
         expect(
           () => ParsedCommand.parse([]),

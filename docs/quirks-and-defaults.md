@@ -59,7 +59,6 @@ Some options affect or override each other:
 ### Output and working files
 
 - `--override` controls whether existing output files are replaced automatically.
-- `--keep-temp` stops cleanup of the `.temp` directory on exit, which is useful for debugging and HITL inspection.
 
 ### Unimplemented behavior
 

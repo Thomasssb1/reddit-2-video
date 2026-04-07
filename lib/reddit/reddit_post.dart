@@ -124,7 +124,7 @@ class RedditPost {
   void _setJsonAttributes(Pick pick) {
     try {
       _subreddit = pick('subreddit').asStringOrNull() ?? "Unknown";
-      _stickied = pick('sticked').asBoolOrFalse();
+      _stickied = pick('stickied').asBoolOrFalse();
       _commentCount = pick('num_comments').asIntOrNull() ?? 0;
       _title = pick('title').asStringOrNull() ?? "Unknown";
       _subredditId = pick('subreddit_id').asStringOrThrow();

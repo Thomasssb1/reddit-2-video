@@ -79,7 +79,7 @@ reddit-2-video --subreddit AmItheAsshole
 
 - Use [CLI Reference](cli.md) for the current flag and command surface.
 - Use [Quirks and Defaults](quirks-and-defaults.md) for behavior notes and built-in asset details.
-- Use [Useful References](useful-references.md) for example commands and embedded walkthroughs.
+- Use [Useful References](useful-references.md) for command references, external links, and embedded output walkthroughs.
 
 ---
 

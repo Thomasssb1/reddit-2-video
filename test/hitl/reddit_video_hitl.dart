@@ -160,18 +160,13 @@ Future<void> main(List<String> args) async {
       continue;
     }
 
-    if (arg == '--keep-temp') {
-      cleanupOnExit = false;
-      continue;
-    }
-
     if (matrixPath == null) {
       matrixPath = arg;
       continue;
     }
 
     throw ArgumentError(
-      'Unexpected extra argument "$arg". Expected at most one matrix path and optional --flush-first/--quiet/--keep-temp.',
+      'Unexpected extra argument "$arg". Expected at most one matrix path and optional --flush-first/--quiet.',
     );
   }
 

@@ -131,10 +131,7 @@ class ParsedCommand extends Command {
       ..addFlag('youtube-short',
           defaultsTo: false,
           help:
-              'Whether to split the final generated video into ~1 minute shorts.')
-      ..addFlag('keep-temp',
-          defaultsTo: false,
-          help: 'When set, do not delete the .temp directory on exit.');
+              'Whether to split the final generated video into ~1 minute shorts.');
     parser.addFlag('help', abbr: 'h', hide: true);
     parser.addOption('delay',
         defaultsTo: '1',
