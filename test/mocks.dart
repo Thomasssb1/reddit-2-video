@@ -55,6 +55,8 @@ class MockVoices extends Mock implements Voices {}
 class FakeTerminalProgressRenderer extends TerminalProgressRenderer {
   final List<ProgressSnapshot> snapshots = [];
   bool cleared = false;
+  int suspendCalls = 0;
+  int resumeCalls = 0;
 
   FakeTerminalProgressRenderer()
       : super(
@@ -71,6 +73,18 @@ class FakeTerminalProgressRenderer extends TerminalProgressRenderer {
   @override
   void clear() {
     cleared = true;
+  }
+
+  @override
+  void suspend() {
+    suspendCalls++;
+    super.suspend();
+  }
+
+  @override
+  void resume() {
+    resumeCalls++;
+    super.resume();
   }
 
   @override

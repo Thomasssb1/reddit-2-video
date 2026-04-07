@@ -83,6 +83,23 @@ void main() {
       expect(visited.first['post_id'], 'abc123');
       expect(visited.first['subreddit_id'], 'AskReddit');
     });
+
+    test('persists a single skipped post', () async {
+      final log = await Log.fromFile();
+      final post = MockRedditPost();
+      when(() => post.redditId).thenReturn(RedditId('skip123', 'AskReddit'));
+
+      log.addPost(post);
+
+      final json = jsonDecode(
+              AppPaths.resolve('.temp/visited_log.json').readAsStringSync())
+          as Map<String, dynamic>;
+      final visited = json['visited'] as List<dynamic>;
+      expect(visited.length, 1);
+      expect(visited.first['post_id'], 'skip123');
+      expect(visited.first['subreddit_id'], 'AskReddit');
+      expect(log.contains(post), isTrue);
+    });
   });
 
   group('Log.remove', () {

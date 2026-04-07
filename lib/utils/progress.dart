@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -9,12 +10,14 @@ class ProgressSnapshot {
   final String title;
   final String detail;
   final LogSection section;
+  final String spinnerFrame;
 
   const ProgressSnapshot({
     required this.fraction,
     required this.title,
     required this.detail,
     required this.section,
+    this.spinnerFrame = '|',
   });
 }
 
@@ -23,6 +26,7 @@ class TerminalProgressRenderer {
   final IOSink _stderrSink;
   final bool _enabled;
   int _renderedLines = 0;
+  int _suspensionDepth = 0;
   ProgressSnapshot? _snapshot;
 
   TerminalProgressRenderer({
@@ -38,10 +42,11 @@ class TerminalProgressRenderer {
                 stderr.supportsAnsiEscapes);
 
   bool get isEnabled => _enabled;
+  bool get isSuspended => _suspensionDepth > 0;
 
   void writeMessage(String message, {required bool isError}) {
     final sink = isError ? _stderrSink : _stdoutSink;
-    if (!isEnabled) {
+    if (!isEnabled || isSuspended) {
       sink.write(message);
       return;
     }
@@ -53,6 +58,7 @@ class TerminalProgressRenderer {
   void update(ProgressSnapshot snapshot) {
     if (!isEnabled) return;
     _snapshot = snapshot;
+    if (isSuspended) return;
     _redrawFooterPreservingCursor();
   }
 
@@ -60,6 +66,22 @@ class TerminalProgressRenderer {
     if (!isEnabled) return;
     _snapshot = null;
     _clearFooter();
+  }
+
+  void suspend() {
+    if (!isEnabled) return;
+    _suspensionDepth++;
+    if (_suspensionDepth == 1) {
+      _clearFooter();
+    }
+  }
+
+  void resume() {
+    if (!isEnabled || _suspensionDepth == 0) return;
+    _suspensionDepth--;
+    if (_suspensionDepth == 0 && _snapshot != null) {
+      _redrawFooterPreservingCursor();
+    }
   }
 
   void _clearFooter() {
@@ -89,7 +111,7 @@ class TerminalProgressRenderer {
       head: '${logger.formatSection(snapshot.section)} ',
       barFillCharacter: '=',
       tailBuilder: (_, __, percent) =>
-          ' ${percent.toStringAsFixed(1)}% ${snapshot.title}',
+          ' ${snapshot.spinnerFrame} ${percent.toStringAsFixed(1)}% ${snapshot.title}',
     )..current = (snapshot.fraction.clamp(0.0, 1.0) * 1000).round();
 
     Console.draw(progressBar);
@@ -146,19 +168,46 @@ class _ProgressTask {
 class GenerationProgressTracker {
   final TerminalProgressRenderer renderer;
   final Map<String, _ProgressTask> _tasks = {};
+  final Duration _spinnerInterval;
   int _nextTaskId = 0;
   bool _started = false;
   String? _activeTaskId;
+  Timer? _spinnerTimer;
+  int _spinnerFrameIndex = 0;
 
-  GenerationProgressTracker({TerminalProgressRenderer? renderer})
-      : renderer = renderer ?? TerminalProgressRenderer();
+  static const List<String> _spinnerFrames = ['|', '/', '-', '\\'];
+
+  GenerationProgressTracker({
+    TerminalProgressRenderer? renderer,
+    Duration spinnerInterval = const Duration(milliseconds: 120),
+  })  : renderer = renderer ?? TerminalProgressRenderer(),
+        _spinnerInterval = spinnerInterval;
 
   bool get isActive => _started && renderer.isEnabled;
+
+  Future<T> runWithOverlaySuspended<T>(FutureOr<T> Function() action) async {
+    if (!_started || !renderer.isEnabled) {
+      return await action();
+    }
+
+    renderer.suspend();
+    try {
+      return await action();
+    } finally {
+      renderer.resume();
+    }
+  }
 
   void start() {
     if (_started || !renderer.isEnabled) return;
     _started = true;
+    _spinnerFrameIndex = 0;
     logger.attachOverlay(renderer.writeMessage);
+    _spinnerTimer = Timer.periodic(_spinnerInterval, (_) {
+      if (!_started) return;
+      _spinnerFrameIndex = (_spinnerFrameIndex + 1) % _spinnerFrames.length;
+      _render();
+    });
     renderer.update(const ProgressSnapshot(
       fraction: 0,
       title: 'Starting generation',
@@ -168,6 +217,8 @@ class GenerationProgressTracker {
   }
 
   void stop() {
+    _spinnerTimer?.cancel();
+    _spinnerTimer = null;
     _tasks.clear();
     _activeTaskId = null;
     if (_started) {
@@ -262,6 +313,7 @@ class GenerationProgressTracker {
       title: title,
       detail: detail,
       section: section,
+      spinnerFrame: _currentSpinnerFrame,
     ));
   }
 
@@ -290,8 +342,11 @@ class GenerationProgressTracker {
       title: (active ?? fallback).title,
       detail: (active ?? fallback).detail,
       section: (active ?? fallback).section,
+      spinnerFrame: _currentSpinnerFrame,
     ));
   }
+
+  String get _currentSpinnerFrame => _spinnerFrames[_spinnerFrameIndex];
 }
 
 final generationProgress = GenerationProgressTracker();

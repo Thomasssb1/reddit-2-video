@@ -153,73 +153,77 @@ class RedditVideo {
 
       // if the user wants to confirm the post and the subreddit arg is not a link
       if (command.postConfirmation) {
-        // iterate through each post collected previously
-        for (final post in postData) {
-          // output relevant information
-          logger.underline(post.title, section: LogSection.reddit);
-          print(
-              "${ansiGreen}Upvotes: ${post.upvotes}     ${ansiYellow}Comments: ${post.commentCount} $ansiReset\n");
-          print(
-              "Created: ${post.created}, ${post.spoiler ? 'This post ${ansiRed}is${ansiReset} marked as a spoiler' : ''}\n");
-          if (post.hasMedia) {
-            print("Media: ${post.hasMedia}\n");
-          }
-          if (command.nsfw) {
+        await generationProgress.runWithOverlaySuspended(() async {
+          // iterate through each post collected previously
+          for (final post in postData) {
+            // output relevant information
+            logger.underline(post.title, section: LogSection.reddit);
             print(
-                "This post is${post.nsfw ? '' : ' ${ansiRed}not${ansiReset}'} marked as NSFW.");
-          }
-          logger.underline(
-              "Post ${postData.indexOf(post) + 1}/${postData.length}.",
-              section: LogSection.reddit);
-          logger.info(
-              "Do you want to see the body of the post? [${ansiGreen}y${ansiReset}/${ansiRed}N${ansiReset}] ",
-              section: LogSection.reddit);
-          // read the cli for what the user entered
-          String showBody = stdin.readLineSync() ?? 'n';
-          // if the user entered yes
-          if (showBody.toLowerCase() == 'y') {
-            print(post.body);
-          }
-          logger.info(
-              "Do you want to generate a video for this post? [${ansiGreen}y${ansiReset}/${ansiRed}N${ansiReset}] ",
-              section: LogSection.reddit);
-          if (command.type == RedditVideoType.multi) {
+                "${ansiGreen}Upvotes: ${post.upvotes}     ${ansiYellow}Comments: ${post.commentCount} $ansiReset\n");
+            print(
+                "Created: ${post.created}, ${post.spoiler ? 'This post ${ansiRed}is${ansiReset} marked as a spoiler' : ''}\n");
+            if (post.hasMedia) {
+              print("Media: ${post.hasMedia}\n");
+            }
+            if (command.nsfw) {
+              print(
+                  "This post is${post.nsfw ? '' : ' ${ansiRed}not${ansiReset}'} marked as NSFW.");
+            }
+            logger.underline(
+                "Post ${postData.indexOf(post) + 1}/${postData.length}.",
+                section: LogSection.reddit);
             logger.info(
-              "You can also enter 'skip' to skip all remaining posts. ",
-              section: LogSection.reddit,
-            );
-          }
-          // read the cli for what the user entered
-          String continueGeneration = stdin.readLineSync() ?? 'n';
-          // if the user entered yes
-          if (continueGeneration.toLowerCase() == 'y') {
-            // add post to postData
-            postData.add(post);
-            // if the type is not multiple then break the loop as only one post can be selected
-            if (command.type != RedditVideoType.multi ||
-                postData.length == command.commentCount) {
+                "Do you want to see the body of the post? [${ansiGreen}y${ansiReset}/${ansiRed}N${ansiReset}] ",
+                section: LogSection.reddit);
+            // read the cli for what the user entered
+            String showBody = stdin.readLineSync() ?? 'n';
+            // if the user entered yes
+            if (showBody.toLowerCase() == 'y') {
+              print(post.body);
+            }
+            logger.info(
+                "Do you want to generate a video for this post? [${ansiGreen}y${ansiReset}/${ansiRed}N${ansiReset}] ",
+                section: LogSection.reddit);
+            if (command.type == RedditVideoType.multi) {
+              logger.info(
+                "You can also enter 'skip' to skip all remaining posts. ",
+                section: LogSection.reddit,
+              );
+            }
+            // read the cli for what the user entered
+            String continueGeneration = stdin.readLineSync() ?? 'n';
+            // if the user entered yes
+            if (continueGeneration.toLowerCase() == 'y') {
+              // add post to postData
+              postData.add(post);
+              // if the type is not multiple then break the loop as only one post can be selected
+              if (command.type != RedditVideoType.multi ||
+                  postData.length == command.commentCount) {
+                break;
+              }
+            } // if the user entered skip and the type selected is multi
+            else if (continueGeneration.toLowerCase() == 'skip' &&
+                command.type == RedditVideoType.multi) {
+              log.addPost(post);
+              if (postData.isEmpty) {
+                throw EmptyPostSelectionException(
+                    message: "No posts have been selected, try again.");
+              }
               break;
-            }
-          } // if the user entered skip and the type selected is multi
-          else if (continueGeneration.toLowerCase() == 'skip' &&
-              command.type == RedditVideoType.multi) {
-            if (postData.isEmpty) {
-              throw EmptyPostSelectionException(
-                  message: "No posts have been selected, try again.");
-            }
-            break;
-          } // if the user entered no or otherwise
-          else {
-            logger.info("Fetching next post...\n", section: LogSection.reddit);
-            // if the post is the last post / if the user hasn't selected any posts but have multi type
-            if (post == postData.last &&
-                command.type != RedditVideoType.multi) {
-              throw PostsExhaustedException(
-                  message:
-                      "All posts have been searched for the subreddit ${command.subreddit}, try again later or use a different sort term..");
+            } // if the user entered no or otherwise
+            else {
+              log.addPost(post);
+              logger.info("Fetching next post...\n", section: LogSection.reddit);
+              // if the post is the last post / if the user hasn't selected any posts but have multi type
+              if (post == postData.last &&
+                  command.type != RedditVideoType.multi) {
+                throw PostsExhaustedException(
+                    message:
+                        "All posts have been searched for the subreddit ${command.subreddit}, try again later or use a different sort term..");
+              }
             }
           }
-        }
+        });
         if (postData.isEmpty) {
           throw EmptyPostSelectionException(
               message: "No posts have been selected, try again.");

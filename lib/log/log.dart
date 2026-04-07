@@ -60,6 +60,12 @@ class Log {
     _tempIds.addAll(video.posts.map((e) => e.redditId));
   }
 
+  void addPost(RedditPost post) {
+    _tempIds.remove(post.redditId);
+    _ids.add(post.redditId);
+    _flush();
+  }
+
   void add(RedditVideo video) {
     for (final post in video.posts) {
       _tempIds.remove(post.redditId);
