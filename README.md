@@ -12,13 +12,13 @@ The easiest way to get started is to download one of the [releases](https://gith
 **Add the folder to path**<br>
 This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder `reddit-2-video/bin` that you cloned. You need to add the full path to `reddit-2-video/bin` to your system path in environmental variables.<br><br>
 **Install dependencies**<br>
-If you do not have ffmpeg or [whisper_timestamped](https://github.com/linto-ai/whisper-timestamped), you can run the following command in an _elevated shell_.
+If you do not have the required runtime tools installed, you can run the following command in an _elevated shell_.
 
 ```zsh
 $ reddit-2-video install
 ```
 
-This will install ffmpeg and whisper_timestamped that are required to run reddit-2-video. If this does not work, you can install these prerequisites [manually](https://github.com/Thomasssb1/reddit-2-video#dependencies).
+This will help you check the core runtime dependencies required to run reddit-2-video. If this does not work, you can install these prerequisites [manually](https://github.com/Thomasssb1/reddit-2-video#dependencies).
 
 <details>
     <summary>For developer builds</summary><br>
@@ -79,11 +79,11 @@ Click to expand each of the examples.
 > The below command uses the `--type comments` option in order to compile the video using comments and post title.<br>
 >
 > ```zsh
-> $ reddit-2-video --subreddit AskReddit --type comments --count 10 --alternate=on,on,H0000FF
+> $ reddit-2-video --subreddit AskReddit --type comments --count 10 --alternate=on,on --title-color H0000FF --output example-1
 > ```
 >
 > The `--count` option is used to tell reddit-2-video to only use posts that have a minimum of 10 comments.<br>
-> Using the `--alternate` option is ideal when creating commands which involve multiple users interacting, for more info on how it works, check [here](https://github.com/Thomasssb1/reddit-2-video/wiki/Documentation#flags--options)
+> Using the `--alternate` option is ideal when creating videos which involve multiple users interacting, for more info on how it works check the docs.
 
 </details>
 <details>
@@ -92,10 +92,10 @@ Click to expand each of the examples.
 > The below command uses the `--horror` flag in order to change the pitch of the voice to better work for creepy stories.
 >
 > ```zsh
-> $ reddit-2-video --subreddit nosleep --horror --post-confirmation
+> $ reddit-2-video --subreddit nosleep --horror --post-confirmation --music <path-to-music> --youtube-short --output example-2.mp4
 > ```
 >
-> The command also uses the `--post-confirmation` flag so that you get to check each post before the video is generated.
+> The command also uses the `--post-confirmation` flag so that you get to check each post before the video is generated. The `--music` option is used to add an eerie background ambience, `--youtube-short` to split each video into 1 minute segments for youtube short upload.
 
 </details>
 <details>
@@ -104,10 +104,10 @@ Click to expand each of the examples.
 > The below command uses the `--repeat` option in order to generate 5 videos from the subreddit specified.
 >
 > ```zsh
-> $ reddit-2-video --subreddit pettyrevenge --repeat 5 --no-nsfw --youtube-short --censor
+> $ reddit-2-video --subreddit pettyrevenge --repeat 3 --no-nsfw --censor --sort top --output example-3
 > ```
 >
-> This command also sets the following flags `--no-nsfw` to allow nsfw content, `--youtube-short` to split each video into 1 minute segments for youtube short upload and `--censor` to change what is spoken based on the lexemes provided in `defaults/lexicons/lexeme.xml`.
+> This command also sets the following flags `--no-nsfw` to allow nsfw content and `--censor` to change what is spoken based on the lexemes provided in `defaults/lexicons/lexeme.xml`. The `--sort` flag will pull posts from r/pettyrevenge in top-sorted order.
 
 </details>
 <details>
@@ -116,7 +116,7 @@ Click to expand each of the examples.
 > The below command sets `--type multi` in order to generate a video using multiple posts in one - ignoring comments.
 >
 > ```zsh
-> $ reddit-2-video --subreddit dadjokes --type multi --sort rising --framerate 75
+> $ reddit-2-video --subreddit dadjokes --type multi --count 3 --sort rising --framerate 75 --output example-4.mp4
 > ```
 >
 > This command also sets the `sort` option to rising and the `framerate` to 75.
@@ -128,7 +128,7 @@ Click to expand each of the examples.
 > The below command passes a link instead of a subreddit in order to generate a video for a specific post.
 >
 > ```zsh
-> $ reddit-2-video --subreddit https://www.reddit.com/r/TrueOffMyChest/comments/1850nn6/my_husband_is_cheating_on_me_with_our_best_friend/ --end-card <path-to-gif> -v
+> $ reddit-2-video --subreddit https://www.reddit.com/r/TrueOffMyChest/comments/1sfywpl/my_husband_has_started_wearing_makeup_and_i_hate/ --end-card <path-to-gif> -v --output example-5
 > ```
 >
 > This command also adds an end card to the end of the video by using the gif passed to it (in this case it is the placeholder _\<path-to-gif\>_). It also sets verbosity to true in order to see extra debugging information whilst generating the video.
@@ -137,7 +137,7 @@ Click to expand each of the examples.
 
 ## Dependencies
 
-Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [whisper_timestamped](https://github.com/linto-ai/whisper-timestamped)
+Required for usage: [ffmpeg](https://ffmpeg.org/about.html), [yt-dlp](https://github.com/yt-dlp/yt-dlp), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions)
 If you are using a system which supports `apt-get`, you can run the following command to install ffmpeg and dart.
 You only need to install dart if you are compiling yourself - as explained below.
 
@@ -145,7 +145,6 @@ You only need to install dart if you are compiling yourself - as explained below
 $ apt-get install ffmpeg dart
 ```
 
-To install whisper_timestamped, you need to have ffmpeg and python installed. Check how to install [here](https://github.com/linto-ai/whisper-timestamped#installation).<br>
 To build the exe, you will need to compile which requires [dart](https://dart.dev/) 3.0.5. Run the following command whilst in the `reddit-2-video` folder.
 
 ```zsh
