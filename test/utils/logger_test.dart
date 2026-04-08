@@ -15,7 +15,7 @@ void main() {
       logger.error(
         SubprocessException(
           message: 'Generation failed.',
-          detail: 'stderr:\nToken has expired and refresh failed',
+          detail: 'Token has expired and refresh failed',
           executable: 'test',
           arguments: const [],
         ),
@@ -27,6 +27,7 @@ void main() {
         stderrBuffer.toString(),
         contains('Token has expired and refresh failed'),
       );
+      expect(stderrBuffer.toString(), isNot(contains('stderr:')));
     });
 
     test('logs only message when detail is blank', () {

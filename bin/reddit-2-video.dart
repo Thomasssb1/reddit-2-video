@@ -112,7 +112,7 @@ void main(
           await vid.generate(command, backgroundVideo, cutVideo, i);
           log.add(vid);
         }
-        generationProgress.stop();
+        stopAllProgress();
         break;
       case CommandType.flush:
         RedditPost? post;
@@ -133,10 +133,11 @@ void main(
         logger.error("No command found.", section: LogSection.setup);
     }
   } on Exception catch (e) {
-    logger.error(e, section: LogSection.setup);
+    stopAllProgress();
+    logger.error(e);
     exitCode = 1;
   } finally {
-    generationProgress.stop();
+    stopAllProgress();
     if (AppPaths.isDevMode) {
       logger.warning(
         "Running in dev mode, not clearing temporary files.",

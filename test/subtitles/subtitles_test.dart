@@ -315,7 +315,7 @@ void main() {
           throwsA(isA<TTSFailedException>()
               .having((e) => e.stderr, 'stderr', contains('aws failed'))
               .having((e) => e.errorDetail, 'errorDetail',
-                  contains('stderr:\naws failed'))),
+                  contains('aws failed'))),
         );
       });
 
@@ -351,7 +351,7 @@ void main() {
               .having(
                   (e) => e.stderr, 'stderr', contains('speech marks failed'))
               .having((e) => e.errorDetail, 'errorDetail',
-                  contains('stderr:\nspeech marks failed'))),
+                  contains('speech marks failed'))),
         );
       });
 

@@ -479,7 +479,7 @@ void main() {
         await expectLater(
           () => video.generate(command, backgroundVideo, cutVideo, 1),
           throwsA(isA<FFmpegCommandException>().having((e) => e.errorDetail,
-              'errorDetail', contains('stderr:\nrender failed'))),
+              'errorDetail', contains('render failed'))),
         );
       });
 

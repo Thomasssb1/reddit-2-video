@@ -5,6 +5,8 @@ import 'dart:math' as math;
 import 'package:consola/consola.dart';
 import 'package:reddit_2_video/utils/logger.dart';
 
+final Set<GenerationProgressTracker> _activeProgressTrackers = {};
+
 class ProgressSnapshot {
   final double fraction;
   final String title;
@@ -201,6 +203,7 @@ class GenerationProgressTracker {
   void start() {
     if (_started || !renderer.isEnabled) return;
     _started = true;
+    _activeProgressTrackers.add(this);
     _spinnerFrameIndex = 0;
     logger.attachOverlay(renderer.writeMessage);
     _spinnerTimer = Timer.periodic(_spinnerInterval, (_) {
@@ -221,6 +224,7 @@ class GenerationProgressTracker {
     _spinnerTimer = null;
     _tasks.clear();
     _activeTaskId = null;
+    _activeProgressTrackers.remove(this);
     if (_started) {
       renderer.clear();
       logger.detachOverlay();
@@ -347,6 +351,12 @@ class GenerationProgressTracker {
   }
 
   String get _currentSpinnerFrame => _spinnerFrames[_spinnerFrameIndex];
+}
+
+void stopAllProgress() {
+  for (final tracker in _activeProgressTrackers.toList(growable: false)) {
+    tracker.stop();
+  }
 }
 
 final generationProgress = GenerationProgressTracker();

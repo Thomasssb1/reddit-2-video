@@ -33,15 +33,37 @@ class Logger {
   StringSink _stdoutSink = stdout;
   StringSink _stderrSink = stderr;
 
-  String _colorText(String text, String colorCode) {
-    if (!stdout.supportsAnsiEscapes) {
+  bool _supportsAnsiEscapes({required bool isError}) {
+    return isError ? stderr.supportsAnsiEscapes : stdout.supportsAnsiEscapes;
+  }
+
+  String _styleText(
+    String text, {
+    String? colorCode,
+    bool underline = false,
+    required bool isError,
+  }) {
+    if (!_supportsAnsiEscapes(isError: isError)) {
       return text;
     }
-    return '$ansiAsciiCharsetReset$colorCode$text$ansiReset';
+
+    final styleCodes = <String>[];
+    if (underline) {
+      styleCodes.add(ansiUnderline);
+    }
+    if (colorCode != null) {
+      styleCodes.add(colorCode);
+    }
+    if (styleCodes.isEmpty) {
+      return text;
+    }
+
+    return '$ansiAsciiCharsetReset${styleCodes.join()}$text$ansiReset';
   }
 
   String formatSection(LogSection section) =>
-      _colorText('[${section.label}]', section.color);
+      _styleText('[${section.label}]',
+          colorCode: section.color, isError: false);
 
   String prefixLines(String message, {LogSection? section}) {
     if (section == null || message.isEmpty) {
@@ -73,11 +95,8 @@ class Logger {
       String? messageColor,
       bool underline = false,
       bool isError = false}) {
-    final formattedMessage = underline
-        ? _colorText(message, ansiUnderline)
-        : messageColor != null
-            ? _colorText(message, messageColor)
-            : message;
+    final formattedMessage = _styleText(message,
+        colorCode: messageColor, underline: underline, isError: isError);
     emitRaw('$formattedMessage\n', section: section, isError: isError);
   }
 

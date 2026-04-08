@@ -93,6 +93,7 @@ class Subtitles {
       outputFormat: "mp3",
       outputPath: ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
     );
+
     final result = await Subprocess.exec(
       "aws",
       arguments,
@@ -129,6 +130,7 @@ class Subtitles {
           ".temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json",
       speechMarkTypes: const ["word"],
     );
+
     final result = await Subprocess.exec(
       "aws",
       arguments,
@@ -183,10 +185,8 @@ class Subtitles {
       text,
       "--engine",
       ntts ? "neural" : "standard",
-      if (speechMarkTypes.isNotEmpty) ...<String>[
-        "--speech-mark-types",
-        jsonEncode(speechMarkTypes),
-      ],
+      if (speechMarkTypes.isNotEmpty)
+        "--speech-mark-types=${jsonEncode(speechMarkTypes)}",
       outputPath,
     ];
   }

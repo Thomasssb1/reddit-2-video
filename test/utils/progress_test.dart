@@ -117,5 +117,20 @@ void main() {
 
       tracker.stop();
     });
+
+    test('stopAllProgress stops every active tracker', () {
+      final firstRenderer = FakeTerminalProgressRenderer();
+      final secondRenderer = FakeTerminalProgressRenderer();
+      final firstTracker = GenerationProgressTracker(renderer: firstRenderer);
+      final secondTracker = GenerationProgressTracker(renderer: secondRenderer);
+
+      firstTracker.start();
+      secondTracker.start();
+
+      stopAllProgress();
+
+      expect(firstRenderer.cleared, isTrue);
+      expect(secondRenderer.cleared, isTrue);
+    });
   });
 }

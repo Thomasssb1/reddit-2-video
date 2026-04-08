@@ -33,10 +33,10 @@ class SubprocessException implements Exception {
       sections.add(normalizedDetail);
     }
     if (normalizedStderr != null) {
-      sections.add('stderr:\n$normalizedStderr');
+      sections.add(normalizedStderr);
     }
     if (normalizedStdout != null) {
-      sections.add('stdout:\n$normalizedStdout');
+      sections.add(normalizedStdout);
     }
 
     if (sections.isEmpty) {

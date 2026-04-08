@@ -38,7 +38,7 @@ void main() {
         throwsA(isA<FFmpegCommandException>()
             .having((e) => e.command, 'command', isNotEmpty)
             .having((e) => e.errorDetail, 'errorDetail',
-                contains('stderr:\nsplit failed'))),
+                contains('split failed'))),
       );
     });
 
