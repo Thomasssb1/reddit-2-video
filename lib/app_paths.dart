@@ -9,10 +9,13 @@ class AppPaths {
   static late Directory _root;
   static bool _initialised = false;
   static bool _isDevMode = false;
+  static String Function()? _resolvedExecutableProvider;
+
+  static String get _resolvedExecutable =>
+      _resolvedExecutableProvider?.call() ?? Platform.resolvedExecutable;
 
   static bool get isRunningFromDartTool {
-    final executableName =
-        p.basename(Platform.resolvedExecutable).toLowerCase();
+    final executableName = p.basename(_resolvedExecutable).toLowerCase();
     return executableName == 'dart' || executableName == 'dart.exe';
   }
 
@@ -23,7 +26,7 @@ class AppPaths {
     _isDevMode = isRunningFromDartTool;
     _root = _isDevMode
         ? Directory.current
-        : File(Platform.resolvedExecutable).parent.parent;
+        : File(_resolvedExecutable).parent.parent;
     _initialised = true;
   }
 
@@ -63,5 +66,15 @@ class AppPaths {
       return Directory(relativePath);
     }
     return Directory(p.join(_root.path, relativePath));
+  }
+
+  static void setResolvedExecutableForTest(String path) {
+    _resolvedExecutableProvider = () => path;
+  }
+
+  static void resetForTest() {
+    _resolvedExecutableProvider = null;
+    _initialised = false;
+    _isDevMode = false;
   }
 }

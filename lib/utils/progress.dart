@@ -24,6 +24,11 @@ class ProgressSnapshot {
 }
 
 class TerminalProgressRenderer {
+  static ConsoleCoordinate Function() _cursorPositionProvider =
+      Console.getCursorPosition;
+  static int Function() _windowWidthProvider = Console.getWindowWidth;
+  static int Function() _windowHeightProvider = Console.getWindowHeight;
+
   final IOSink _stdoutSink;
   final IOSink _stderrSink;
   final bool _enabled;
@@ -45,6 +50,8 @@ class TerminalProgressRenderer {
 
   bool get isEnabled => _enabled;
   bool get isSuspended => _suspensionDepth > 0;
+  int get renderedLinesForTest => _renderedLines;
+  ProgressSnapshot? get snapshotForTest => _snapshot;
 
   void writeMessage(String message, {required bool isError}) {
     final sink = isError ? _stderrSink : _stdoutSink;
@@ -101,8 +108,8 @@ class TerminalProgressRenderer {
     if (!isEnabled || _snapshot == null) return;
 
     final snapshot = _snapshot!;
-    final columns =
-        Console.getWindowWidth() > 0 ? Console.getWindowWidth() : 80;
+    final width = _windowWidthProvider();
+    final columns = width > 0 ? width : 80;
     final footerRows = _footerRows(2);
     final barWidth = math.max(16, math.min(40, columns ~/ 3));
     final progressBar = ProgressBar.atPosition(
@@ -126,17 +133,48 @@ class TerminalProgressRenderer {
   void _redrawFooterPreservingCursor() {
     if (!isEnabled) return;
 
-    final cursor = Console.getCursorPosition();
+    final cursor = _cursorPositionProvider();
     _clearFooter();
     _drawFooter();
     Console.moveTo(cursor.x, cursor.y);
   }
 
   List<int> _footerRows(int count) {
-    final height =
-        Console.getWindowHeight() > 0 ? Console.getWindowHeight() : 24;
+    final windowHeight = _windowHeightProvider();
+    final height = windowHeight > 0 ? windowHeight : 24;
     final startRow = math.max(1, height - count + 1);
     return List<int>.generate(count, (index) => startRow + index);
+  }
+
+  void drawFooterForTest() {
+    _drawFooter();
+  }
+
+  void redrawFooterPreservingCursorForTest() {
+    _redrawFooterPreservingCursor();
+  }
+
+  void setSnapshotForTest(ProgressSnapshot snapshot) {
+    _snapshot = snapshot;
+  }
+
+  static void setCursorPositionProviderForTest(
+      ConsoleCoordinate Function() provider) {
+    _cursorPositionProvider = provider;
+  }
+
+  static void setWindowWidthProviderForTest(int Function() provider) {
+    _windowWidthProvider = provider;
+  }
+
+  static void setWindowHeightProviderForTest(int Function() provider) {
+    _windowHeightProvider = provider;
+  }
+
+  static void resetForTest() {
+    _cursorPositionProvider = Console.getCursorPosition;
+    _windowWidthProvider = Console.getWindowWidth;
+    _windowHeightProvider = Console.getWindowHeight;
   }
 }
 

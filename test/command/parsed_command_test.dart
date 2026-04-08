@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'package:reddit_2_video/app_paths.dart';
@@ -6,6 +8,7 @@ import 'package:reddit_2_video/command/parsed_command.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/ffmpeg/file_type.dart';
 import 'package:reddit_2_video/ffmpeg/fps.dart';
+import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/utils/logger.dart';
 import 'package:test/test.dart';
 
@@ -13,6 +16,21 @@ import 'package:test/test.dart';
 /// [ParsedCommand] in default-command mode.
 ParsedCommand _build(List<String> args) {
   return ParsedCommand.parse(['--subreddit', 'AskReddit', ...args]);
+}
+
+String _capturePrint(void Function() action) {
+  final output = <String>[];
+
+  runZoned(
+    action,
+    zoneSpecification: ZoneSpecification(
+      print: (_, __, ___, String line) {
+        output.add(line);
+      },
+    ),
+  );
+
+  return output.join('\n');
 }
 
 void main() {
@@ -55,6 +73,18 @@ void main() {
             'AskReddit',
             '--alternate',
             'on',
+          ]),
+          throwsA(isA<ArgumentMissingException>()),
+        );
+      });
+
+      test('throws when --music has more than two values', () {
+        expect(
+          () => ParsedCommand.parse([
+            '--subreddit',
+            'AskReddit',
+            '--music',
+            'song.mp3,0.5,extra',
           ]),
           throwsA(isA<ArgumentMissingException>()),
         );
@@ -129,6 +159,54 @@ void main() {
     });
 
     group('new parameter getters', () {
+      test('commentSort returns correct enum for valid input', () {
+        final cmd = _build(['--comment-sort', 'controversial']);
+        expect(cmd.commentSort.name, 'controversial');
+      });
+
+      test('throws when commentSort input is invalid', () {
+        expect(
+          () => _build(['--comment-sort', 'invalid-sort']),
+          throwsA(isA<ArgParserException>()),
+        );
+      });
+
+      test('type returns correct enum for valid input', () {
+        final cmd = _build(['--type', 'multi']);
+        expect(cmd.type, RedditVideoType.multi);
+      });
+
+      test('throws when type input is invalid', () {
+        expect(
+          () => _build(['--type', 'invalid-type']),
+          throwsA(isA<ArgParserException>()),
+        );
+      });
+
+      test('alternate returns true values for valid input', () {
+        final cmd = _build(['--alternate', 'on,on']);
+        expect(cmd.alternate.tts, isTrue);
+        expect(cmd.alternate.color, isTrue);
+      });
+
+      test('alternate treats unknown values as false', () {
+        final cmd = _build(['--alternate', 'maybe,nope']);
+        expect(cmd.alternate.tts, isFalse);
+        expect(cmd.alternate.color, isFalse);
+      });
+
+      test('titleColor returns .ass formatted value for valid input', () {
+        final cmd = _build(['--title-color', '112233']);
+        expect(cmd.titleColor.toString(), r'\1c&H332211');
+      });
+
+      test('throws when titleColor input is invalid', () {
+        expect(
+          () => _build(['--title-color', 'not-a-colour']).titleColor,
+          throwsA(isA<FormatException>()),
+        );
+      });
+
       test('delay returns correct Duration', () {
         final cmd = _build(['--delay', '3']);
         expect(cmd.delay, Duration(seconds: 3));
@@ -184,6 +262,22 @@ void main() {
         final cmd = _build(['--output', 'video.mp4', '--repeat', '3']);
 
         expect(cmd.outputFile(2).path, p.join(tempDir.path, 'video-2.mp4'));
+      });
+
+      test('endCard returns resolved item when file exists', () async {
+        final endCardFile = File('${tempDir.path}/end-card.png')..createSync();
+        final cmd = _build([
+          '--end-card',
+          'end-card.png',
+          '--end-card-length',
+          '5',
+        ]);
+
+        final endCard = await cmd.endCard;
+
+        expect(endCard, isNotNull);
+        expect(endCard!.path.path, endCardFile.path);
+        expect(endCard.duration, const Duration(seconds: 5));
       });
     });
 
@@ -270,6 +364,61 @@ void main() {
       test('help flag returns help command', () {
         final cmd = ParsedCommand.parse(['--help']);
         expect(cmd.name, CommandType.help);
+      });
+    });
+
+    group('Command.printHelp', () {
+      test('throws ArgumentMissingException when parser is null', () {
+        final command = ParsedCommand.none();
+
+        expect(
+          () => command.printHelp(),
+          throwsA(isA<ArgumentMissingException>()),
+        );
+      });
+
+      test('prints formatted parser usage', () {
+        final parser = ParsedCommand.getParser();
+        final command = ParsedCommand.noArgs(
+          command: CommandType.help,
+          parser: parser,
+        );
+
+        final actual = _capturePrint(() {
+          command.printHelp(
+            defaultsColourCode: '<default>',
+            optionsColourCode: '<option>',
+            flagsColourCode: '<flag>',
+          );
+        });
+
+        var expected = parser.usage;
+        final bracketsRegex = RegExp(r'\((defaults.+)\)');
+        final sqBracketsRegex = RegExp(r'\[(.*?)\]');
+        final dashRegex = RegExp(r'(?!-level|-colour|-domain)(\-\S+)');
+
+        for (final match in bracketsRegex.allMatches(expected)) {
+          expected = expected.replaceAll(
+            match[0]!,
+            '<default>${match[0]}$ansiReset',
+          );
+        }
+        for (final match in sqBracketsRegex.allMatches(expected)) {
+          if (match[0] != '[no-]') {
+            expected = expected.replaceAll(
+              match[0]!,
+              '<option>${match[0]}$ansiReset',
+            );
+          }
+        }
+        for (final match in dashRegex.allMatches(expected)) {
+          expected = expected.replaceAll(
+            match[0]!,
+            '<flag>${match[0]}$ansiReset',
+          );
+        }
+
+        expect(actual, expected);
       });
     });
   });

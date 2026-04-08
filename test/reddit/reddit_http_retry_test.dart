@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:http/http.dart' as http;
 import 'package:reddit_2_video/exceptions/reddit_api_exception.dart';
 import 'package:reddit_2_video/reddit/reddit_http_retry.dart';
@@ -45,46 +47,45 @@ void main() {
       expect(delays, [Duration(seconds: 2)]);
     });
 
-    test('uses waitForRetry when rate limit reset metadata is present',
+    test(
+        'waits for retry metadata before continuing and throws after maximum retry',
         () async {
       final waits = <Duration>[];
       final delays = <Duration>[];
-      var calls = 0;
+      final waitCompleter = Completer<void>();
 
       RedditHttpRetry.setWaitForRetryForTest((duration) async {
         waits.add(duration);
+        await waitCompleter.future;
       });
       RedditHttpRetry.setDelayForTest((duration) async {
         delays.add(duration);
       });
       RedditHttpRetry.setGetForTest((url) async {
-        calls++;
-        if (calls == 1) {
-          return http.Response('', 429, headers: {
-            'x-ratelimit-remaining': '0',
-            'x-ratelimit-reset': '3',
-            'retry-after': '1',
-          });
-        }
-        return http.Response('ok', 200);
+        return http.Response('', 429, headers: {
+          'x-ratelimit-remaining': '0',
+          'x-ratelimit-reset': '3',
+          'retry-after': '1',
+        });
       });
 
-      await RedditHttpRetry.retryHttp(Uri.https('reddit.com', '/test'));
+      var completed = false;
+      final future = RedditHttpRetry.retryHttp(
+        Uri.https('reddit.com', '/test'),
+        maxRetries: 1,
+      ).whenComplete(() {
+        completed = true;
+      });
 
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, isFalse);
       expect(waits, [Duration(seconds: 3)]);
-      expect(delays, [Duration(seconds: 1)]);
-    });
+      expect(delays, isEmpty);
 
-    test('throws after max retries are exhausted', () async {
-      RedditHttpRetry.setDelayForTest((duration) async {});
-      RedditHttpRetry.setGetForTest(
-          (url) async => http.Response('', 429, headers: {'retry-after': '1'}));
+      waitCompleter.complete();
 
       await expectLater(
-        () => RedditHttpRetry.retryHttp(
-          Uri.https('reddit.com', '/test'),
-          maxRetries: 2,
-        ),
+        future,
         throwsA(
           isA<RedditApiException>().having(
             (e) => e.statusCode,
@@ -93,6 +94,7 @@ void main() {
           ),
         ),
       );
+      expect(delays, [Duration(seconds: 1)]);
     });
 
     test('throws for non-retriable status codes', () async {

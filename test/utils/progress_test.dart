@@ -1,3 +1,4 @@
+import 'package:consola/consola.dart';
 import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/progress.dart';
 import 'package:test/test.dart';
@@ -7,6 +8,7 @@ import '../mocks.dart';
 void main() {
   tearDown(() {
     logger.resetForTest();
+    TerminalProgressRenderer.resetForTest();
   });
 
   group('GenerationProgressTracker', () {
@@ -118,6 +120,27 @@ void main() {
       tracker.stop();
     });
 
+    test('setTotalUnits updates progress calculations for an existing task', () {
+      final renderer = FakeTerminalProgressRenderer();
+      final tracker = GenerationProgressTracker(renderer: renderer);
+
+      tracker.start();
+      final task = tracker.createTask(
+        title: 'Render',
+        weight: 1,
+        section: LogSection.generation,
+        totalUnits: 2,
+      );
+
+      tracker.incrementTask(task, by: 1);
+      expect(renderer.snapshots.last.fraction, 0.5);
+
+      tracker.setTotalUnits(task, 4);
+
+      expect(renderer.snapshots.last.fraction, 0.25);
+      tracker.stop();
+    });
+
     test('stopAllProgress stops every active tracker', () {
       final firstRenderer = FakeTerminalProgressRenderer();
       final secondRenderer = FakeTerminalProgressRenderer();
@@ -131,6 +154,62 @@ void main() {
 
       expect(firstRenderer.cleared, isTrue);
       expect(secondRenderer.cleared, isTrue);
+    });
+  });
+
+  group('TerminalProgressRenderer', () {
+    test('drawFooter renders two footer lines when a snapshot is present', () {
+      final renderer = TerminalProgressRenderer(enabled: false);
+
+      renderer.update(const ProgressSnapshot(
+        fraction: 0.5,
+        title: 'Render',
+        detail: 'Halfway there',
+        section: LogSection.generation,
+      ));
+
+      expect(renderer.snapshotForTest, isNull);
+
+      final enabledRenderer = TerminalProgressRenderer(enabled: true);
+      TerminalProgressRenderer.setWindowWidthProviderForTest(() => 80);
+      TerminalProgressRenderer.setWindowHeightProviderForTest(() => 24);
+      enabledRenderer.setSnapshotForTest(const ProgressSnapshot(
+        fraction: 0.5,
+        title: 'Render',
+        detail: 'Halfway there',
+        section: LogSection.generation,
+      ));
+
+      enabledRenderer.drawFooterForTest();
+
+      expect(enabledRenderer.snapshotForTest, isNotNull);
+      expect(enabledRenderer.renderedLinesForTest, 2);
+    });
+
+    test('redrawFooterPreservingCursor keeps footer rendered when snapshot exists',
+        () {
+      final renderer = TerminalProgressRenderer(enabled: true);
+      TerminalProgressRenderer.setCursorPositionProviderForTest(
+        () => const ConsoleCoordinate(1, 1),
+      );
+      TerminalProgressRenderer.setWindowWidthProviderForTest(() => 80);
+      TerminalProgressRenderer.setWindowHeightProviderForTest(() => 24);
+
+      renderer.setSnapshotForTest(const ProgressSnapshot(
+        fraction: 0.75,
+        title: 'Encode',
+        detail: 'Writing output',
+        section: LogSection.generation,
+      ));
+      renderer.drawFooterForTest();
+
+      expect(renderer.renderedLinesForTest, 2);
+
+      renderer.redrawFooterPreservingCursorForTest();
+
+      expect(renderer.renderedLinesForTest, 2);
+      expect(renderer.snapshotForTest?.title, 'Encode');
+      expect(renderer.snapshotForTest?.detail, 'Writing output');
     });
   });
 }

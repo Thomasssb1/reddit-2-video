@@ -24,6 +24,12 @@ import 'dart:io';
 /// Stores the reddit post(s) for the specific vid to be generated as well as the videotype
 ///
 class RedditVideo {
+  static Future<List<RedditPost>> Function(
+    List<RedditPost> candidates,
+    ParsedCommand command,
+    Log log,
+  )? _confirmPostSelectionOverride;
+
   final List<RedditPost> posts;
   final RedditVideoType videoType;
   Subtitles? subtitles;
@@ -258,11 +264,13 @@ class RedditVideo {
       // if the user wants to confirm the post and the subreddit arg is not a link
       if (command.postConfirmation) {
         selectedPosts = await generationProgress.runWithOverlaySuspended(
-          () => confirmPostSelection(
-            candidates: eligiblePosts,
-            command: command,
-            log: log,
-          ),
+          () => (_confirmPostSelectionOverride != null
+              ? _confirmPostSelectionOverride!(eligiblePosts, command, log)
+              : confirmPostSelection(
+                  candidates: eligiblePosts,
+                  command: command,
+                  log: log,
+                )),
         );
         if (selectedPosts.isEmpty) {
           throw EmptyPostSelectionException(
@@ -375,4 +383,18 @@ class RedditVideo {
   }
 
   String get id => posts.map((e) => e.id).join("-");
+
+  static void setConfirmPostSelectionForTest(
+    Future<List<RedditPost>> Function(
+      List<RedditPost> candidates,
+      ParsedCommand command,
+      Log log,
+    ) handler,
+  ) {
+    _confirmPostSelectionOverride = handler;
+  }
+
+  static void resetForTest() {
+    _confirmPostSelectionOverride = null;
+  }
 }

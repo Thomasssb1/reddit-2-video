@@ -6,6 +6,10 @@ import 'package:test/test.dart';
 
 void main() {
   group('AppPaths', () {
+    tearDown(() {
+      AppPaths.resetForTest();
+    });
+
     test('throws StateError when accessed before init', () {
       expect(
         () => AppPaths.resolve('defaults/default.ass'),
@@ -92,6 +96,39 @@ void main() {
 
       final absolute = p.join(root.path, 'absolute_dir');
       expect(AppPaths.resolveDir(absolute).path, absolute);
+    });
+
+    group('init', () {
+      test('uses current directory when running from dart', () {
+        AppPaths.setResolvedExecutableForTest(
+          p.join(Directory.systemTemp.path, 'dart'),
+        );
+
+        AppPaths.init();
+
+        expect(AppPaths.isDevMode, isTrue);
+        expect(p.normalize(AppPaths.rootPath),
+            p.normalize(Directory.current.path));
+      });
+
+      test('uses executable parent parent when not running from dart', () {
+        final executablePath = p.join(
+          Directory.systemTemp.path,
+          'reddit-2-video-test',
+          'bin',
+          'reddit-2-video',
+        );
+
+        AppPaths.setResolvedExecutableForTest(executablePath);
+
+        AppPaths.init();
+
+        expect(AppPaths.isDevMode, isFalse);
+        expect(
+          p.normalize(AppPaths.rootPath),
+          p.normalize(p.dirname(p.dirname(executablePath))),
+        );
+      });
     });
   });
 }

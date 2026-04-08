@@ -125,11 +125,8 @@ class Lexica extends ConfigItem {
     File config = File(path);
     var json = jsonDecode(config.readAsStringSync());
     json['_last_updated'] = newTime.toString();
-
-    IOSink sink = config.openWrite();
     const encoder = JsonEncoder.withIndent('  ');
-    sink.write(encoder.convert(json));
-    sink.close();
+    config.writeAsStringSync(encoder.convert(json));
   }
 
   static Future<DateTime> _getLastUpdated(String path) async {
@@ -153,6 +150,14 @@ class Lexica extends ConfigItem {
     } on PickException {
       throw InvalidFileFormatException("Missing field _last_updated", config);
     }
+  }
+
+  static void setLastUpdatedForTest(DateTime newTime, String path) {
+    _setLastUpdated(newTime, path);
+  }
+
+  static Future<DateTime> getLastUpdatedForTest(String path) {
+    return _getLastUpdated(path);
   }
 
   static List<(String, File)> _getMetadata(String path) {
@@ -196,10 +201,12 @@ class Lexica extends ConfigItem {
       }
     });
     final document = builder.buildDocument();
-    if (!path.existsSync()) {
+    if (path.existsSync()) {
       logger.warning("File $path already exists, overwriting.");
     }
-    return document.toXmlString();
+    final xml = document.toXmlString();
+    path.writeAsStringSync(xml);
+    return xml;
   }
 
   Future<void> upload({bool verbose = false}) async {

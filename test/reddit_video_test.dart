@@ -10,6 +10,7 @@ import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/log/log.dart';
 import 'package:reddit_2_video/reddit/reddit_http_retry.dart';
 import 'package:reddit_2_video/reddit/reddit_id.dart';
+import 'package:reddit_2_video/reddit/reddit_post.dart';
 import 'package:reddit_2_video/reddit/reddit_post_sort_type.dart';
 import 'package:reddit_2_video/reddit_video.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
@@ -41,6 +42,7 @@ void main() {
 
   tearDown(() {
     RedditHttpRetry.resetForTest();
+    RedditVideo.resetForTest();
     Subprocess.resetForTest();
     logger.resetForTest();
     tempDir.deleteSync(recursive: true);
@@ -411,6 +413,75 @@ void main() {
         expect(output, contains('Selected post abc123-t5_test.'));
       });
 
+      test('ignores PickException entries and continues parsing eligible posts',
+          () async {
+        when(() => command.subredditIsLink).thenReturn(false);
+        when(() => command.subreddit).thenReturn('test');
+        when(() => command.sort).thenReturn(RedditPostSortType.top);
+        when(() => command.type).thenReturn(RedditVideoType.post);
+        when(() => command.postConfirmation).thenReturn(false);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+
+        RedditHttpRetry.setGetForTest((url) async {
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'data': {
+                'children': [
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Broken',
+                      'selftext': 'Body',
+                      'ups': 1,
+                      'created_utc': 1701083780,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': false,
+                      'media': false,
+                      'num_comments': 3,
+                    }
+                  },
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Working',
+                      'selftext': 'Body',
+                      'id': 'abc123',
+                      'ups': 1,
+                      'created_utc': 1701083780,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': false,
+                      'media': false,
+                      'num_comments': 3,
+                    }
+                  }
+                ]
+              }
+            })),
+            200,
+          );
+        });
+
+        final log = await Log.fromFile();
+        final stdoutBuffer = StringBuffer();
+        logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
+        final video = await RedditVideo.parse(command, log);
+
+        expect(video.posts, hasLength(1));
+        expect(video.posts.first.id, 'abc123-t5_test');
+        expect(
+          stdoutBuffer.toString(),
+          contains(
+            'An error occurred whilst trying to fetch the post. Ignoring post.',
+          ),
+        );
+      });
+
       test('throws PostsExhausted when no eligible posts are returned',
           () async {
         when(() => command.subredditIsLink).thenReturn(false);
@@ -455,6 +526,157 @@ void main() {
           () => RedditVideo.parse(command, log),
           throwsA(isA<PostsExhaustedException>()),
         );
+      });
+
+      test('throws RedditApiException when subreddit request fails', () async {
+        when(() => command.subredditIsLink).thenReturn(false);
+        when(() => command.subreddit).thenReturn('test');
+        when(() => command.sort).thenReturn(RedditPostSortType.top);
+        when(() => command.type).thenReturn(RedditVideoType.post);
+
+        RedditHttpRetry.setGetForTest((url) async => http.Response('', 503));
+
+        final log = await Log.fromFile();
+
+        await expectLater(
+          () => RedditVideo.parse(command, log),
+          throwsA(
+            isA<RedditApiException>().having(
+              (e) => e.statusCode,
+              'statusCode',
+              503,
+            ),
+          ),
+        );
+      });
+
+      test(
+          'throws EmptyPostSelectionException when post confirmation returns no selected posts',
+          () async {
+        when(() => command.subredditIsLink).thenReturn(false);
+        when(() => command.subreddit).thenReturn('test');
+        when(() => command.sort).thenReturn(RedditPostSortType.top);
+        when(() => command.type).thenReturn(RedditVideoType.multi);
+        when(() => command.postConfirmation).thenReturn(true);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+
+        RedditHttpRetry.setGetForTest((url) async {
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'data': {
+                'children': [
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Title',
+                      'selftext': 'Body',
+                      'id': 'abc123',
+                      'ups': 1,
+                      'created_utc': 1701083780,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': false,
+                      'media': false,
+                      'num_comments': 3,
+                    }
+                  }
+                ]
+              }
+            })),
+            200,
+          );
+        });
+
+        RedditVideo.setConfirmPostSelectionForTest((candidates, _, __) async {
+          expect(candidates, hasLength(1));
+          return <RedditPost>[];
+        });
+
+        final log = await Log.fromFile();
+
+        await expectLater(
+          () => RedditVideo.parse(command, log),
+          throwsA(isA<EmptyPostSelectionException>()),
+        );
+      });
+
+      test('sublists selected posts to commentCount for multi parse', () async {
+        when(() => command.subredditIsLink).thenReturn(false);
+        when(() => command.subreddit).thenReturn('test');
+        when(() => command.sort).thenReturn(RedditPostSortType.top);
+        when(() => command.type).thenReturn(RedditVideoType.multi);
+        when(() => command.postConfirmation).thenReturn(false);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+
+        RedditHttpRetry.setGetForTest((url) async {
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'data': {
+                'children': [
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'First',
+                      'selftext': 'Body',
+                      'id': 'first',
+                      'ups': 1,
+                      'created_utc': 1701083780,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': false,
+                      'media': false,
+                      'num_comments': 5,
+                    }
+                  },
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Second',
+                      'selftext': 'Body',
+                      'id': 'second',
+                      'ups': 1,
+                      'created_utc': 1701083781,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': false,
+                      'media': false,
+                      'num_comments': 6,
+                    }
+                  },
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Third',
+                      'selftext': 'Body',
+                      'id': 'third',
+                      'ups': 1,
+                      'created_utc': 1701083782,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': false,
+                      'media': false,
+                      'num_comments': 7,
+                    }
+                  }
+                ]
+              }
+            })),
+            200,
+          );
+        });
+
+        final log = await Log.fromFile();
+        final video = await RedditVideo.parse(command, log);
+
+        expect(video.posts, hasLength(2));
+        expect(video.posts.map((post) => post.id),
+            ['first-t5_test', 'second-t5_test']);
       });
 
       test(
@@ -523,6 +745,45 @@ void main() {
         expect(candidates, hasLength(3));
         expect(selected, equals([firstPost, thirdPost]));
         expect(log.contains(secondPost), isTrue);
+      });
+
+      test(
+          'confirmPostSelection throws when skip is and there are no more posts to select from',
+          () async {
+        final candidate = MockRedditPost();
+
+        when(() => command.type).thenReturn(RedditVideoType.multi);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+        when(() => command.subreddit).thenReturn('test');
+
+        when(() => candidate.title).thenReturn('First');
+        when(() => candidate.upvotes).thenReturn(10);
+        when(() => candidate.commentCount).thenReturn(5);
+        when(() => candidate.created)
+            .thenReturn(DateTime.fromMillisecondsSinceEpoch(1701083780000));
+        when(() => candidate.spoiler).thenReturn(false);
+        when(() => candidate.hasMedia).thenReturn(false);
+        when(() => candidate.nsfw).thenReturn(false);
+        when(() => candidate.body).thenReturn('First body');
+        when(() => candidate.redditId).thenReturn(RedditId('first', 't5_test'));
+        when(() => candidate.id).thenReturn('first-t5_test');
+
+        final log = await Log.fromFile();
+        final responses = ['n', 'skip'].iterator;
+
+        await expectLater(
+          () => RedditVideo.confirmPostSelection(
+            candidates: [candidate],
+            command: command,
+            log: log,
+            readLine: () {
+              expect(responses.moveNext(), isTrue);
+              return responses.current;
+            },
+          ),
+          throwsA(isA<EmptyPostSelectionException>()),
+        );
       });
     });
 
@@ -682,6 +943,81 @@ void main() {
           ),
         );
         expect(stdoutBuffer.toString(), isNot(contains('[final.mp4](file://')));
+      });
+
+      test('splits video when youtubeShort is enabled', () async {
+        final video = RedditVideo(
+          posts: [post],
+          videoType: RedditVideoType.post,
+        );
+        final subtitles = MockSubtitles();
+        video.subtitles = subtitles;
+        final cutVideo = File('${tempDir.path}/cut.mp4')..createSync();
+
+        when(() => command.type).thenReturn(RedditVideoType.post);
+        when(() => command.endCard).thenAnswer((_) async => null);
+        when(() => command.music).thenReturn(null);
+        when(() => command.verbose).thenReturn(false);
+        when(() => command.override).thenReturn(false);
+        when(() => command.horror).thenReturn(false);
+        when(() => command.framerate).thenReturn(FPS.fps45);
+        when(() => command.output).thenReturn('short.mp4');
+        when(() => command.fileType).thenReturn(FileType.mp4);
+        when(() => command.repeat).thenReturn(1);
+        when(() => command.youtubeShort).thenReturn(true);
+
+        when(() => backgroundVideo.position).thenReturn(0);
+        when(() => subtitles.getTTSFilesAsInput()).thenReturn([]);
+        when(() => subtitles.getTTSStream(any())).thenReturn(['[1:a]']);
+        when(() => subtitles.assFile)
+            .thenReturn(File('${tempDir.path}/sub.ass'));
+        when(() => subtitles.duration).thenReturn(const Duration(seconds: 5));
+        when(() => subtitles.position = any<int>()).thenReturn(0);
+
+        final splitSegmentA = File(
+          p.join(Directory.current.path, 'short-000.mp4'),
+        );
+        final splitSegmentB = File(
+          p.join(Directory.current.path, 'short-001.mp4'),
+        );
+        addTearDown(() {
+          if (splitSegmentA.existsSync()) {
+            splitSegmentA.deleteSync();
+          }
+          if (splitSegmentB.existsSync()) {
+            splitSegmentB.deleteSync();
+          }
+        });
+
+        var ffmpegCalls = 0;
+        Subprocess.setStartForTest((executable, arguments,
+            {workingDirectory,
+            environment,
+            includeParentEnvironment = true,
+            runInShell = false,
+            mode = ProcessStartMode.normal}) async {
+          ffmpegCalls++;
+          if (arguments.contains('-segment_time')) {
+            splitSegmentA.createSync();
+            splitSegmentB.createSync();
+          }
+          return FakeProcess(exitCode: 0);
+        });
+
+        final stdoutBuffer = StringBuffer();
+        logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
+        await video.generate(command, backgroundVideo, cutVideo, 1);
+
+        expect(ffmpegCalls, 2);
+        expect(
+          stdoutBuffer.toString(),
+          contains('Video successfully split into 2 YouTube shorts:'),
+        );
+        expect(
+            stdoutBuffer.toString(), contains(p.basename(splitSegmentA.path)));
+        expect(
+            stdoutBuffer.toString(), contains(p.basename(splitSegmentB.path)));
       });
     });
   });

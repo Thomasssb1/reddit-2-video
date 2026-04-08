@@ -1,5 +1,3 @@
-import 'dart:io';
-
 class PostAlreadyGeneratedException implements Exception {
   final String message;
   final String help;
@@ -12,10 +10,5 @@ class PostAlreadyGeneratedException implements Exception {
   @override
   String toString() {
     return message;
-  }
-
-  void print() {
-    stdout.writeln(message);
-    stdout.writeln(help);
   }
 }
