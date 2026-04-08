@@ -2,22 +2,16 @@ class SubtitleLineData {
   String text;
   final Duration end;
   final Duration start;
-  final bool finalWord;
-  final int segmentID;
+  final int lineNumber;
 
   SubtitleLineData({
     required this.text,
     required this.end,
     required this.start,
-    required this.finalWord,
-    required this.segmentID,
+    required this.lineNumber,
   });
 
-  bool isFinalSegment(int segmentCount) {
-    return segmentCount == segmentID;
-  }
-
-  bool get isFinalWord => finalWord;
+  bool isFinalLine(int lineCount) => lineNumber == lineCount;
 
   @override
   String toString() {

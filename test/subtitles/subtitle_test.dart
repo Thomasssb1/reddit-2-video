@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:reddit_2_video/subtitles/subtitle.dart';
@@ -14,10 +13,13 @@ void main() {
     color = SubstationAlphaSubtitleColor('#FFFFFF');
     Subtitle.setDurationReaderForTest(
         (file) => const Duration(milliseconds: 1500));
+    SubtitleConfig.setDurationReaderForTest(
+        (file) => const Duration(milliseconds: 1500));
   });
 
   tearDown(() {
     Subtitle.resetForTest();
+    SubtitleConfig.resetForTest();
   });
 
   group('Subtitle', () {
@@ -29,7 +31,7 @@ void main() {
 
       test('creates subtitle with an empty config', () {
         final subtitle = Subtitle.none();
-        expect(subtitle.config.segments, isEmpty);
+        expect(subtitle.config.words, isEmpty);
       });
     });
 
@@ -73,8 +75,7 @@ void main() {
           text: 'word',
           end: Duration(seconds: 1),
           start: Duration.zero,
-          finalWord: false,
-          segmentID: 1,
+          lineNumber: 1,
         );
 
         subtitle.addHighlight(line);
@@ -92,8 +93,7 @@ void main() {
           text: 'word',
           end: Duration(seconds: 1),
           start: Duration.zero,
-          finalWord: false,
-          segmentID: 1,
+          lineNumber: 1,
         );
         subtitle.addHighlight(line);
         expect(line.text, '{\\c&${subtitle.highlightColour}}word');
@@ -108,17 +108,10 @@ void main() {
         addTearDown(() => tempDir.deleteSync(recursive: true));
         final tts = File('${tempDir.path}/tts.mp3')..writeAsStringSync('');
         final configFile = File('${tempDir.path}/tts.words.json')
-          ..writeAsStringSync(jsonEncode({
-            'segments': [
-              {
-                'id': 1,
-                'words': [
-                  {'text': 'hello', 'start': 0.0, 'end': 0.5},
-                  {'text': 'world', 'start': 0.5, 'end': 1.0},
-                ]
-              }
-            ]
-          }));
+          ..writeAsStringSync(
+            '{"time":0,"type":"word","start":0,"end":5,"value":"hello"}\n'
+            '{"time":500,"type":"word","start":6,"end":11,"value":"world"}',
+          );
         final ass = File('${tempDir.path}/out.ass')..writeAsStringSync('');
 
         final subtitle = Subtitle(
@@ -139,20 +132,23 @@ void main() {
   });
 
   group('SubtitleConfig', () {
-    test('parses valid json segments', () {
+    test('parses Polly speech marks into words', () {
       final tempDir = Directory.systemTemp.createTempSync('subtitle_config_');
       addTearDown(() => tempDir.deleteSync(recursive: true));
       final tts = File('${tempDir.path}/tts.mp3')..writeAsStringSync('');
       final configFile = File('${tempDir.path}/tts.words.json')
-        ..writeAsStringSync(jsonEncode({
-          'segments': [
-            {'id': 1, 'words': []}
-          ]
-        }));
+        ..writeAsStringSync(
+          '{"time":373,"type":"word","start":5,"end":8,"value":"had"}\n'
+          '{"time":812,"type":"word","start":9,"end":14,"value":"enough"}',
+        );
 
       final config = SubtitleConfig.fromFile(tts: tts, configFile: configFile);
 
-      expect(config.segments, hasLength(1));
+      expect(config.words, hasLength(2));
+      expect(config.words[0].text, 'had');
+      expect(config.words[0].start, const Duration(milliseconds: 373));
+      expect(config.words[0].end, const Duration(milliseconds: 812));
+      expect(config.words[1].end, const Duration(milliseconds: 1500));
     });
 
     test('throws for invalid json', () {
@@ -170,18 +166,16 @@ void main() {
   });
 
   group('SubtitleLineData', () {
-    test('tracks final segment and final word state', () {
+    test('tracks final line state', () {
       final line = SubtitleLineData(
         text: 'word',
         end: const Duration(seconds: 1),
         start: Duration.zero,
-        finalWord: true,
-        segmentID: 2,
+        lineNumber: 2,
       );
 
-      expect(line.isFinalWord, isTrue);
-      expect(line.isFinalSegment(2), isTrue);
-      expect(line.isFinalSegment(3), isFalse);
+      expect(line.isFinalLine(2), isTrue);
+      expect(line.isFinalLine(3), isFalse);
       expect(line.toString(), 'word');
     });
   });

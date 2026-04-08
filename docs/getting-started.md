@@ -21,7 +21,6 @@ For normal usage you do not need Dart, but you do need the runtime tools the bin
 - `ffmpeg`
 - `ffprobe`
 - `yt-dlp`
-- `whisper_timestamped`
 
 > AWS Polly is currently the only supported text synthesis backend, so AWS CLI setup is required.
 
@@ -33,7 +32,7 @@ You can start with:
 reddit-2-video install
 ```
 
-Treat this as a bootstrap command rather than a guaranteed full installer. It is a good starting point, but you should still verify that `ffmpeg`, `ffprobe`, `yt-dlp`, and `whisper_timestamped` are available afterwards.
+Treat this as a bootstrap command rather than a guaranteed full installer. It is a good starting point, but you should still verify that `ffmpeg`, `ffprobe`, `yt-dlp`, and `aws` are available afterwards.
 
 ## Compile It Yourself
 
@@ -83,4 +82,4 @@ reddit-2-video --subreddit AmItheAsshole
 
 ---
 
-Last reviewed: 2026-04-07
+Last reviewed: 2026-04-08

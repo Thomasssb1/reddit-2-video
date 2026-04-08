@@ -22,7 +22,7 @@ That lets you run `reddit-2-video` across your file system while iterating on th
 
 - End users should prefer release binaries.
 - Contributors will need Dart and the rest of the source build toolchain.
-- Runtime dependencies such as `ffmpeg`, `ffprobe`, `yt-dlp`, and `whisper_timestamped` are still relevant for real execution paths.
+- Runtime dependencies such as `ffmpeg`, `ffprobe`, `yt-dlp`, and `aws` are still relevant for real execution paths.
 
 ## Checked-In State Filter
 
@@ -41,4 +41,4 @@ If you are compiling the executable yourself, refer back to the repository READM
 
 ---
 
-Last reviewed: 2026-04-07
+Last reviewed: 2026-04-08

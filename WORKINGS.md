@@ -2,7 +2,7 @@
 
 If you want to see in depth how reddit-2-video works then continue reading otherwise, you can read the shortened down statement below:
 
-> reddit-2-video is written 100% in dart and uses the command line to interact with other moving parts in order to create the working process. Currently reddit-2-video relies on [whisper_timestamped]() for correcting subtitle positioning as well as [ffmpeg]() to create the video with a custom set of arguments determined by the user input. Using Reddit JSON endpoints to fetch posts and comments, data is then processed and passed to [AWS Polly]() to create custom neural tts, while the ASS (Advanced SubStation Alpha) file format is used to create subtitles which can be animated and finetuned to change their appearance as need be.
+> reddit-2-video is written 100% in dart and uses the command line to interact with other moving parts in order to create the working process. Currently reddit-2-video relies on [AWS Polly]() speech marks for subtitle timing as well as [ffmpeg]() to create the video with a custom set of arguments determined by the user input. Using Reddit JSON endpoints to fetch posts and comments, data is then processed and passed to [AWS Polly]() to create custom neural tts, while the ASS (Advanced SubStation Alpha) file format is used to create subtitles which can be animated and finetuned to change their appearance as need be.
 
 ```mermaid
 graph LR;
@@ -72,7 +72,7 @@ The video is created using the [ffmpeg]() library by interacting with the CLI ve
 
 The TTS in reddit-2-video is currently generated using [AWS Polly](). After the post and comment text has been fetched and cleaned up, the program sends each section of text to AWS Polly through the command line and saves the returned audio as `.mp3` files inside the temporary folder. This means each title, body or comment can be generated as its own piece of audio before being combined later on in the final ffmpeg command.
 
-This is necessary because the narration audio is what drives the rest of the process. Once the text has been turned into speech, [whisper_timestamped]() is used to align that speech back to the original text so that timing data can be generated for the subtitles. In other words, the TTS is not just there to make the video speak, it is also the thing that allows the subtitles to appear in the correct place at the correct time.
+This is necessary because the narration audio is what drives the rest of the process. Once the text has been turned into speech, AWS Polly speech marks are generated alongside the audio so that timing data can be used for the subtitles. In other words, the TTS is not just there to make the video speak, it is also the thing that allows the subtitles to appear in the correct place at the correct time.
 
 ### Using the "reddit api"
 

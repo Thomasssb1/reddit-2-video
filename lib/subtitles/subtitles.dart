@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:reddit_2_video/app_paths.dart';
@@ -19,22 +20,6 @@ import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/utils/logger.dart';
 import 'package:reddit_2_video/utils/progress.dart';
 import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
-
-String formatTtsFailureMessage(
-    {required int exitCode,
-    required String stderrOutput,
-    required String stdoutOutput}) {
-  final details = <String>[];
-  if (stderrOutput.trim().isNotEmpty) {
-    details.add("stderr: ${stderrOutput.trim()}");
-  }
-  if (stdoutOutput.trim().isNotEmpty) {
-    details.add("stdout: ${stdoutOutput.trim()}");
-  }
-  final detailsText =
-      details.isEmpty ? "No additional AWS output." : details.join(" | ");
-  return "TTS failed to generate. Exit code: $exitCode. $detailsText";
-}
 
 class Subtitles {
   late File _assFile;
@@ -104,37 +89,19 @@ class Subtitles {
       String text, Voice voice, ParsedCommand command) async {
     final result = await Subprocess.exec(
       "aws",
-      [
-        "polly",
-        "synthesize-speech",
-        if (censor) ...<String>[
-          "--lexicon-names",
-          ...lexicons.map((e) => e.toString()),
-        ],
-        "--output-format",
-        "mp3",
-        "--voice-id",
-        voice.id,
-        "--text",
-        text,
-        "--engine",
-        ntts ? "neural" : "standard",
-        // TODO: add a way to toggle specific lexicons
-        ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
-      ],
+      _pollyArguments(
+        text: text,
+        voice: voice,
+        outputFormat: "mp3",
+        outputPath: ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
+      ),
       verbose: command.verbose,
       section: LogSection.subtitles,
     );
 
-    final processStdout = result.stdout.trim();
-    final processStderr = result.stderr.trim();
-
     if (result.exitCode != 0) {
       throw TTSFailedException(
-          message: formatTtsFailureMessage(
-              exitCode: result.exitCode,
-              stderrOutput: processStderr,
-              stdoutOutput: processStdout),
+          message: "TTS failed to generate. Exit code: ${result.exitCode}.",
           id: video.id,
           text: text);
     }
@@ -146,33 +113,29 @@ class Subtitles {
   }
 
   Future<SubtitleConfig> _alignSubtitles(
-      Subtitle prevSubtitle, ParsedCommand command, File tts) async {
+      String text, Voice voice, ParsedCommand command, File tts) async {
     final result = await Subprocess.exec(
-      "whisper_timestamped",
-      [
-        tts.absolute.path,
-        "--language",
-        "en",
-        "--output_format",
-        "json",
-        "--compute_confidence",
-        "False",
-        if (prevSubtitle.text.isNotEmpty) ...[
-          "--initial_prompt",
-          prevSubtitle.text,
-        ],
-        "--output_dir",
-        ".temp/${video.id}/config/",
-      ],
+      "aws",
+      _pollyArguments(
+        text: text,
+        voice: voice,
+        outputFormat: "json",
+        outputPath:
+            ".temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json",
+        speechMarkTypes: const ["word"],
+      ),
       verbose: command.verbose,
       section: LogSection.subtitles,
     );
+
     if (result.exitCode != 0) {
       throw TTSFailedException(
-          message: "Aligning TTS to subtitles failed. Exiting.",
+          message:
+              "Speech marks failed to generate. Exit code: ${result.exitCode}.",
           id: video.id,
-          text: prevSubtitle.text);
+          text: text);
     }
+
     if (_progressTask != null) {
       generationProgress.incrementTask(_progressTask!,
           detail:
@@ -182,6 +145,36 @@ class Subtitles {
         tts: tts,
         configFile: AppPaths.resolve(
             '.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json'));
+  }
+
+  List<String> _pollyArguments({
+    required String text,
+    required Voice voice,
+    required String outputFormat,
+    required String outputPath,
+    List<String> speechMarkTypes = const [],
+  }) {
+    return [
+      "polly",
+      "synthesize-speech",
+      if (censor) ...<String>[
+        "--lexicon-names",
+        ...lexicons.map((e) => e.toString()),
+      ],
+      "--output-format",
+      outputFormat,
+      "--voice-id",
+      voice.id,
+      "--text",
+      text,
+      "--engine",
+      ntts ? "neural" : "standard",
+      if (speechMarkTypes.isNotEmpty) ...<String>[
+        "--speech-mark-types",
+        jsonEncode(speechMarkTypes),
+      ],
+      outputPath,
+    ];
   }
 
   Future<void> parse(ParsedCommand command) async {
@@ -285,7 +278,7 @@ class Subtitles {
           AppPaths.resolveDir('.temp/${video.id}/config')
               .createSync(recursive: true);
           SubtitleConfig config =
-              await _alignSubtitles(prevSubtitle, command, tts);
+              await _alignSubtitles(textSegment, voices.current, command, tts);
 
           SubstationAlphaSubtitleColor color = TextColor.current;
 

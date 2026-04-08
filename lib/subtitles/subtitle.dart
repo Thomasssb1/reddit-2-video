@@ -26,32 +26,26 @@ class Subtitle {
     File assFile,
     Duration prevDuration,
   ) async {
-    for (final segment in config.segments) {
-      List<SubtitleLineData> lineData = [];
-      num characterCount = 0;
-      if (segment['words'][0]['text'] != 'you') {
-        var words = segment['words'];
-        for (int i = 0; i < words.length; i++) {
-          if (characterCount + words[i]['text'].length > maxCharacterCount) {
-            await _karaokeEffect(
-                lineData, assFile, prevDuration, config.segments.length);
-            lineData = [];
-            characterCount = 0;
-          }
-          lineData.add(SubtitleLineData(
-            text: words[i]['text'],
-            end: Duration(milliseconds: (words[i]['end'] * 1000).toInt()),
-            start: Duration(milliseconds: (words[i]['start'] * 1000).toInt()),
-            finalWord: (i == words.length - 1),
-            segmentID: segment['id'],
-          ));
-          characterCount += words[i]['text'].length;
-        }
-        if (lineData.isNotEmpty) {
-          await _karaokeEffect(
-              lineData, assFile, prevDuration, config.segments.length);
-        }
+    List<SubtitleLineData> lineData = [];
+    num characterCount = 0;
+
+    for (int i = 0; i < config.words.length; i++) {
+      final SubtitleWord word = config.words[i];
+      if (characterCount + word.text.length > maxCharacterCount) {
+        await _karaokeEffect(lineData, assFile, prevDuration);
+        lineData = [];
+        characterCount = 0;
       }
+      lineData.add(SubtitleLineData(
+        text: word.text,
+        end: word.end,
+        start: word.start,
+        lineNumber: i + 1,
+      ));
+      characterCount += word.text.length;
+    }
+    if (lineData.isNotEmpty) {
+      await _karaokeEffect(lineData, assFile, prevDuration);
     }
   }
 
@@ -64,15 +58,14 @@ class Subtitle {
       "${time.inHours}:${time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${time.inSeconds.remainder(60).toString().padLeft(2, '0')}.${time.inMilliseconds.remainder(1000).toString().padLeft(3, '0').substring(0, 2)}";
 
   Future<void> _karaokeEffect(List<SubtitleLineData> lineData, File assFile,
-      Duration prevDuration, int segmentCount) async {
+      Duration prevDuration) async {
     IOSink sink = assFile.openWrite(mode: FileMode.append);
     for (int i = 0; i < lineData.length; i++) {
       String start = _getNewTime(lineData[i].start + prevDuration);
 
-      String end = _getNewTime(
-          lineData[i].isFinalWord && lineData[i].isFinalSegment(segmentCount)
-              ? duration + prevDuration
-              : lineData[i].end + prevDuration);
+      String end = _getNewTime(lineData[i].isFinalLine(config.words.length)
+          ? duration + prevDuration
+          : lineData[i].end + prevDuration);
 
       List<SubtitleLineData> words = lineData.sublist(0, i + 1);
       SubtitleLineData word =

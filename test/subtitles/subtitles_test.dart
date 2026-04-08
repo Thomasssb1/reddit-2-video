@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:mocktail/mocktail.dart';
 import 'package:reddit_2_video/app_paths.dart';
@@ -9,6 +8,7 @@ import 'package:reddit_2_video/config/voices/voice.dart';
 import 'package:reddit_2_video/reddit/reddit_video_type.dart';
 import 'package:reddit_2_video/subtitles/alternate.dart';
 import 'package:reddit_2_video/subtitles/subtitle.dart';
+import 'package:reddit_2_video/subtitles/subtitle_config.dart';
 import 'package:reddit_2_video/subtitles/subtitles.dart';
 import 'package:reddit_2_video/exceptions/exceptions.dart';
 import 'package:reddit_2_video/utils/subprocess/subprocess.dart';
@@ -48,16 +48,21 @@ void main() {
     _stubCommand(command, type: RedditVideoType.comments);
     TextColor.reset();
     Subtitle.setDurationReaderForTest((file) => const Duration(seconds: 1));
+    SubtitleConfig.setDurationReaderForTest(
+        (file) => const Duration(seconds: 1));
   });
 
   tearDown(() {
     Subprocess.resetForTest();
     Subtitle.resetForTest();
+    SubtitleConfig.resetForTest();
     TextColor.reset();
   });
 
-  void _stubTtsAndAlignmentProcesses(Directory root,
-      {int ttsExitCode = 0, int alignExitCode = 0, List<String>? seenTexts}) {
+  void _stubTtsProcesses(
+      {int ttsExitCode = 0,
+      int speechMarkExitCode = 0,
+      List<String>? seenTexts}) {
     Subprocess.setStartForTest((executable, arguments,
         {workingDirectory,
         environment,
@@ -68,33 +73,24 @@ void main() {
         final outPath = arguments.last;
         seenTexts?.add(arguments[arguments.indexOf('--text') + 1]);
         File(outPath).createSync(recursive: true);
+
+        final outputFormat = arguments[arguments.indexOf('--output-format') + 1];
+        if (outputFormat == 'json') {
+          File(outPath).writeAsStringSync([
+            '{"time":0,"type":"word","start":0,"end":5,"value":"hello"}',
+            '{"time":500,"type":"word","start":6,"end":11,"value":"world"}',
+          ].join('\n'));
+          return FakeProcess(
+            exitCode: speechMarkExitCode,
+            out: speechMarkExitCode == 0 ? 'ok' : '',
+            err: speechMarkExitCode == 0 ? '' : 'speech marks failed',
+          );
+        }
+
         return FakeProcess(
           exitCode: ttsExitCode,
           out: ttsExitCode == 0 ? 'ok' : '',
           err: ttsExitCode == 0 ? '' : 'aws failed',
-        );
-      }
-
-      if (executable == 'whisper_timestamped') {
-        final ttsPath = arguments.first;
-        final outputDir = arguments[arguments.indexOf('--output_dir') + 1];
-        final fileName = '${ttsPath.split('/').last}.words.json';
-        final configFile = File('${root.path}/$outputDir/$fileName');
-        configFile.createSync(recursive: true);
-        configFile.writeAsStringSync(jsonEncode({
-          'segments': [
-            {
-              'id': 1,
-              'words': [
-                {'text': 'hello', 'start': 0.0, 'end': 0.5},
-                {'text': 'world', 'start': 0.5, 'end': 1.0},
-              ]
-            }
-          ]
-        }));
-        return FakeProcess(
-          exitCode: alignExitCode,
-          err: alignExitCode == 0 ? '' : 'align failed',
         );
       }
 
@@ -224,7 +220,7 @@ void main() {
           () async {
         final tempDir = _initSubtitlesTestRoot();
         addTearDown(() => tempDir.deleteSync(recursive: true));
-        _stubTtsAndAlignmentProcesses(tempDir);
+        _stubTtsProcesses();
 
         final voice = Voice(id: 'Matthew', neural: true, standard: true);
         final voices = MockVoices();
@@ -258,7 +254,7 @@ void main() {
         final tempDir = _initSubtitlesTestRoot();
         addTearDown(() => tempDir.deleteSync(recursive: true));
         final seenTexts = <String>[];
-        _stubTtsAndAlignmentProcesses(tempDir, seenTexts: seenTexts);
+        _stubTtsProcesses(seenTexts: seenTexts);
 
         final voice = Voice(id: 'Matthew', neural: true, standard: true);
         final voices = MockVoices();
@@ -289,7 +285,7 @@ void main() {
       test('throws when TTS generation fails', () async {
         final tempDir = _initSubtitlesTestRoot();
         addTearDown(() => tempDir.deleteSync(recursive: true));
-        _stubTtsAndAlignmentProcesses(tempDir, ttsExitCode: 1);
+        _stubTtsProcesses(ttsExitCode: 1);
 
         final voice = Voice(id: 'Matthew', neural: true, standard: true);
         final voices = MockVoices();
@@ -318,10 +314,10 @@ void main() {
         );
       });
 
-      test('throws when alignment fails', () async {
+      test('throws when speech mark generation fails', () async {
         final tempDir = _initSubtitlesTestRoot();
         addTearDown(() => tempDir.deleteSync(recursive: true));
-        _stubTtsAndAlignmentProcesses(tempDir, alignExitCode: 1);
+        _stubTtsProcesses(speechMarkExitCode: 1);
 
         final voice = Voice(id: 'Matthew', neural: true, standard: true);
         final voices = MockVoices();
@@ -353,7 +349,7 @@ void main() {
       test('alternates voice and colour when configured', () async {
         final tempDir = _initSubtitlesTestRoot();
         addTearDown(() => tempDir.deleteSync(recursive: true));
-        _stubTtsAndAlignmentProcesses(tempDir);
+        _stubTtsProcesses();
         when(() => command.alternate)
             .thenReturn(const Alternate(tts: true, color: true));
 
@@ -385,11 +381,6 @@ void main() {
         verify(() => voices.next()).called(2);
         expect(initialColor, SubstationAlphaSubtitleColor('#FFFFFF'));
         expect(finalColor, SubstationAlphaSubtitleColor('#FF0000'));
-        final assOutput = subtitles.assFile.readAsStringSync();
-        expect(
-          assOutput,
-          contains('\\c&${SubstationAlphaSubtitleColor('#DCF5F5')}'),
-        );
       });
     });
 
@@ -423,7 +414,7 @@ void main() {
       test('returns expected stream order after parse', () async {
         final tempDir = _initSubtitlesTestRoot();
         addTearDown(() => tempDir.deleteSync(recursive: true));
-        _stubTtsAndAlignmentProcesses(tempDir);
+        _stubTtsProcesses();
 
         final voice = Voice(id: 'Matthew', neural: true, standard: true);
         final voices = MockVoices();

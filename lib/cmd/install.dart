@@ -16,34 +16,6 @@ Future<bool> checkInstall(String command) async {
   }
 }
 
-Future<void> installWhisper() async {
-  logger.info(
-    "Attempting to install whisper-timestamped via pip.",
-    section: LogSection.install,
-  );
-  try {
-    var result = await Subprocess.exec(
-      'pip',
-      ['install', 'git+https://github.com/linto-ai/whisper-timestamped'],
-      verbose: true,
-      section: LogSection.install,
-    );
-    int exitCode = result.exitCode;
-    if (exitCode != 0) {
-      logger.warning(
-          "Whilst trying to install whisper-timestamped using pip something went wrong. Error code: $exitCode",
-          section: LogSection.install);
-    } else {
-      logger.success("Successfully installed whisper-timestamped.",
-          section: LogSection.install);
-    }
-  } catch (e) {
-    logger.error(
-        "Failed to execute pip install for whisper-timestamped. Exception: $e",
-        section: LogSection.install);
-  }
-}
-
 Future<void> checkDependencies() async {
   logger.info("Checking dependencies.", section: LogSection.setup);
   bool ffmpegInstalled = await checkInstall('ffmpeg');
@@ -73,13 +45,6 @@ Future<void> checkDependencies() async {
 }
 
 Future<void> runInstallCommand() async {
-  bool pythonInstalled = await checkInstall('python');
-  if (!pythonInstalled) {
-    logger.warning(
-        "In order to continue, you need to have python installed. Download it here: $ansiReset https://www.python.org/downloads/",
-        section: LogSection.install);
-  }
-
   bool ffmpegInstalled = await checkInstall('ffmpeg');
   if (!ffmpegInstalled) {
     logger.warning(
@@ -94,15 +59,6 @@ Future<void> runInstallCommand() async {
         section: LogSection.install);
   }
 
-  bool pipInstalled = await checkInstall('pip');
-  if (!pipInstalled) {
-    logger.warning(
-        "You need to have pip installed in order to install the python dependencies (like whisper-timestamped).",
-        section: LogSection.install);
-  } else {
-    await installWhisper();
-  }
-
   bool awsCLIInstalled = await checkInstall('aws');
   if (!awsCLIInstalled) {
     logger.warning(
@@ -111,7 +67,7 @@ Future<void> runInstallCommand() async {
         section: LogSection.install);
   }
 
-  if (pythonInstalled && ffmpegInstalled && ytDlpInstalled && pipInstalled) {
+  if (ffmpegInstalled && ytDlpInstalled && awsCLIInstalled) {
     logger.success("All core dependencies are installed!",
         section: LogSection.install);
   }
