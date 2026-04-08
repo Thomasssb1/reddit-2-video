@@ -5,6 +5,7 @@ on:
     branches: ["master"]
   pull_request:
     branches: ["master"]
+  workflow_call:
 
 jobs:
   build:
@@ -48,6 +49,8 @@ jobs:
   coverage:
     needs: build
     uses: ./.github/workflows/coverage.yml
+    with:
+      update_badge: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     permissions:
       contents: write
       pull-requests: write

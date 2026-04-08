@@ -2,6 +2,11 @@ name: Coverage
 
 on:
   workflow_call:
+    inputs:
+      update_badge:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   coverage:
@@ -63,7 +68,7 @@ jobs:
 
   update-badge:
     needs: coverage
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: inputs.update_badge
     runs-on: ubuntu-latest
 
     steps:
