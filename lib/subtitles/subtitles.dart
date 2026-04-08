@@ -127,7 +127,7 @@ class Subtitles {
       voice: voice,
       outputFormat: "json",
       outputPath:
-          ".temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json",
+          ".temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.txt",
       speechMarkTypes: const ["word"],
     );
 
@@ -160,7 +160,7 @@ class Subtitles {
     return SubtitleConfig.fromFile(
         tts: tts,
         configFile: AppPaths.resolve(
-            '.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json'));
+            '.temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.txt'));
   }
 
   List<String> _pollyArguments({

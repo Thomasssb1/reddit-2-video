@@ -41,6 +41,34 @@ class RedditVideo {
     required RedditVideoType videoType,
   }) : this(posts: [post], videoType: videoType);
 
+  static Future<List<RedditVideo>> parseRepeated({
+    required ParsedCommand command,
+    required Log log,
+    void Function(int videoIndex)? onSelectionAttempt,
+    void Function(int videoIndex, RedditVideo video)? onSelectionSuccess,
+  }) async {
+    final videos = <RedditVideo>[];
+
+    for (var i = 0; i < command.repeat; i++) {
+      onSelectionAttempt?.call(i);
+
+      try {
+        final video = await parse(command, log);
+        videos.add(video);
+        onSelectionSuccess?.call(i, video);
+      } on PostsExhaustedException {
+        if (videos.isEmpty) rethrow;
+        logger.warning(
+          'Only ${videos.length} of ${command.repeat} requested videos could be selected from ${command.subreddit}. Continuing with the available posts.',
+          section: LogSection.reddit,
+        );
+        break;
+      }
+    }
+
+    return videos;
+  }
+
   static Future<List<RedditPost>> confirmPostSelection({
     required List<RedditPost> candidates,
     required ParsedCommand command,

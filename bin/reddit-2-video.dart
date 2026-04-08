@@ -83,26 +83,45 @@ void main(
           return video;
         }
 
-        List<RedditVideo> videos = [];
-        for (int i = 0; i < command.repeat; i++) {
-          final selectionTask = generationProgress.createTask(
-            title: 'Selecting Reddit content',
-            detail: 'Video ${i + 1}/${command.repeat}',
-            section: LogSection.reddit,
-            totalUnits: 1,
-            weight: 2,
-          );
-          logger.info("Selecting Reddit content.", section: LogSection.reddit);
-          RedditVideo video = await RedditVideo.parse(command, log);
-          videos.add(video);
-          generationProgress.completeTask(selectionTask,
-              detail: 'Selected ${video.id}');
-        }
+        final selectionTask = generationProgress.createTask(
+          title: 'Selecting Reddit content',
+          detail: 'Video 1/${command.repeat}',
+          section: LogSection.reddit,
+          totalUnits: command.repeat.toDouble(),
+          weight: command.repeat * 2,
+        );
 
-        List<Future<RedditVideo>> generatedVideos =
-            List.generate(command.repeat, (i) {
-          return generateVideo(videos[i], i);
-        }, growable: false);
+        List<RedditVideo> videos = await RedditVideo.parseRepeated(
+          command: command,
+          log: log,
+          onSelectionAttempt: (index) {
+            generationProgress.updateTask(
+              selectionTask,
+              completedUnits: index.toDouble(),
+              detail: 'Video ${index + 1}/${command.repeat}',
+            );
+            logger.info(
+              "Selecting Reddit content.",
+              section: LogSection.reddit,
+            );
+          },
+          onSelectionSuccess: (index, video) {
+            generationProgress.incrementTask(
+              selectionTask,
+              detail: 'Selected ${video.id}',
+            );
+          },
+        );
+        generationProgress.completeTask(
+          selectionTask,
+          detail: videos.length == command.repeat
+              ? 'Selected ${videos.length} requested videos'
+              : 'Selected ${videos.length} of ${command.repeat} requested videos',
+        );
+
+        List<Future<RedditVideo>> generatedVideos = List.generate(
+            videos.length, (i) => generateVideo(videos[i], i),
+            growable: false);
         List<RedditVideo> finalVideos = await Future.wait(generatedVideos);
 
         for (int i = 1; i <= finalVideos.length; i++) {

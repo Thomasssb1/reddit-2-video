@@ -96,6 +96,155 @@ void main() {
     });
 
     group('parse (feasible branches)', () {
+      test('parseRepeated continues with warning when later selections exhaust',
+          () async {
+        when(() => command.repeat).thenReturn(3);
+        when(() => command.subreddit).thenReturn('test');
+        when(() => command.subredditIsLink).thenReturn(false);
+        when(() => command.sort).thenReturn(RedditPostSortType.top);
+        when(() => command.type).thenReturn(RedditVideoType.post);
+        when(() => command.postConfirmation).thenReturn(false);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+
+        final log = await Log.fromFile();
+        var attempts = 0;
+        var successes = 0;
+        var requestCount = 0;
+
+        final stdoutBuffer = StringBuffer();
+        logger.setOutputSinksForTest(stdoutSink: stdoutBuffer);
+
+        RedditHttpRetry.setGetForTest((url) async {
+          requestCount++;
+          if (requestCount == 1) {
+            return http.Response.bytes(
+              utf8.encode(jsonEncode({
+                'data': {
+                  'children': [
+                    {
+                      'data': {
+                        'subreddit': 'test',
+                        'subreddit_id': 't5_test',
+                        'title': 'Title',
+                        'selftext': 'Body',
+                        'id': 'abc123',
+                        'ups': 1,
+                        'created_utc': 1701083780,
+                        'spoiler': false,
+                        'stickied': false,
+                        'over_18': false,
+                        'media': false,
+                        'num_comments': 3,
+                      }
+                    }
+                  ]
+                }
+              })),
+              200,
+            );
+          }
+
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'data': {
+                'children': [
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Ignored',
+                      'selftext': 'Body',
+                      'id': 'def456',
+                      'ups': 1,
+                      'created_utc': 1701083780,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': true,
+                      'media': false,
+                      'num_comments': 1,
+                    }
+                  }
+                ]
+              }
+            })),
+            200,
+          );
+        });
+
+        final videos = await RedditVideo.parseRepeated(
+          command: command,
+          log: log,
+          onSelectionAttempt: (index) {
+            attempts++;
+          },
+          onSelectionSuccess: (index, video) {
+            successes++;
+          },
+        );
+
+        expect(videos, hasLength(1));
+        expect(videos.first.posts.first.id, 'abc123-t5_test');
+        expect(attempts, 2);
+        expect(successes, 1);
+        expect(
+          stdoutBuffer.toString(),
+          contains(
+            'Only 1 of 3 requested videos could be selected from test. Continuing with the available posts.',
+          ),
+        );
+      });
+
+      test('parseRepeated still throws when no selections can be made',
+          () async {
+        when(() => command.repeat).thenReturn(3);
+        when(() => command.subreddit).thenReturn('test');
+        when(() => command.subredditIsLink).thenReturn(false);
+        when(() => command.sort).thenReturn(RedditPostSortType.top);
+        when(() => command.type).thenReturn(RedditVideoType.post);
+        when(() => command.postConfirmation).thenReturn(false);
+        when(() => command.commentCount).thenReturn(2);
+        when(() => command.nsfw).thenReturn(false);
+
+        final log = await Log.fromFile();
+
+        RedditHttpRetry.setGetForTest((url) async {
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'data': {
+                'children': [
+                  {
+                    'data': {
+                      'subreddit': 'test',
+                      'subreddit_id': 't5_test',
+                      'title': 'Ignored',
+                      'selftext': 'Body',
+                      'id': 'abc123',
+                      'ups': 1,
+                      'created_utc': 1701083780,
+                      'spoiler': false,
+                      'stickied': false,
+                      'over_18': true,
+                      'media': false,
+                      'num_comments': 1,
+                    }
+                  }
+                ]
+              }
+            })),
+            200,
+          );
+        });
+
+        await expectLater(
+          () => RedditVideo.parseRepeated(
+            command: command,
+            log: log,
+          ),
+          throwsA(isA<PostsExhaustedException>()),
+        );
+      });
+
       test('throws conflict when subreddit is link and type is multi',
           () async {
         when(() => command.subredditIsLink).thenReturn(true);
@@ -478,8 +627,8 @@ void main() {
 
         await expectLater(
           () => video.generate(command, backgroundVideo, cutVideo, 1),
-          throwsA(isA<FFmpegCommandException>().having((e) => e.errorDetail,
-              'errorDetail', contains('render failed'))),
+          throwsA(isA<FFmpegCommandException>().having(
+              (e) => e.errorDetail, 'errorDetail', contains('render failed'))),
         );
       });
 
