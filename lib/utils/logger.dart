@@ -61,9 +61,8 @@ class Logger {
     return '$ansiAsciiCharsetReset${styleCodes.join()}$text$ansiReset';
   }
 
-  String formatSection(LogSection section) =>
-      _styleText('[${section.label}]',
-          colorCode: section.color, isError: false);
+  String formatSection(LogSection section) => _styleText('[${section.label}]',
+      colorCode: section.color, isError: false);
 
   String prefixLines(String message, {LogSection? section}) {
     if (section == null || message.isEmpty) {

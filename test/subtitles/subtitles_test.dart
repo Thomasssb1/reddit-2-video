@@ -314,8 +314,8 @@ void main() {
           () => subtitles.parse(command),
           throwsA(isA<TTSFailedException>()
               .having((e) => e.stderr, 'stderr', contains('aws failed'))
-              .having((e) => e.errorDetail, 'errorDetail',
-                  contains('aws failed'))),
+              .having(
+                  (e) => e.errorDetail, 'errorDetail', contains('aws failed'))),
         );
       });
 

@@ -193,8 +193,7 @@ void main() {
         ),
         throwsA(isA<VideoDownloadFailedException>()
             .having((e) => e.stderr, 'stderr', equals('boom'))
-            .having((e) => e.errorDetail, 'errorDetail',
-                contains('boom'))),
+            .having((e) => e.errorDetail, 'errorDetail', contains('boom'))),
       );
     });
 
@@ -333,9 +332,7 @@ void main() {
           command,
         ),
         throwsA(isA<BackgroundVideoCuttingException>().having(
-            (e) => e.errorDetail,
-            'errorDetail',
-            contains('ffmpeg exploded'))),
+            (e) => e.errorDetail, 'errorDetail', contains('ffmpeg exploded'))),
       );
     });
   });

@@ -6,8 +6,7 @@ import 'package:test/test.dart';
 void main() {
   group('simple exceptions', () {
     test('ArgumentConflictException exposes conflicting arguments', () {
-      final exception =
-          ArgumentConflictException('conflict', '--a', '--b');
+      final exception = ArgumentConflictException('conflict', '--a', '--b');
 
       expect(exception.argument1, '--a');
       expect(exception.argument2, '--b');

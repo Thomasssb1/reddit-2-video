@@ -37,8 +37,8 @@ void main() {
         () => splitVideo(mockVideo.path, 'mp4', 0),
         throwsA(isA<FFmpegCommandException>()
             .having((e) => e.command, 'command', isNotEmpty)
-            .having((e) => e.errorDetail, 'errorDetail',
-                contains('split failed'))),
+            .having(
+                (e) => e.errorDetail, 'errorDetail', contains('split failed'))),
       );
     });
 

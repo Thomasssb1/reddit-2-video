@@ -120,7 +120,8 @@ void main() {
       tracker.stop();
     });
 
-    test('setTotalUnits updates progress calculations for an existing task', () {
+    test('setTotalUnits updates progress calculations for an existing task',
+        () {
       final renderer = FakeTerminalProgressRenderer();
       final tracker = GenerationProgressTracker(renderer: renderer);
 
@@ -186,7 +187,8 @@ void main() {
       expect(enabledRenderer.renderedLinesForTest, 2);
     });
 
-    test('redrawFooterPreservingCursor keeps footer rendered when snapshot exists',
+    test(
+        'redrawFooterPreservingCursor keeps footer rendered when snapshot exists',
         () {
       final renderer = TerminalProgressRenderer(enabled: true);
       TerminalProgressRenderer.setCursorPositionProviderForTest(
