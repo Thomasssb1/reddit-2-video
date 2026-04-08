@@ -1,6 +1,8 @@
 site_name: reddit-2-video
 site_description: Documentation for the reddit-2-video CLI
 repo_url: https://github.com/Thomasssb1/reddit-2-video
+exclude_docs: |
+  /tools/
 theme:
   name: material
   logo: assets/images/icon.svg

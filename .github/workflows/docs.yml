@@ -7,7 +7,6 @@ on:
       - "docs/**"
       - "lib/command/parsed_command.dart"
       - "lib/docs/**"
-      - "tool/generate_cli_docs.dart"
       - "mkdocs.yml"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
@@ -37,7 +36,7 @@ jobs:
         run: dart pub get
 
       - name: Generate CLI docs
-        run: dart run tool/generate_cli_docs.dart
+        run: dart run docs/tools/generate_cli_docs.dart
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -45,7 +44,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install MkDocs
-        run: pip install mkdocs mkdocs-material
+        run: pip install "mkdocs>=1.5" mkdocs-material
 
       - name: Build site
         run: mkdocs build

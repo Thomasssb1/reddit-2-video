@@ -53,6 +53,9 @@ reddit-2-video --subreddit AskReddit [options]
 #### `--alternate`
 
 - Type: `multi-option`
+- Value: `<alternate-tts(on/off),alternate-colour(on/off)>`
+- Default: `[off, off]`
+- Description: tts - alternate TTS voice for each comment/post (defaults to off) colour - alternate text colour for each comment/post (defaults to off)
 
 #### `--title-color`
 
@@ -63,19 +66,24 @@ reddit-2-video --subreddit AskReddit [options]
 #### `--post-confirmation`
 
 - Type: `flag`
+- Default: `false`
 
 #### `--nsfw`
 
 - Type: `flag`
+- Default: `true`
 
 #### `--spoiler`
 
 - Type: `flag`
+- Default: `false`
 - Description: Add a spoiler to the video which hides the image/text before showing for 3s.
 
 #### `--ntts`
 
 - Type: `flag`
+- Default: `true`
+- Description: Determines whether to use neural tts or normal tts. (This will only affect usage if aws polly is active).
 
 #### `--voice`
 
@@ -104,6 +112,7 @@ reddit-2-video --subreddit AskReddit [options]
 #### `--horror`
 
 - Type: `flag`
+- Default: `false`
 - Description: Lowers the pitch from TTS for creepy stories.
 
 #### `--output`
@@ -129,6 +138,7 @@ reddit-2-video --subreddit AskReddit [options]
 #### `--censor`
 
 - Type: `flag`
+- Default: `false`
 - Description: Censors any innapropriate words. This will only work when using AWS and you need to upload the defaults/lexicons/lexeme.xml file as a lexicon in AWS console.
 
 #### `--end-card`
@@ -141,15 +151,18 @@ reddit-2-video --subreddit AskReddit [options]
 
 - Type: `flag`
 - Short flag: `-v`
+- Default: `false`
 
 #### `--override`
 
 - Type: `flag`
 - Short flag: `-y`
+- Default: `false`
 
 #### `--youtube-short`
 
 - Type: `flag`
+- Default: `false`
 - Description: Whether to split the final generated video into ~1 minute shorts.
 
 #### `--help`
@@ -173,18 +186,6 @@ reddit-2-video --subreddit AskReddit [options]
 - Type: `option`
 - Description: Maximum video length in seconds. Generation stops at a logical boundary once this limit is reached. Ignored for post type.
 
-## `install` Command
-
-Installs or bootstraps runtime dependencies. In practice this is a starting point for setup rather than a complete environment installer.
-
-```bash
-reddit-2-video install
-```
-
-### Options
-
-This command has no command-specific options.
-
 ## `flush` Command
 
 Manages visited-post state so you can remove a post from the visited log and allow it to be reused.
@@ -200,3 +201,15 @@ reddit-2-video flush --post <reddit-post-id>
 - Type: `option`
 - Short flag: `-p`
 - Description: Remove a specific reddit post from the visited log.
+
+## `install` Command
+
+Installs or bootstraps runtime dependencies. In practice this is a starting point for setup rather than a complete environment installer.
+
+```bash
+reddit-2-video install
+```
+
+### Options
+
+This command has no command-specific options.
