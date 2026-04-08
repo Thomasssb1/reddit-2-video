@@ -191,7 +191,10 @@ void main() {
         () => BackgroundVideo.downloadVideo(
           testVideoUrl,
         ),
-        throwsA(isA<VideoDownloadFailedException>()),
+        throwsA(isA<VideoDownloadFailedException>()
+            .having((e) => e.stderr, 'stderr', equals('boom'))
+            .having((e) => e.errorDetail, 'errorDetail',
+                contains('stderr:\nboom'))),
       );
     });
 
@@ -320,7 +323,7 @@ void main() {
           includeParentEnvironment = true,
           runInShell = false,
           mode = ProcessStartMode.normal}) async {
-        return FakeProcess(exitCode: 1);
+        return FakeProcess(exitCode: 1, err: 'ffmpeg exploded');
       });
 
       await expectLater(
@@ -329,7 +332,10 @@ void main() {
           redditVideo,
           command,
         ),
-        throwsA(isA<BackgroundVideoCuttingException>()),
+        throwsA(isA<BackgroundVideoCuttingException>().having(
+            (e) => e.errorDetail,
+            'errorDetail',
+            contains('stderr:\nffmpeg exploded'))),
       );
     });
   });

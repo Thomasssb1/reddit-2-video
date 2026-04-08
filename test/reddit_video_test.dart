@@ -473,12 +473,13 @@ void main() {
             includeParentEnvironment = true,
             runInShell = false,
             mode = ProcessStartMode.normal}) async {
-          return FakeProcess(exitCode: 1);
+          return FakeProcess(exitCode: 1, err: 'render failed');
         });
 
         await expectLater(
           () => video.generate(command, backgroundVideo, cutVideo, 1),
-          throwsA(isA<FFmpegCommandException>()),
+          throwsA(isA<FFmpegCommandException>().having((e) => e.errorDetail,
+              'errorDetail', contains('stderr:\nrender failed'))),
         );
       });
 

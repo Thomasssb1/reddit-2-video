@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:reddit_2_video/exceptions/subprocess_exception.dart';
 
 const String ansiReset = '\x1b[0m';
 const String ansiAsciiCharsetReset = '\x1b(B';
@@ -68,13 +69,16 @@ class Logger {
   }
 
   void _printMessage(String message,
-      {LogSection? section, String? messageColor, bool underline = false}) {
+      {LogSection? section,
+      String? messageColor,
+      bool underline = false,
+      bool isError = false}) {
     final formattedMessage = underline
         ? _colorText(message, ansiUnderline)
         : messageColor != null
             ? _colorText(message, messageColor)
             : message;
-    emitRaw('$formattedMessage\n', section: section);
+    emitRaw('$formattedMessage\n', section: section, isError: isError);
   }
 
   void emitRaw(String message, {LogSection? section, bool isError = false}) {
@@ -92,8 +96,23 @@ class Logger {
     _printMessage(message, section: section);
   }
 
-  void error(String message, {LogSection? section}) {
-    _printMessage(message, section: section, messageColor: ansiRed);
+  void error(Object error, {LogSection? section}) {
+    if (error is SubprocessException) {
+      _printMessage(error.message,
+          section: section,
+          messageColor: ansiRed,
+          isError: true,
+          underline: true);
+      final detail = error.errorDetail;
+      if (detail != null && detail != error.message) {
+        _printMessage(detail,
+            section: section, messageColor: ansiRed, isError: true);
+      }
+      return;
+    }
+
+    _printMessage(error.toString(),
+        section: section, messageColor: ansiRed, isError: true);
   }
 
   void warning(String message, {LogSection? section}) {

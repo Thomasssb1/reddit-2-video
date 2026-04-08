@@ -317,8 +317,12 @@ class RedditVideo {
     if (code != 0) {
       generationProgress.completeTask(progressTask, detail: 'Render failed');
       throw FFmpegCommandException(
-          message: "Something went wrong when generating the video. Exiting.",
-          command: input);
+        message: "Something went wrong when generating the video. Exiting.",
+        command: input,
+        exitCode: result.exitCode,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      );
     }
     generationProgress.completeTask(progressTask, detail: outputFile.path);
 

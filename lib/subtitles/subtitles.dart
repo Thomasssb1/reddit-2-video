@@ -87,23 +87,30 @@ class Subtitles {
 
   Future<File> _generateTTS(
       String text, Voice voice, ParsedCommand command) async {
+    final arguments = _pollyArguments(
+      text: text,
+      voice: voice,
+      outputFormat: "mp3",
+      outputPath: ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
+    );
     final result = await Subprocess.exec(
       "aws",
-      _pollyArguments(
-        text: text,
-        voice: voice,
-        outputFormat: "mp3",
-        outputPath: ".temp/${video.id}/tts/tts-${_subtitles.length}.mp3",
-      ),
+      arguments,
       verbose: command.verbose,
       section: LogSection.subtitles,
     );
 
     if (result.exitCode != 0) {
       throw TTSFailedException(
-          message: "TTS failed to generate. Exit code: ${result.exitCode}.",
-          id: video.id,
-          text: text);
+        message: "TTS failed to generate. Exit code: ${result.exitCode}.",
+        id: video.id,
+        text: text,
+        executable: 'aws',
+        arguments: arguments,
+        exitCode: result.exitCode,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      );
     }
     if (_progressTask != null) {
       generationProgress.incrementTask(_progressTask!,
@@ -114,26 +121,33 @@ class Subtitles {
 
   Future<SubtitleConfig> _alignSubtitles(
       String text, Voice voice, ParsedCommand command, File tts) async {
+    final arguments = _pollyArguments(
+      text: text,
+      voice: voice,
+      outputFormat: "json",
+      outputPath:
+          ".temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json",
+      speechMarkTypes: const ["word"],
+    );
     final result = await Subprocess.exec(
       "aws",
-      _pollyArguments(
-        text: text,
-        voice: voice,
-        outputFormat: "json",
-        outputPath:
-            ".temp/${video.id}/config/tts-${_subtitles.length}.mp3.words.json",
-        speechMarkTypes: const ["word"],
-      ),
+      arguments,
       verbose: command.verbose,
       section: LogSection.subtitles,
     );
 
     if (result.exitCode != 0) {
       throw TTSFailedException(
-          message:
-              "Speech marks failed to generate. Exit code: ${result.exitCode}.",
-          id: video.id,
-          text: text);
+        message:
+            "Speech marks failed to generate. Exit code: ${result.exitCode}.",
+        id: video.id,
+        text: text,
+        executable: 'aws',
+        arguments: arguments,
+        exitCode: result.exitCode,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      );
     }
 
     if (_progressTask != null) {

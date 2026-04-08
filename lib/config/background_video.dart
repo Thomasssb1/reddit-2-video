@@ -126,28 +126,47 @@ class BackgroundVideo {
           },
         );
         if (result.exitCode != 0) {
-          final stderrOutput = result.stderr.trim();
-          final details = stderrOutput.isNotEmpty ? ' $stderrOutput' : '';
           throw VideoDownloadFailedException(
-              message:
-                  "yt-dlp failed with exit code ${result.exitCode}.$details",
-              url: url);
+            message: "yt-dlp failed with exit code ${result.exitCode}.",
+            url: url,
+            executable: 'yt-dlp',
+            arguments: args,
+            exitCode: result.exitCode,
+            stdout: result.stdout,
+            stderr: result.stderr,
+          );
         }
         generationProgress.completeTask(progressTask,
             detail: 'Saved to ${path.path}');
       } on ProcessException catch (e) {
         generationProgress.completeTask(progressTask, detail: e.message);
-        throw VideoDownloadFailedException(message: e.message, url: url);
+        throw VideoDownloadFailedException(
+          message: e.message,
+          url: url,
+          executable: 'yt-dlp',
+          arguments: args,
+          detail: e.toString(),
+        );
+      } on VideoDownloadFailedException {
+        rethrow;
       } catch (e) {
         generationProgress.completeTask(progressTask, detail: e.toString());
         throw VideoDownloadFailedException(
-            message: "Error downloading video: $e", url: url);
+          message: "Error downloading video: $e",
+          url: url,
+          executable: 'yt-dlp',
+          arguments: args,
+          detail: e.toString(),
+        );
       }
 
       if (!path.existsSync()) {
         throw VideoDownloadFailedException(
-            message: "yt-dlp finished but no output file was created.",
-            url: url);
+          message: "yt-dlp finished but no output file was created.",
+          url: url,
+          executable: 'yt-dlp',
+          arguments: args,
+        );
       }
     }
     return BackgroundVideo.fromFile(source: path, url: url);
@@ -229,10 +248,16 @@ class BackgroundVideo {
       generationProgress.completeTask(progressTask,
           detail: 'Background cut failed');
       throw BackgroundVideoCuttingException(
-          message:
-              "Something went wrong when trying to cut the background video.",
-          url: url?.toString() ?? "None",
-          duration: duration);
+        message:
+            "Something went wrong when trying to cut the background video.",
+        url: url?.toString() ?? "None",
+        duration: duration,
+        executable: 'ffmpeg',
+        arguments: ffmpegCommand,
+        exitCode: result.exitCode,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      );
     } else {
       generationProgress.completeTask(progressTask,
           detail: 'Prepared .temp/${video.id}/video.mp4');

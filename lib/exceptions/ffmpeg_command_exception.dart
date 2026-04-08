@@ -1,11 +1,17 @@
-class FFmpegCommandException implements Exception {
-  final String message;
+import 'package:reddit_2_video/exceptions/subprocess_exception.dart';
+
+class FFmpegCommandException extends SubprocessException {
   final List<String> command;
 
-  FFmpegCommandException({required this.message, required this.command});
-
-  @override
-  String toString() {
-    return message;
-  }
+  FFmpegCommandException({
+    required super.message,
+    required this.command,
+    super.exitCode,
+    super.stdout,
+    super.stderr,
+    super.detail,
+  }) : super(
+          executable: 'ffmpeg',
+          arguments: command,
+        );
 }

@@ -1,12 +1,16 @@
-class VideoDownloadFailedException implements Exception {
-  final String message;
+import 'package:reddit_2_video/exceptions/subprocess_exception.dart';
+
+class VideoDownloadFailedException extends SubprocessException {
   final Uri url;
 
-  const VideoDownloadFailedException(
-      {required this.message, required this.url});
-
-  @override
-  String toString() {
-    return message;
-  }
+  VideoDownloadFailedException({
+    required super.message,
+    required this.url,
+    required super.executable,
+    required super.arguments,
+    super.exitCode,
+    super.stdout,
+    super.stderr,
+    super.detail,
+  });
 }

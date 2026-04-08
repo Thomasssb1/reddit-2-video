@@ -1,13 +1,18 @@
-class TTSFailedException implements Exception {
-  final String message;
+import 'package:reddit_2_video/exceptions/subprocess_exception.dart';
+
+class TTSFailedException extends SubprocessException {
   final String id;
   final String text;
 
-  const TTSFailedException(
-      {required this.message, required this.id, required this.text});
-
-  @override
-  String toString() {
-    return message;
-  }
+  TTSFailedException({
+    required super.message,
+    required this.id,
+    required this.text,
+    required super.executable,
+    required super.arguments,
+    super.exitCode,
+    super.stdout,
+    super.stderr,
+    super.detail,
+  });
 }

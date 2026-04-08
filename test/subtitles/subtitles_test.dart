@@ -72,11 +72,13 @@ void main() {
       if (executable == 'aws') {
         final outPath = arguments.last;
         seenTexts?.add(arguments[arguments.indexOf('--text') + 1]);
-        File(outPath).createSync(recursive: true);
+        final outputFile = AppPaths.resolve(outPath);
+        outputFile.createSync(recursive: true);
 
-        final outputFormat = arguments[arguments.indexOf('--output-format') + 1];
+        final outputFormat =
+            arguments[arguments.indexOf('--output-format') + 1];
         if (outputFormat == 'json') {
-          File(outPath).writeAsStringSync([
+          outputFile.writeAsStringSync([
             '{"time":0,"type":"word","start":0,"end":5,"value":"hello"}',
             '{"time":500,"type":"word","start":6,"end":11,"value":"world"}',
           ].join('\n'));
@@ -310,7 +312,10 @@ void main() {
 
         await expectLater(
           () => subtitles.parse(command),
-          throwsA(isA<TTSFailedException>()),
+          throwsA(isA<TTSFailedException>()
+              .having((e) => e.stderr, 'stderr', contains('aws failed'))
+              .having((e) => e.errorDetail, 'errorDetail',
+                  contains('stderr:\naws failed'))),
         );
       });
 
@@ -342,7 +347,11 @@ void main() {
 
         await expectLater(
           () => subtitles.parse(command),
-          throwsA(isA<TTSFailedException>()),
+          throwsA(isA<TTSFailedException>()
+              .having(
+                  (e) => e.stderr, 'stderr', contains('speech marks failed'))
+              .having((e) => e.errorDetail, 'errorDetail',
+                  contains('stderr:\nspeech marks failed'))),
         );
       });
 

@@ -42,9 +42,13 @@ Future<List<File>> splitVideo(
   if (code != 0) {
     generationProgress.completeTask(progressTask, detail: 'Split failed');
     throw FFmpegCommandException(
-        message:
-            "Something went wrong when splitting the video into segments for youtube shorts. Error code $code",
-        command: commandArgs);
+      message:
+          "Something went wrong when splitting the video into segments for youtube shorts. Error code $code",
+      command: commandArgs,
+      exitCode: result.exitCode,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    );
   }
 
   // Find the generated segments

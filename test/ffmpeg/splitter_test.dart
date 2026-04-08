@@ -30,13 +30,15 @@ void main() {
           includeParentEnvironment = true,
           runInShell = false,
           mode = ProcessStartMode.normal}) async {
-        return FakeProcess(exitCode: 1);
+        return FakeProcess(exitCode: 1, err: 'split failed');
       });
 
       await expectLater(
         () => splitVideo(mockVideo.path, 'mp4', 0),
         throwsA(isA<FFmpegCommandException>()
-            .having((e) => e.command, 'command', isNotEmpty)),
+            .having((e) => e.command, 'command', isNotEmpty)
+            .having((e) => e.errorDetail, 'errorDetail',
+                contains('stderr:\nsplit failed'))),
       );
     });
 

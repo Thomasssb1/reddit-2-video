@@ -1,13 +1,18 @@
-class BackgroundVideoCuttingException implements Exception {
-  final String message;
+import 'package:reddit_2_video/exceptions/subprocess_exception.dart';
+
+class BackgroundVideoCuttingException extends SubprocessException {
   final String url;
   final Duration duration;
 
-  BackgroundVideoCuttingException(
-      {required this.message, required this.url, required this.duration});
-
-  @override
-  String toString() {
-    return message;
-  }
+  BackgroundVideoCuttingException({
+    required super.message,
+    required this.url,
+    required this.duration,
+    required super.executable,
+    required super.arguments,
+    super.exitCode,
+    super.stdout,
+    super.stderr,
+    super.detail,
+  });
 }

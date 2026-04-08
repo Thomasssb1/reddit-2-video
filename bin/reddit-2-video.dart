@@ -133,7 +133,7 @@ void main(
         logger.error("No command found.", section: LogSection.setup);
     }
   } on Exception catch (e) {
-    logger.error(e.toString(), section: LogSection.setup);
+    logger.error(e, section: LogSection.setup);
     exitCode = 1;
   } finally {
     generationProgress.stop();

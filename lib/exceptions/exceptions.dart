@@ -12,6 +12,7 @@ export 'output_file_exists_exception.dart';
 export 'post_already_generated_exception.dart';
 export 'posts_exhausted_exception.dart';
 export 'reddit_api_exception.dart';
+export 'subprocess_exception.dart';
 export 'tts_failed_exception.dart';
 export 'video_download_failed_exception.dart';
 export 'max_length_exceeded_exception.dart';
