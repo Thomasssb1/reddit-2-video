@@ -265,7 +265,8 @@ void main() {
       });
 
       test('endCard returns resolved item when file exists', () async {
-        final endCardFile = File('${tempDir.path}/end-card.png')..createSync();
+        final endCardFile = File(p.join(tempDir.path, 'end-card.png'))
+          ..createSync();
         final cmd = _build([
           '--end-card',
           'end-card.png',
