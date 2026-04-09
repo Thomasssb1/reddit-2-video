@@ -32,9 +32,26 @@ class Logger {
   void Function(String message, {required bool isError})? _overlayWriter;
   StringSink _stdoutSink = stdout;
   StringSink _stderrSink = stderr;
+  bool? _forceAnsiEscapes;
 
   bool _supportsAnsiEscapes({required bool isError}) {
-    return isError ? stderr.supportsAnsiEscapes : stdout.supportsAnsiEscapes;
+    if (_forceAnsiEscapes != null) {
+      return _forceAnsiEscapes!;
+    }
+
+    if (_overlayWriter != null) {
+      return false;
+    }
+
+    if (isError) {
+      return identical(_stderrSink, stderr) &&
+          stderr.hasTerminal &&
+          stderr.supportsAnsiEscapes;
+    }
+
+    return identical(_stdoutSink, stdout) &&
+        stdout.hasTerminal &&
+        stdout.supportsAnsiEscapes;
   }
 
   String _styleText(
@@ -150,6 +167,7 @@ class Logger {
     _overlayWriter = null;
     _stdoutSink = stdout;
     _stderrSink = stderr;
+    _forceAnsiEscapes = null;
   }
 
   void attachOverlay(
@@ -167,6 +185,10 @@ class Logger {
   }) {
     _stdoutSink = stdoutSink ?? stdout;
     _stderrSink = stderrSink ?? stderr;
+  }
+
+  void setAnsiEscapesForTest(bool enabled) {
+    _forceAnsiEscapes = enabled;
   }
 }
 

@@ -3,6 +3,10 @@ import 'package:reddit_2_video/utils/logger.dart';
 import 'package:test/test.dart';
 
 void main() {
+  setUp(() {
+    logger.setAnsiEscapesForTest(false);
+  });
+
   tearDown(() {
     logger.resetForTest();
   });
