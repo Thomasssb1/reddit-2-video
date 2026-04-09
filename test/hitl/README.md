@@ -1,5 +1,7 @@
 # HITL Testing with Overseer
 
+Last reviewed: 2026-04-09
+
 This directory contains human-in-the-loop (HITL) end-to-end test scenarios using [overseer](https://pub.dev/packages/overseer).
 
 ## Structure
@@ -17,10 +19,6 @@ This directory contains human-in-the-loop (HITL) end-to-end test scenarios using
 
 - `matrices/core.matrix.yaml`  
   Core post/comments generation flow.
-- `matrices/horror.matrix.yaml`  
-  Horror-mode coverage.
-- `matrices/youtube_short.matrix.yaml`  
-  YouTube Shorts split coverage.
 
 ## Run HITL
 
@@ -33,11 +31,7 @@ dart run test/hitl/reddit_video_hitl.dart
 Run a specific matrix:
 
 ```bash
-dart run test/hitl/reddit_video_hitl.dart test/hitl/matrices/horror.matrix.yaml
-```
-
-```bash
-dart run test/hitl/reddit_video_hitl.dart test/hitl/matrices/youtube_short.matrix.yaml
+dart run test/hitl/reddit_video_hitl.dart test/hitl/matrices/core.matrix.yaml
 ```
 
 ## Interactive controls (Overseer)
@@ -53,7 +47,7 @@ dart run test/hitl/reddit_video_hitl.dart test/hitl/matrices/youtube_short.matri
 - HITL runs are manual and are not intended to be fully executed in CI.
 - Reports are written under `test/hitl/reports/`.
 - If interrupted, rerun the same matrix to resume from `.overseer.lock`.
-- Keep matrices focused by feature area (core, horror, shorts, etc.).
+- Keep matrices focused by feature area when new scenarios are added.
 
 ## Troubleshooting
 

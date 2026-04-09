@@ -2,27 +2,69 @@ name: "reddit_video_core"
 mode: list
 parameters:
   label:
-    - "post_flow_single_story"
-    - "comments_flow_with_top_comments"
+    - "post_flow"
+    - "comments_flow"
+    - "multi_flow"
   subreddit:
-    - "https://www.reddit.com/r/TrueOffMyChest/comments/1850nn6/my_husband_is_cheating_on_me_with_our_best_friend/"
-    - "https://www.reddit.com/r/AskReddit/comments/1jpnzyl/what_screams_i_have_no_personality/"
-  type:
-    - "post"
-    - "comments"
-  count:
-    - "1"
-    - "5"
+    - "TrueOffMyChest"
+    - "AskReddit"
+    - "DadJokes"
   sort:
     - "top"
     - "rising"
+    - "new"
+  comment_sort: # Only applicable for comments_flow
+    - "top"
+    - "new"
+    - "best"
+  count: # Not applicable for post_flow or horror_post_flow
+    - "1"
+    - "3"
+    - "5"
+  type:
+    - "post"
+    - "comments"
+    - "multi"
+  title-color:
+    - "FFFFFF"
+    - "0000FF"
+    - "00FF00"
+  nsfw:
+    - "false"
+    - "true"
+    - "true"
+  ntts:
+    - "true"
+    - "true"
+    - "false"
   voice:
+    - "Amy"
+    - "Stephen"
     - "Russell"
-    - "Russell"
+  file-type:
+    - "mp4"
+    - "mov"
+    - "avi"
+  framerate:
+    - "30"
+    - "60"
+    - "144"
+  censor:
+    - "true"
+    - "false"
+    - "true"
   output:
-    - ".temp/hitl/post_flow_single_story.mp4"
-    - ".temp/hitl/comments_flow_with_top_comments.mp4"
+    - ".temp/hitl/post_flow.mp4"
+    - ".temp/hitl/comments_flow.mov"
+    - ".temp/hitl/multi_flow.avi"
 checklist:
+  - "Video renders successfully without errors."
+  - "Correct subreddit is used based on the 'subreddit' parameter."
+  - "Correct title color is applied based on the 'title-color' parameter."
+  - "Correct voice is used for TTS based on the 'voice' and 'ntts' parameters."
+  - "Correct number of posts/comments are included based on the 'count' parameter."
+  - "Content is censored appropriately when 'censor' is set to 'true'."
   - "Title/body/comment subtitles stay aligned with spoken audio."
   - "No overlapping TTS tracks, clipping, or unexpected silence."
   - "Final render uses a 9:16 crop and expected styling."
+  - "Correct file type and framerate are applied based on the 'file-type' and 'framerate' parameters."

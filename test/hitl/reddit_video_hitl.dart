@@ -11,16 +11,18 @@ Future<void> main(List<String> args) async {
   AppPaths.initForTest(repoRoot);
   final parsedArgs = parseHitlArgs(args);
   final matrixPath = resolveFromRoot(repoRoot, parsedArgs.matrixPath);
-  final cleanupState = _CleanupState();
+  final cleanupState = HitlCleanupState();
 
-  Future<void> cleanup() => _cleanupTempDirectory(
+  Future<void> cleanup() => cleanupHitlTempDirectory(
         repoRoot,
         enabled: parsedArgs.cleanupOnExit,
         showOutput: parsedArgs.showOutput,
         cleanupState: cleanupState,
       );
 
-  _installCleanupOnTermination(cleanup);
+  final terminationHandler = TerminationCleanupHandler.install(
+    cleanup: cleanup,
+  );
 
   try {
     final runner = OverseerRunner(
@@ -29,12 +31,7 @@ Future<void> main(List<String> args) async {
       autoOpen: true,
       generator: (testCase) async {
         final label = _requiredParam(testCase, 'label');
-        final subreddit = _requiredParam(testCase, 'subreddit');
-        final type = _requiredParam(testCase, 'type');
-        final count = _requiredParam(testCase, 'count');
         final output = _requiredParam(testCase, 'output');
-        final sort = _requiredParam(testCase, 'sort');
-        final voice = _requiredParam(testCase, 'voice');
         final resolvedOutputPath = resolveFromRoot(repoRoot, output);
 
         await Directory(path.join(repoRoot.path, 'test', 'hitl'))
@@ -68,33 +65,10 @@ Future<void> main(List<String> args) async {
           }
         }
 
-        final horror = _optionalBoolParam(testCase, 'horror');
-        final youtubeShort = _optionalBoolParam(testCase, 'youtube_short');
-
-        final runArgs = [
-          'run',
-          'bin/reddit-2-video.dart',
-          '--subreddit',
-          subreddit,
-          '--type',
-          type,
-          '--count',
-          count,
-          '--sort',
-          sort,
-          '--voice',
-          voice,
-          '--output',
-          resolvedOutputPath,
-          '--file-type',
-          'mp4',
-          '--repeat',
-          '1',
-          '--override',
-          '--verbose',
-          if (horror) '--horror',
-          if (youtubeShort) '--youtube-short',
-        ];
+        final runArgs = buildRunArgs(
+          testCase.params,
+          outputPath: resolvedOutputPath,
+        );
 
         final run = await _runCommandWithStreaming(
           executable: 'dart',
@@ -127,16 +101,18 @@ Future<void> main(List<String> args) async {
           path: resolvedOutputPath,
           metadata: {
             'label': label,
-            'type': type,
-            'subreddit': subreddit,
+            'type': _requiredParam(testCase, 'type'),
+            'subreddit': _requiredParam(testCase, 'subreddit'),
             'command': 'dart ${runArgs.join(' ')}',
           },
         );
       },
     );
 
-    await runner.run();
+    final reportPath = await runner.run();
+    print('Generated report successfully: $reportPath');
   } finally {
+    await terminationHandler.dispose();
     await cleanup();
   }
 }
@@ -176,6 +152,48 @@ Future<void> main(List<String> args) async {
     showOutput: showOutput,
     cleanupOnExit: cleanupOnExit,
   );
+}
+
+List<String> buildRunArgs(
+  Map<String, dynamic> params, {
+  required String outputPath,
+}) {
+  final type = _requiredMapParam(params, 'type');
+  final runArgs = <String>[
+    'run',
+    'bin/reddit-2-video.dart',
+    '--subreddit',
+    _requiredMapParam(params, 'subreddit'),
+    '--type',
+    type,
+    '--count',
+    _requiredMapParam(params, 'count'),
+    '--sort',
+    _requiredMapParam(params, 'sort'),
+    if (type == 'comments') ...[
+      '--comment-sort',
+      _requiredMapParam(params, 'comment_sort'),
+    ],
+    '--title-color',
+    _requiredMapParam(params, 'title-color'),
+    ..._boolFlagArgs(params, key: 'nsfw', flagName: 'nsfw'),
+    ..._boolFlagArgs(params, key: 'ntts', flagName: 'ntts'),
+    '--voice',
+    _requiredMapParam(params, 'voice'),
+    '--output',
+    outputPath,
+    '--file-type',
+    _requiredMapParam(params, 'file-type'),
+    '--framerate',
+    _requiredMapParam(params, 'framerate'),
+    ..._boolFlagArgs(params, key: 'censor', flagName: 'censor'),
+    '--repeat',
+    '1',
+    '--override',
+    '--verbose',
+  ];
+
+  return runArgs;
 }
 
 Directory detectRepositoryRoot([Directory? startDirectory]) {
@@ -261,30 +279,55 @@ Future<ProcessResult> _runCommandWithStreaming({
   );
 }
 
-void _installCleanupOnTermination(Future<void> Function() cleanup) {
-  ProcessSignal.sigint.watch().listen((_) async {
-    await cleanup();
-    exit(130);
-  });
+class TerminationCleanupHandler {
+  TerminationCleanupHandler._(this._subscriptions);
 
-  ProcessSignal.sigterm.watch().listen((_) async {
-    await cleanup();
-    exit(143);
-  });
+  final List<StreamSubscription<ProcessSignal>> _subscriptions;
+
+  static TerminationCleanupHandler install({
+    required Future<void> Function() cleanup,
+    Stream<ProcessSignal>? sigintStream,
+    Stream<ProcessSignal>? sigtermStream,
+    void Function(int exitCode)? exitProcess,
+  }) {
+    final resolvedExitProcess = exitProcess ?? exit;
+    final subscriptions = <StreamSubscription<ProcessSignal>>[];
+
+    subscriptions.add(
+      (sigintStream ?? ProcessSignal.sigint.watch()).listen((_) async {
+        await cleanup();
+        resolvedExitProcess(130);
+      }),
+    );
+
+    subscriptions.add(
+      (sigtermStream ?? ProcessSignal.sigterm.watch()).listen((_) async {
+        await cleanup();
+        resolvedExitProcess(143);
+      }),
+    );
+
+    return TerminationCleanupHandler._(subscriptions);
+  }
+
+  Future<void> dispose() async {
+    await Future.wait(
+        _subscriptions.map((subscription) => subscription.cancel()));
+  }
 }
 
-Future<void> _cleanupTempDirectory(
+Future<void> cleanupHitlTempDirectory(
   Directory repoRoot, {
   required bool enabled,
   required bool showOutput,
-  required _CleanupState cleanupState,
+  required HitlCleanupState cleanupState,
 }) async {
   if (!enabled || cleanupState.hasRun) {
     return;
   }
 
   cleanupState.hasRun = true;
-  final tempDirectory = Directory(path.join(repoRoot.path, '.temp'));
+  final tempDirectory = Directory(path.join(repoRoot.path, '.temp', 'hitl'));
 
   if (!tempDirectory.existsSync()) {
     return;
@@ -311,16 +354,37 @@ String _requiredParam(TestCase testCase, String key) {
   return value.toString();
 }
 
-bool _optionalBoolParam(TestCase testCase, String key) {
-  final value = testCase.params[key];
+String _requiredMapParam(Map<String, dynamic> params, String key) {
+  final value = params[key];
+  if (value == null || value.toString().trim().isEmpty) {
+    throw ArgumentError('Missing required matrix parameter: $key');
+  }
+  return value.toString();
+}
+
+bool? _optionalBoolMapParam(Map<String, dynamic> params, String key) {
+  final value = params[key];
   if (value == null) {
-    return false;
+    return null;
   }
 
   final normalized = value.toString().trim().toLowerCase();
   return normalized == 'true' || normalized == '1' || normalized == 'yes';
 }
 
-class _CleanupState {
+List<String> _boolFlagArgs(
+  Map<String, dynamic> params, {
+  required String key,
+  required String flagName,
+}) {
+  final value = _optionalBoolMapParam(params, key);
+  if (value == null) {
+    return const [];
+  }
+
+  return [value ? '--$flagName' : '--no-$flagName'];
+}
+
+class HitlCleanupState {
   bool hasRun = false;
 }
