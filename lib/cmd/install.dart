@@ -16,7 +16,7 @@ Future<bool> checkInstall(String command) async {
   }
 }
 
-Future<void> checkDependencies() async {
+Future<void> checkDependencies({bool requireVideoDownloader = true}) async {
   logger.info("Checking dependencies.", section: LogSection.setup);
   bool ffmpegInstalled = await checkInstall('ffmpeg');
   if (!ffmpegInstalled) {
@@ -26,12 +26,14 @@ Future<void> checkDependencies() async {
     exit(1);
   }
 
-  bool ytDlpInstalled = await checkInstall('yt-dlp');
-  if (!ytDlpInstalled) {
-    logger.warning(
-        "yt-dlp is missing. You need to have yt-dlp installed globally to download background videos. Download it here: $ansiReset https://github.com/yt-dlp/yt-dlp",
-        section: LogSection.install);
-    exit(1);
+  if (requireVideoDownloader) {
+    bool ytDlpInstalled = await checkInstall('yt-dlp');
+    if (!ytDlpInstalled) {
+      logger.warning(
+          "yt-dlp is missing. You need to have yt-dlp installed globally to download background videos. Download it here: $ansiReset https://github.com/yt-dlp/yt-dlp",
+          section: LogSection.install);
+      exit(1);
+    }
   }
 
   bool awsCLIInstalled = await checkInstall('aws');

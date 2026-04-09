@@ -22,7 +22,7 @@ void main(
   try {
     ParsedCommand command = ParsedCommand.parse(args);
     if (command.name == CommandType.defaultCommand) {
-      await checkDependencies();
+      await checkDependencies(requireVideoDownloader: command.video == null);
     }
 
     AppPaths.init();

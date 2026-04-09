@@ -84,8 +84,7 @@ class Lexica extends ConfigItem {
 
   static Future<void> update(String configPath, List<Lexica> lexicas,
       {bool verbose = false}) async {
-    final configFile =
-        AppPaths.resolve('defaults/lexicons/lexemes.config.json');
+    final configFile = AppPaths.resolve(configPath);
     await _update(configFile.path, lexicas, verbose: verbose);
   }
 
@@ -190,7 +189,7 @@ class Lexica extends ConfigItem {
 
   String createXMLFile() {
     final builder = XmlBuilder();
-    builder.processing("xml", 'version="$xmlVersion');
+    builder.processing("xml", 'version="$xmlVersion"');
     builder.element("lexicon", attributes: {"xml:lang": languageCode},
         nest: () {
       for (Lexicon lexeme in lexicons) {
