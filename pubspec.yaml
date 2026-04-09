@@ -1,6 +1,6 @@
 name: reddit_2_video
 description: A command-line application for generating a tiktok-style reddit commentary video.
-version: 1.0.0
+version: 1.1.0
 repository: https://github.com/Thomasssb1/reddit-bot
 
 environment:
