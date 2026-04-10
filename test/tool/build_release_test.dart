@@ -20,7 +20,7 @@ void main() {
         });
 
         final result = await Process.run(
-            '/opt/homebrew/bin/dart',
+            'dart',
             [
               'run',
               'tool/build_release.dart',
@@ -55,7 +55,7 @@ void main() {
 
     test('refuses to use the repository root as output', () async {
       final result = await Process.run(
-          '/opt/homebrew/bin/dart',
+          'dart',
           [
             'run',
             'tool/build_release.dart',
