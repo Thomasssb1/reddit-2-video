@@ -8,6 +8,7 @@
 *.mp3
 *.srt
 *.gif
+release/**
 
 .temp/**
 coverage/**

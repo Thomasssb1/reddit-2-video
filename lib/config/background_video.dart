@@ -85,7 +85,8 @@ class BackgroundVideo {
     // Download the video if not already downloaded
     if (!_videoExists(url)) {
       final progressTask = generationProgress.createTask(
-        title: 'Downloading background video',
+        title:
+            'Downloading background video. This will only happen once and will be reused for future generations.',
         detail: url.toString(),
         section: LogSection.backgroundVideo,
         totalUnits: 100,
@@ -261,7 +262,7 @@ class BackgroundVideo {
     } else {
       generationProgress.completeTask(progressTask,
           detail: 'Prepared .temp/${video.id}/video.mp4');
-      return File(".temp/${video.id}/video.mp4");
+      return AppPaths.resolve('.temp/${video.id}/video.mp4');
     }
   }
 

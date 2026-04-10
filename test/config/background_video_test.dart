@@ -300,7 +300,7 @@ void main() {
         command,
       );
 
-      expect(result.path, '.temp/video_id/video.mp4');
+      expect(result.path, AppPaths.resolve('.temp/video_id/video.mp4').path);
       expect(capturedArgs, isNotNull);
       expect(capturedArgs,
           containsAll(['-i', sourceFile.path, '-c:v', 'libx264']));

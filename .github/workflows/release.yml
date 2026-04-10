@@ -27,12 +27,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get version from pubspec.yaml
         id: get_version
         run: |
           VERSION=$(awk -F': ' '/^version:/ {print $2}' pubspec.yaml)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag commit is on master
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          git fetch origin master --depth=1
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "Error: tag commit $GITHUB_SHA is not on origin/master"
+            exit 1
+          fi
+          echo "Success: tag commit is on origin/master."
 
       - name: Verify tag matches pubspec version
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -52,14 +64,84 @@ jobs:
           version: ${{ steps.get_version.outputs.version }}
           path: ./CHANGELOG.md
 
-  release:
+  build-release-assets:
     needs: prepare-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: reddit-2-video-linux-x64
+            archive_name: reddit-2-video-linux-x64.zip
+            executable_name: reddit-2-video
+          - os: windows-latest
+            artifact_name: reddit-2-video-windows-x64
+            archive_name: reddit-2-video-windows-x64.zip
+            executable_name: reddit-2-video.exe
+          - os: macos-latest
+            artifact_name: reddit-2-video-macos-arm64
+            archive_name: reddit-2-video-macos-arm64.zip
+            executable_name: reddit-2-video
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+
+      - name: Install Dart dependencies
+        run: dart pub get
+
+      - name: Build Windows release bundle
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $packageRoot = "release/reddit-2-video-v${{ needs.prepare-release.outputs.version }}"
+          dart run tool/build_release.dart --output-root $packageRoot --executable-name ${{ matrix.executable_name }}
+          Compress-Archive -Path $packageRoot -DestinationPath release/${{ matrix.archive_name }} -Force
+
+      - name: Build Linux release bundle
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="release/reddit-2-video-v${{ needs.prepare-release.outputs.version }}"
+          dart run tool/build_release.dart --output-root "$package_root" --executable-name "${{ matrix.executable_name }}"
+          cd release
+          zip -r "${{ matrix.archive_name }}" "reddit-2-video-v${{ needs.prepare-release.outputs.version }}"
+
+      - name: Build macOS release bundle
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="release/reddit-2-video-v${{ needs.prepare-release.outputs.version }}"
+          dart run tool/build_release.dart --output-root "$package_root" --executable-name "${{ matrix.executable_name }}"
+          ditto -c -k --sequesterRsrc --keepParent "$package_root" release/${{ matrix.archive_name }}
+
+      - name: Upload packaged release asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: release/${{ matrix.archive_name }}
+
+  release:
+    needs:
+      - prepare-release
+      - build-release-assets
     runs-on: ubuntu-latest
 
     steps:
+      - name: Download packaged assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.prepare-release.outputs.version }}
           name: Release v${{ needs.prepare-release.outputs.version }}
           body: ${{ needs.prepare-release.outputs.changelog }}
+          files: release-assets/*.zip

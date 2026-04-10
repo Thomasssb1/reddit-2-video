@@ -103,7 +103,7 @@ class Lexica extends ConfigItem {
 
   static Future<void> _update(String path, List<Lexica> lexicas,
       {bool verbose = false}) async {
-    File config = File(path);
+    File config = AppPaths.resolve(path);
     Future<DateTime> lastModified = _getLastUpdatedFile(config);
     Future<DateTime> lastUpdate = _getLastUpdated(path);
     var result = await Future.wait([lastModified, lastUpdate]);
@@ -121,7 +121,7 @@ class Lexica extends ConfigItem {
   }
 
   static void _setLastUpdated(DateTime newTime, String path) {
-    File config = File(path);
+    File config = AppPaths.resolve(path);
     var json = jsonDecode(config.readAsStringSync());
     json['_last_updated'] = newTime.toString();
     const encoder = JsonEncoder.withIndent('  ');
@@ -129,7 +129,7 @@ class Lexica extends ConfigItem {
   }
 
   static Future<DateTime> _getLastUpdated(String path) async {
-    File config = File(path);
+    File config = AppPaths.resolve(path);
     try {
       var json = jsonDecode(config.readAsStringSync());
       String? updated = pick(json, "_last_updated").asStringOrNull();
@@ -160,7 +160,7 @@ class Lexica extends ConfigItem {
   }
 
   static List<(String, File)> _getMetadata(String path) {
-    File config = File(path);
+    File config = AppPaths.resolve(path);
     try {
       var json = jsonDecode(config.readAsStringSync());
       List<(String, File)> lexemeConfigs =

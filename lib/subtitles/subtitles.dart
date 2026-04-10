@@ -117,7 +117,8 @@ class Subtitles {
       generationProgress.incrementTask(_progressTask!,
           detail: 'Generated TTS ${_subtitles.length + 1}/$_plannedSegments');
     }
-    return File(".temp/${video.id}/tts/tts-${_subtitles.length}.mp3");
+    return AppPaths.resolve(
+        '.temp/${video.id}/tts/tts-${_subtitles.length}.mp3');
   }
 
   Future<SubtitleConfig> _alignSubtitles(

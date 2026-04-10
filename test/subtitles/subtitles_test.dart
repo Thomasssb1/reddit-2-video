@@ -249,6 +249,10 @@ void main() {
 
         expect(subtitles.duration, const Duration(seconds: 1));
         expect(subtitles.getTTSFilesAsInput(), hasLength(2));
+        expect(
+          subtitles.getTTSFilesAsInput(),
+          contains(AppPaths.resolve('.temp/test/tts/tts-0.mp3').absolute.path),
+        );
         expect(subtitles.assFile.readAsStringSync(), contains('Dialogue: 0,'));
       });
 

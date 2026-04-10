@@ -8,7 +8,7 @@ View the docs [here](https://thomasssb1.github.io/reddit-2-video/) for informati
 
 ## Setup
 
-The easiest way to get started is to download one of the [releases](https://github.com/Thomasssb1/reddit-2-video/releases) but is only compiled for Windows & MacOS (Sorry Linux users, for now you will have to compile yourself using `dart compile exe reddit-2-video/bin`).<br>Something going wrong? You may need to [compile yourself](https://github.com/Thomasssb1/reddit-2-video/tree/master#dependencies).<br><br>
+The easiest way to get started is to download one of the [releases](https://github.com/Thomasssb1/reddit-2-video/releases). Release bundles are built for Windows, macOS, and Linux, and ship as a `reddit-2-video/` folder containing `bin/reddit-2-video(.exe)`, `defaults/`, and `.temp/`.<br>Something going wrong? You may need to [compile yourself](https://github.com/Thomasssb1/reddit-2-video/tree/master#dependencies).<br><br>
 **Add the folder to path**<br>
 This is different across each operating system. [This gist](https://gist.github.com/nex3/c395b2f8fd4b02068be37c961301caa7) shows the different methods to add a folder to path - follow the steps but use the folder `reddit-2-video/bin` that you cloned. You need to add the full path to `reddit-2-video/bin` to your system path in environmental variables.<br><br>
 **Install dependencies**<br>
@@ -128,7 +128,7 @@ Click to expand each of the examples.
 > The below command passes a link instead of a subreddit in order to generate a video for a specific post.
 >
 > ```zsh
-> $ reddit-2-video --subreddit https://www.reddit.com/r/TrueOffMyChest/comments/1sfywpl/my_husband_has_started_wearing_makeup_and_i_hate/ --end-card <path-to-gif> -v --output example-5
+> $ reddit-2-video --subreddit https://www.reddit.com/r/TrueOffMyChest/comments/t26b1s/i_found_out_that_my_boyfriend_of_2_years_is/ --end-card <path-to-gif> -v --output example-5
 > ```
 >
 > This command also adds an end card to the end of the video by using the gif passed to it (in this case it is the placeholder _\<path-to-gif\>_). It also sets verbosity to true in order to see extra debugging information whilst generating the video.
@@ -145,10 +145,10 @@ You only need to install dart if you are compiling yourself - as explained below
 $ apt-get install ffmpeg dart
 ```
 
-To build the exe, you will need to compile which requires [dart](https://dart.dev/) 3.0.5. Run the following command whilst in the `reddit-2-video` folder.
+To build the packaged release folder, you will need [dart](https://dart.dev/) >= 3.0.5. Run the following command whilst in the `reddit-2-video` folder.
 
 ```zsh
-$ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
+$ dart run tool/build_release.dart --output-root build/reddit-2-video
 ```
 
 <details>
@@ -159,10 +159,14 @@ $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video
 > Run the below command if you are on windows
 >
 > ```sh
-> $ dart compile exe bin/reddit-2-video.dart --output=bin/reddit-2-video.exe
+> $ dart run tool/build_release.dart --output-root build/reddit-2-video --executable-name reddit-2-video.exe
 > ```
 
 </details>
+
+The build script refuses unsafe output roots such as `.` or the repository root. Use a dedicated directory such as `build/reddit-2-video`.
+
+This creates the same structure used by release builds: `reddit-2-video/bin/reddit-2-video(.exe)`, `reddit-2-video/defaults/`, and `reddit-2-video/.temp/visited_log.json`.
 
 You will also need [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) setup if you plan on using AWS-Polly to generate TTS, which currently is the only option for TTS generation.
 
