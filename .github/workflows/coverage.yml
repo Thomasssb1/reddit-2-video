@@ -117,7 +117,7 @@ jobs:
             exit 0
           fi
 
-          BRANCH_NAME="coverage-badge-update-${{ github.run_id }}"
+          BRANCH_NAME="coverage-badge-update-${{ github.run_id }}-${{ github.run_attempt }}"
           git checkout -b "$BRANCH_NAME"
           git commit -m "docs: update coverage badge [skip ci]"
           git push origin "$BRANCH_NAME"
