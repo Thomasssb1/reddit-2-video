@@ -1,0 +1,129 @@
+name: Coverage
+
+on:
+  workflow_call:
+    inputs:
+      update_badge:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    outputs:
+      line_coverage: ${{ steps.collect-coverage.outputs.line_coverage }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+
+      - name: Setup FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        id: setup-ffmpeg
+        with:
+          ffmpeg-version: release
+          github-token: ${{ github.token }}
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Install coverage tools
+        run: dart pub global activate coverage
+
+      - name: Collect coverage
+        id: collect-coverage
+        run: |
+          dart pub global run coverage:test_with_coverage --out=coverage
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          lcov = Path("coverage/lcov.info").read_text()
+          found = hit = 0
+          for line in lcov.splitlines():
+              if line.startswith("LF:"):
+                  found += int(line.split(":", 1)[1])
+              elif line.startswith("LH:"):
+                  hit += int(line.split(":", 1)[1])
+
+          percent = 0.0 if found == 0 else round((hit / found) * 100, 2)
+          Path("coverage/coverage.json").write_text(
+              json.dumps({"line_coverage": percent}, indent=2) + "\n"
+          )
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
+              output.write(f"line_coverage={percent}\n")
+          print(f"Line coverage: {percent}%")
+          PY
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: |
+            coverage/coverage.json
+            coverage/lcov.info
+
+  update-badge:
+    needs: coverage
+    if: inputs.update_badge
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Update coverage badge in README
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINE_COVERAGE: ${{ needs.coverage.outputs.line_coverage }}
+        run: |
+          python3 - <<'PY'
+          import re
+          import os
+          from pathlib import Path
+
+          coverage = float(os.environ["LINE_COVERAGE"])
+          display = f"{coverage:.2f}".rstrip("0").rstrip(".")
+
+          if coverage < 75:
+              color = "red"
+          elif coverage < 90:
+              color = "yellow"
+          else:
+              color = "green"
+
+          readme = Path("README.md").read_text()
+          updated = re.sub(
+              r"https://img\.shields\.io/badge/coverage-[^)]*",
+              f"https://img.shields.io/badge/coverage-{display}%25-{color}",
+              readme,
+              count=1,
+          )
+          Path("README.md").write_text(updated)
+          print(f"Updated coverage badge to {display}% ({color})")
+          PY
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add README.md
+
+          if git diff --cached --quiet; then
+            echo "No coverage badge changes to commit."
+            exit 0
+          fi
+
+          BRANCH_NAME="coverage-badge-update-${{ github.run_id }}"
+          git checkout -b "$BRANCH_NAME"
+          git commit -m "docs: update coverage badge [skip ci]"
+          git push origin "$BRANCH_NAME"
+
+          gh pr create \
+            --base master \
+            --head "$BRANCH_NAME" \
+            --title "docs: update coverage badge" \
+            --body "Automated update of the README coverage badge based on the latest successful CI run on master." || echo "Pull request creation skipped or failed"

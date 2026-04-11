@@ -1,9 +1,19 @@
 .dart_tool/
+.vscode/
+.DS_Store
+
+# Ignore generated files
 *.mp4
 *.wav
-.temp/*
-!.temp/visited_log.txt
+*.mp3
 *.srt
-.vscode/
-.temp/tts/*
-!defaults/silence.wav
+*.gif
+release/**
+
+.temp/**
+coverage/**
+test/hitl/.overseer.lock
+
+!defaults/silence.mp3
+# Ignore implementation plans
+implementation_plan*.md

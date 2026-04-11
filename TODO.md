@@ -1,15 +1,13 @@
-- Use ffmpeg-cli as a ffmpeg wrapper
-- Smart split keeping words together by backtracking
-- Custom delay length & end card length
-- Add multiple TTS options including local
-- Add max video length
-- Automatic deletion of temp if terminate batch job
-- Possibly create a sample tts wav file which can be used as pre-input for whisper_timestamped
-- Switch to standalone stt model with dart inference lib
+- Smart split keeping sentences together by backtracking
+- Add multiple TTS options including local (which will require a transcription step as well)
 - Support for images/videos
-- Change to min_count, max_count then omit min_count on urls if not explicitly set
-- Parallel processing
 - Docker image
-- Interface with java library for aws polly
-- Handle the rare case where a post is deleted during fetch?? happened once on multi t5_2t0no-118of33z never existed and so reset endtime to 0
-- Swap to stdout from print
+- Add compression option before final output
+- Optimisations including:
+  - Graphic specific encoding
+  - FPS re-encoding in splitting stage without fps step in generation
+  - Use filter complex threads for complex filter graphs
+  - Batch TTS generation
+  - Combine splitting into final generation
+  - Prebuild TTS into a single file, reducing complexity for final command
+- Update horror mode to change subtitle, tts (extended pausing, holding final word longer) and video effects

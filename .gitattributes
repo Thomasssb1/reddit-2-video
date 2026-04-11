@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+defaults/lexicons/lexemes.config.json filter=cleanJsonState
+.temp/visited_log.json filter=cleanJsonState
+
+docs/** linguist-documentation
+mkdocs.yml linguist-documentation

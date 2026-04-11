@@ -1,204 +1,169 @@
-import 'package:args/args.dart';
-import 'package:reddit_2_video/ffmpeg/command.dart';
-import 'package:reddit_2_video/ffmpeg/execute.dart';
-import 'package:reddit_2_video/ffmpeg/splitter.dart';
-import 'package:reddit_2_video/subtitles/align.dart';
-import 'package:reddit_2_video/subtitles/generate.dart';
-import 'package:reddit_2_video/tts/split.dart';
+import 'package:reddit_2_video/command/parsed_command.dart';
+import 'package:reddit_2_video/app_paths.dart';
+import 'package:reddit_2_video/config/background_video.dart';
+import 'package:reddit_2_video/config/lexicons/lexica.dart';
+import 'package:reddit_2_video/config/voices/voice.dart';
+import 'package:reddit_2_video/config/voices/voices.dart';
+import 'package:reddit_2_video/reddit/reddit_post.dart';
+import 'package:reddit_2_video/reddit/reddit_video_type.dart';
+import 'package:reddit_2_video/reddit_video.dart';
+import 'package:reddit_2_video/log/log.dart';
+import 'package:reddit_2_video/subtitles/subtitles.dart';
+import 'package:reddit_2_video/cmd/install.dart';
+import 'package:reddit_2_video/utils/logger.dart';
+import 'package:reddit_2_video/utils/progress.dart';
+
 import 'dart:io';
-import 'package:reddit_2_video/utils/log.dart';
-import 'package:reddit_2_video/get_data.dart';
-import 'package:reddit_2_video/cmd.dart';
-import 'package:reddit_2_video/utils/prepath.dart';
-import 'package:reddit_2_video/utils/prettify.dart';
-import 'package:reddit_2_video/ffmpeg/video.dart';
-import 'package:reddit_2_video/utils/cleanup.dart';
-import 'package:reddit_2_video/utils/install.dart';
-import 'package:reddit_2_video/tts/aws.dart';
-import 'dart:convert';
-import 'package:reddit_2_video/utils/http.dart';
-import 'package:reddit_2_video/utils/remove_characters.dart';
 
-// [enable preview ffplay]
 void main(
-  List<String> arguments,
+  List<String> args,
 ) async {
-  bool awsCLIInstalled = await checkInstall('aws');
-  if (!awsCLIInstalled) {
-    printError("You need to install AWS CLI in order to use AWS-Polly TTS.");
-    print(
-        "You can find out how to do this here:\nhttps://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions");
-    exit(0);
-  }
-
-  // get the arguments passed on command line
-  var results = parse(arguments);
-  ArgResults args = results['args'];
-
-  // for now use static
-  int endCardLength = 2;
-
-  // set prepath based on --dev flag
-  setPath(args);
-
-  await getBackgroundVideo();
-
-  // if the command was the default generation command
-  if (results['command'] == null) {
-    var removeCharacter = RemoveCharacters();
-
-    // unnecessary until native tts is implemented
-    //if (args['aws']) {
-    //await pollyPutLexeme();
-    //}
-
-    String repeat = args['repeat'];
-
-    if (validateLink(args['subreddit'])) {
-      repeat = "1";
+  Log? log;
+  try {
+    ParsedCommand command = ParsedCommand.parse(args);
+    if (command.name == CommandType.defaultCommand) {
+      await checkDependencies(requireVideoDownloader: command.video == null);
     }
 
-    for (int i = 0; i < int.parse(repeat); i++) {
-      // get all post data
-      var (id, postData) = await getPostData(
-        args['subreddit'], // subreddit
-        args['sort'], // sort
-        args['nsfw'], // nsfw tag
-        int.parse(args['count']), // min number of comments
-        args['comment-sort'], // sort for comments
-        args['post-confirmation'], // check each post
-        args['type'], // post type (e.g. comment or multi)
-      );
+    AppPaths.init();
+    command.validateOutputFilesAvailable();
+    log = await Log.fromFile();
 
-      final bool alternateTTS = (args['alternate'][0] == 'on' ? true : false);
-      final bool alternateColour =
-          (args['alternate'][1] == 'on' ? true : false);
-      final String titleColour = args['alternate'][2];
+    switch (command.name) {
+      case CommandType.defaultCommand:
+        generationProgress.start();
+        logger.info(
+          "Preparing background video.",
+          section: LogSection.backgroundVideo,
+        );
+        late BackgroundVideo backgroundVideo;
+        if (command.video == null) {
+          backgroundVideo = await BackgroundVideo.downloadVideo(
+            BackgroundVideo.getDefaultVideoUrl(),
+            verbose: command.verbose,
+          );
+        } else {
+          backgroundVideo = BackgroundVideo(path: command.video!);
+        }
 
-      final config = await File("$prePath/defaults/config.json").readAsString();
-      final json = jsonDecode(config);
-      final List<dynamic> voices = args['aws'] ? json['aws'] : json['accents'];
-      final List<dynamic> colours = json['colours'];
+        // Setup config files
+        List<Lexica> lexicons = Lexica.fromConfig(
+            configPath: 'defaults/lexicons/lexemes.config.json');
+        Lexica.update("defaults/lexicons/lexemes.config.json", lexicons,
+            verbose: command.verbose);
+        List<Voice> voices = Voices.fromFile(command);
+        Voice initialVoice = Voices.find(voices, command.voice);
 
-      int currentTTS = 0;
-      String voice = args['voice'];
-      int currentColour = 0;
-
-      Duration endTime = Duration.zero;
-
-      // if the data collected returned nothing (e.g. subreddit has no posts)
-      if (postData.isNotEmpty) {
-        int counter = 0;
-        String prevText = "";
-
-        final newASS = File("$prePath/.temp/$id/comments.ass");
-        final sinkComments = newASS.openWrite();
-        final defaultASS =
-            File("$prePath/defaults/default.ass").readAsStringSync();
-        sinkComments.writeln(defaultASS);
-
-        for (int i = 0; i < postData.length; i++) {
-          for (int j = 0; j < postData[i].length; j++) {
-            // if an aspect of the post doesn't contain any text
-            // if ignored will produce weird noise in tts
-            final post = postData[i];
-            post[j] = removeCharacter.cleanse(post[j]);
-            if (post[j].isNotEmpty) {
-              List<String> textSegments = splitText(post[j]);
-              for (String text in textSegments) {
-                if (text.isNotEmpty) {
-                  bool ttsSuccess = await generateTTS(text, "$i-$counter",
-                      args['ntts'], voice, args['censor'], id);
-                  if (ttsSuccess) {
-                    bool alignSuccess = await alignSubtitles(
-                        "$i-$counter", prevText, args['verbose'], id);
-                    if (!alignSuccess) {
-                      exit(0);
-                    } else {
-                      endTime = await generateSubtitles(
-                          id,
-                          "$i-$counter",
-                          alternateColour,
-                          j == 0,
-                          args['type'] != 'post',
-                          (j == 0)
-                              ? titleColour
-                              : alternateColour
-                                  ? colours[currentColour]
-                                  : 'HFFFFFF',
-                          endTime,
-                          sinkComments);
-                    }
-                  } else {
-                    exit(0);
-                  }
-                  counter++;
-                  prevText = text;
-                }
-              }
-              if (alternateTTS) {
-                currentTTS = ++currentTTS % voices.length;
-                voice = voices[currentTTS];
-              }
-              if (alternateColour) {
-                currentColour = ++currentColour % colours.length;
-              }
-              endTime += Duration(
-                  milliseconds: (args['type'] == 'comments' ? 1000 : 0));
-            }
+        Future<RedditVideo> generateVideo(RedditVideo video, int index) async {
+          if (command.type == RedditVideoType.comments) {
+            final commentTask = generationProgress.createTask(
+              title: 'Fetching Reddit comments',
+              detail: 'Video ${index + 1}/${command.repeat}',
+              section: LogSection.reddit,
+              totalUnits: 1,
+              weight: 2,
+            );
+            RedditPost post = video.posts.first;
+            // TODO: add some sort of retry when there are < target comments
+            await post.addComments(command);
+            generationProgress.completeTask(commentTask,
+                detail: 'Fetched comments for ${post.id}');
           }
-          endTime +=
-              Duration(milliseconds: (args['type'] == 'multi' ? 1000 : 0));
-        }
-        sinkComments.close();
 
-        bool cutSuccess = await cutVideo(endTime, args['verbose'], id,
-            endCardLength, args.wasParsed('end-card'));
-        if (!cutSuccess) {
-          exit(0);
-        }
+          Voices currentVoice = Voices(voices, initialVoice, command);
+          Subtitles subtitles = Subtitles(
+              video: video,
+              lexicons: lexicons,
+              voices: currentVoice,
+              command: command);
 
-        List<String> command = generateCommand(args, endTime, i, args['horror'],
-            id, endCardLength, args['type'] != 'post');
-        bool ffmpegSuccess = await runFFMPEGCommand(command, args['output'], i);
-        if (!ffmpegSuccess) {
-          exit(0);
+          await subtitles.parse(command);
+          video.subtitles = subtitles;
+
+          return video;
         }
 
-        if (args['youtube-short']) {
-          await splitVideo(args['output'], args['file-type'], i);
+        final selectionTask = generationProgress.createTask(
+          title: 'Selecting Reddit content',
+          detail: 'Video 1/${command.repeat}',
+          section: LogSection.reddit,
+          totalUnits: command.repeat.toDouble(),
+          weight: command.repeat * 2,
+        );
+
+        List<RedditVideo> videos = await RedditVideo.parseRepeated(
+          command: command,
+          log: log,
+          onSelectionAttempt: (index) {
+            generationProgress.updateTask(
+              selectionTask,
+              completedUnits: index.toDouble(),
+              detail: 'Video ${index + 1}/${command.repeat}',
+            );
+            logger.info(
+              "Selecting Reddit content.",
+              section: LogSection.reddit,
+            );
+          },
+          onSelectionSuccess: (index, video) {
+            generationProgress.incrementTask(
+              selectionTask,
+              detail: 'Selected ${video.id}',
+            );
+          },
+        );
+        generationProgress.completeTask(
+          selectionTask,
+          detail: videos.length == command.repeat
+              ? 'Selected ${videos.length} requested videos'
+              : 'Selected ${videos.length} of ${command.repeat} requested videos',
+        );
+
+        List<Future<RedditVideo>> generatedVideos = List.generate(
+            videos.length, (i) => generateVideo(videos[i], i),
+            growable: false);
+        List<RedditVideo> finalVideos = await Future.wait(generatedVideos);
+
+        for (int i = 1; i <= finalVideos.length; i++) {
+          RedditVideo vid = finalVideos.elementAt(i - 1);
+          File cutVideo = await backgroundVideo.cutVideo(
+              vid.subtitles!.duration, vid, command);
+          await vid.generate(command, backgroundVideo, cutVideo, i);
+          log.add(vid);
         }
-        await writeToLog(id, args['type'] == 'multi');
-        await clearTemp(id);
-      } else {
-        // output error
-        printError("No post(s) found... Try again.");
-      }
+        stopAllProgress();
+        break;
+      case CommandType.flush:
+        RedditPost? post;
+        if (command.post != null) {
+          post = await RedditPost.fromUrl(url: command.post!);
+        }
+        log.remove(post: post);
+
+        await log.clearTemporaryFiles();
+        break;
+      case CommandType.install:
+        await runInstallCommand();
+        break;
+      case CommandType.help:
+        command.printHelp();
+        break;
+      case null:
+        logger.error("No command found.", section: LogSection.setup);
     }
-    // if the command is flush
-  } else if (results['command'] == 'flush') {
-    // remove data from visited_log.txt
-    flushLog(results['args']['post']);
-    await clearTemp();
-  } else if (results['command'] == 'install') {
-    bool pythonInstalled = await checkInstall('python');
-    if (!pythonInstalled) {
-      printWarning(
-          "In order to continue, you need to have python installed. Download it here: \x1b[0mhttps://www.python.org/downloads/");
+  } on Exception catch (e) {
+    stopAllProgress();
+    logger.error(e);
+    exitCode = 1;
+  } finally {
+    stopAllProgress();
+    if (AppPaths.isDevMode) {
+      logger.warning(
+        "Running in dev mode, not clearing temporary files.",
+        section: LogSection.setup,
+      );
+    } else {
+      await log?.clearTemporaryFiles();
     }
-    bool ffmpegInstalled = await checkInstall('ffmpeg');
-    if (!ffmpegInstalled) {
-      await installFFmpeg(false);
-    }
-    bool pipInstalled = await checkInstall('pip');
-    if (!pipInstalled) {
-      printWarning(
-          "You need to have pip installed in order to install the python dependencies");
-    }
-    await installWhisper();
-  } else {
-    printError(
-        'There is no such command. Try again but instead use a pre-existing command, for more information run reddit-2-video --help');
   }
-  exit(0);
 }
